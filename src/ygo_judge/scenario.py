@@ -15,6 +15,7 @@ from .cards import (
     TYPE_FUSION,
     TYPE_LINK,
     TYPE_MONSTER,
+    TYPE_PENDULUM,
     TYPE_RITUAL,
     TYPE_SPSUMMON,
     TYPE_SYNCHRO,
@@ -107,6 +108,8 @@ class PlayerSetup(ScenarioModel):
     extra_deck: list[CardRef] = Field(default_factory=list)
     graveyard: list[CardRef | StoredCard] = Field(default_factory=list)
     banished: list[CardRef | StoredCard] = Field(default_factory=list, description="Face-up banished cards.")
+    banished_facedown: list[CardRef] = Field(default_factory=list, description="Face-down banished cards.")
+    extra_deck_faceup: list[CardRef] = Field(default_factory=list, description="Face-up Pendulum Monsters in the Extra Deck.")
     monsters: list[Monster] = Field(default_factory=list)
     spells_traps: list[SpellTrap] = Field(default_factory=list)
     field_spell: FieldSpell | None = None
@@ -199,6 +202,11 @@ def build_puzzle(setup: Setup, cards: CardDB) -> str:
             if not (card.is_(TYPE_MONSTER) and card.is_(EXTRA_DECK_TYPES)):
                 raise ValueError(f"{card.name} is not an Extra Deck monster.")
             b.add(card, player, "LOCATION_EXTRA", 0, "POS_FACEDOWN")
+        for ref in ps.extra_deck_faceup:
+            card = b.card(ref)
+            if not (card.is_(TYPE_MONSTER) and card.is_(TYPE_PENDULUM)):
+                raise ValueError(f"{card.name} is not a Pendulum Monster; only those can be face-up in the Extra Deck.")
+            b.add(card, player, "LOCATION_EXTRA", 0, "POS_FACEUP")
         for ref in ps.hand:
             card = b.card(ref)
             if card.is_(TYPE_MONSTER) and card.is_(EXTRA_DECK_TYPES):
@@ -215,6 +223,9 @@ def build_puzzle(setup: Setup, cards: CardDB) -> str:
                     summoned = history.summoned or _natural_summon(card)
                     source = history.summoned_from or ("extra deck" if card.is_(EXTRA_DECK_TYPES) else "hand")
                     b.lines.append(f"Debug.PreSummon({var},{SUMMON_TYPES[summoned]},{SUMMON_FROM[source]})")
+
+        for ref in ps.banished_facedown:
+            b.add(b.card(ref), player, "LOCATION_REMOVED", 0, "POS_FACEDOWN")
 
         used = set()
         for m in ps.monsters:

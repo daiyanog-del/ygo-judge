@@ -783,6 +783,7 @@ class Duel:
                     names = [
                         self.name(c.get("code", 0))
                         + (" (face-down)" if loc == E.LOCATION_REMOVED and c.get("position", 0) & E.POS_FACEDOWN else "")
+                        + (" (face-up)" if loc == E.LOCATION_EXTRA and c.get("position", 0) & E.POS_FACEUP else "")
                         for c in cards
                     ]
                     more = f" … (+{len(names) - 15} more)" if len(names) > 15 else ""
