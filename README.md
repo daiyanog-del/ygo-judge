@@ -1,5 +1,15 @@
 # YGO Judge
 
+> **This is a modified copy** of [lukaznj/ygo-judge](https://github.com/lukaznj/ygo-judge), used as the rules
+> engine of JudgemanAI (ジャッジマンAI, https://judgeman.greedy-lab.com). Changes from the original:
+>
+> - 2026-11-20: the board setup accepts face-down banished cards (`banished_facedown`) and face-up Pendulum
+>   Monsters in the Extra Deck (`extra_deck_faceup`); the board shows "(face-up)" for the latter.
+> - 2026-11-21: `ygo-judge-http` (`src/ygo_judge/http_api.py`), a small HTTP API over the tools for callers that
+>   are not MCP clients, with Japanese card-name lookup. The image workflow builds for amd64 instead of arm64.
+>
+> JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
+
 Settle Yu-Gi-Oh! ruling questions with ChatGPT or Claude. YGO Judge is an [MCP](https://modelcontextprotocol.io)
 server that lets either assistant use EDOPro's rules engine. It builds the board, plays both players,
 answers from what the engine actually does, and checks Konami's official Q&As.

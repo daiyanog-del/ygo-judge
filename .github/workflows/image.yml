@@ -1,4 +1,4 @@
-# Builds ghcr.io/<owner>/ygo-judge for arm64 (Raspberry Pi 4/5, Apple silicon). The weekly run picks
+# Builds ghcr.io/<owner>/ygo-judge for amd64 (Fly.io; JudgemanAI changed this from arm64 on 2026-11-21). The weekly run picks
 # up new cards and script fixes: every build fetches the latest engine, card scripts and databases.
 name: image
 
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   image:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
@@ -30,7 +30,7 @@ jobs:
         with:
           context: .
           file: Containerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           build-args: DATA_VERSION=${{ github.run_id }}
           tags: |
