@@ -1,0 +1,163 @@
+diff --git a/operations.cpp b/operations.cpp
+index 45dc683..cffebaa 100644
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -3901,7 +3901,11 @@ bool field::process(Processors::Destroy& arg) {
+ 			pcard->current.reason = pcard->temp.reason;
+ 			pcard->current.reason_effect = pcard->temp.reason_effect;
+ 			pcard->current.reason_player = pcard->temp.reason_player;
+-			pcard->set_status(STATUS_DESTROY_CONFIRMED, FALSE);
++			// JudgemanAI 2026-11-23: keep STATUS_DESTROY_CONFIRMED on cards that survive by an indestructibility
++			// effect until destruction replacements have been checked (cleared in step 2 with destroy_canceled).
++			// Konami FAQ 24071: Hugin the Runick Wings under Runick Slumber cannot apply its replacement effect
++			// when it would be destroyed at the same time as other cards, even though it is not destroyed.
++			core.destroy_canceled.insert(pcard);
+ 			targets->container.erase(pcard);
+ 		}
+ 		for (auto& rep : extra) {
+diff --git a/processor.cpp b/processor.cpp
+index ab8a51d..1c139de 100644
+--- a/processor.cpp
++++ b/processor.cpp
+@@ -3027,47 +3027,36 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, st
+ 					if((reflect[1 - pd] = core.attacker->is_affected_by_effect(EFFECT_REFLECT_BATTLE_DAMAGE, core.attack_target)) == nullptr)
+ 						reflect[1 - pd] = is_player_affected_by_effect(1 - pd, EFFECT_REFLECT_BATTLE_DAMAGE);
+ 					bool also[2] = { false, false };
+-					if(!both
+-						&& (core.attack_target->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE)
++					if(
++						(core.attack_target->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE)
+ 							|| is_player_affected_by_effect(pd, EFFECT_ALSO_BATTLE_DAMAGE)))
+ 						also[pd] = true;
+-					if(!both
+-						&& (core.attacker->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE)
++					if(
++						(core.attacker->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE)
+ 							|| is_player_affected_by_effect(1 - pd, EFFECT_ALSO_BATTLE_DAMAGE)))
+ 						also[1 - pd] = true;
+-					if(both) {
+-						//turn player's effect applies first
+-						if(reflect[pa] && reflect[pa]->get_handler_player() == pa) {
+-							core.battle_damage[1 - pa] += core.battle_damage[pa];
+-							core.battle_damage[pa] = 0;
+-						} else if(reflect[1 - pa] && reflect[1 - pa]->get_handler_player() == pa) {
+-							core.battle_damage[pa] += core.battle_damage[1 - pa];
+-							core.battle_damage[1 - pa] = 0;
+-						} else if(reflect[pa] && reflect[pa]->get_handler_player() == 1 - pa) {
+-							core.battle_damage[1 - pa] += core.battle_damage[pa];
+-							core.battle_damage[pa] = 0;
+-						} else if(reflect[1 - pa] && reflect[1 - pa]->get_handler_player() == 1 - pa) {
+-							core.battle_damage[pa] += core.battle_damage[1 - pa];
+-							core.battle_damage[1 - pa] = 0;
+-						}
+-					} else {
+-						if(reflect[damp]) {
+-							if(!also[1 - damp]) {
+-								core.battle_damage[1 - damp] += core.battle_damage[damp];
+-								core.battle_damage[damp] = 0;
++					// JudgemanAI 2026-11-23: apply "the opponent takes it instead" (reflect) and "the opponent also takes it" (also)
++					// to each piece of battle damage separately, and never to damage that one of those effects created.
++					// Konami FAQ 23822 / 24087: with Double-Edged Sword (both players take it) and Ohime the Manifested Mikanko,
++					// (C) vs CNo.96 the CNo.96 player takes the difference twice and the Ohime player once,
++					// (D) vs another Ohime each player takes it once. The engine still adds the pieces into one total per player.
++					{
++						int32_t dmg[2] = { 0, 0 };
++						for(uint8_t p = 0; p < 2; ++p) {
++							int32_t v = core.battle_damage[p];
++							if(!v)
++								continue;
++							if(reflect[p]) {
++								dmg[1 - p] += v;
++							} else if(also[p]) {
++								dmg[p] += v;
++								dmg[1 - p] += v;
+ 							} else {
+-								core.battle_damage[1 - damp] += core.battle_damage[damp];
+-								core.battle_damage[damp] = core.battle_damage[1 - damp];
+-							}
+-						} else if(also[damp]) {
+-							if(!reflect[1 - damp]) {
+-								core.battle_damage[1 - damp] += core.battle_damage[damp];
+-							} else {
+-								core.battle_damage[1 - damp] += core.battle_damage[damp];
+-								core.battle_damage[damp] += core.battle_damage[1 - damp];
+-								core.battle_damage[1 - damp] = 0;
++								dmg[p] += v;
+ 							}
+ 						}
++						core.battle_damage[0] = dmg[0];
++						core.battle_damage[1] = dmg[1];
+ 					}
+ 					eset.clear();
+ 					core.attacker->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);
+@@ -3150,47 +3139,36 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, st
+ 		if((reflect[1 - damp] = reason_card->is_affected_by_effect(EFFECT_REFLECT_BATTLE_DAMAGE, dam_card)) == nullptr)
+ 			reflect[1 - damp] = is_player_affected_by_effect(1 - damp, EFFECT_REFLECT_BATTLE_DAMAGE);
+ 		bool also[2] = { false, false };
+-		if(!both
+-			&& ((dam_card && dam_card->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE))
++		if(
++			((dam_card && dam_card->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE))
+ 				|| is_player_affected_by_effect(damp, EFFECT_ALSO_BATTLE_DAMAGE)))
+ 			also[damp] = true;
+-		if(!both
+-			&& (reason_card->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE)
++		if(
++			(reason_card->is_affected_by_effect(EFFECT_ALSO_BATTLE_DAMAGE)
+ 				|| is_player_affected_by_effect(1 - damp, EFFECT_ALSO_BATTLE_DAMAGE)))
+ 			also[1 - damp] = true;
+-		if(both) {
+-			//turn player's effect applies first
+-			if(reflect[pa] && reflect[pa]->get_handler_player() == pa) {
+-				core.battle_damage[1 - pa] += core.battle_damage[pa];
+-				core.battle_damage[pa] = 0;
+-			} else if(reflect[1 - pa] && reflect[1 - pa]->get_handler_player() == pa) {
+-				core.battle_damage[pa] += core.battle_damage[1 - pa];
+-				core.battle_damage[1 - pa] = 0;
+-			} else if(reflect[pa] && reflect[pa]->get_handler_player() == 1 - pa) {
+-				core.battle_damage[1 - pa] += core.battle_damage[pa];
+-				core.battle_damage[pa] = 0;
+-			} else if(reflect[1 - pa] && reflect[1 - pa]->get_handler_player() == 1 - pa) {
+-				core.battle_damage[pa] += core.battle_damage[1 - pa];
+-				core.battle_damage[1 - pa] = 0;
+-			}
+-		} else {
+-			if(reflect[damp]) {
+-				if(!also[1 - damp]) {
+-					core.battle_damage[1 - damp] += core.battle_damage[damp];
+-					core.battle_damage[damp] = 0;
+-				} else {
+-					core.battle_damage[1 - damp] += core.battle_damage[damp];
+-					core.battle_damage[damp] = core.battle_damage[1 - damp];
+-				}
+-			} else if(also[damp]) {
+-				if(!reflect[1 - damp]) {
+-					core.battle_damage[1 - damp] += core.battle_damage[damp];
++		// JudgemanAI 2026-11-23: apply "the opponent takes it instead" (reflect) and "the opponent also takes it" (also)
++		// to each piece of battle damage separately, and never to damage that one of those effects created.
++		// Konami FAQ 23822 / 24087: with Double-Edged Sword (both players take it) and Ohime the Manifested Mikanko,
++		// (C) vs CNo.96 the CNo.96 player takes the difference twice and the Ohime player once,
++		// (D) vs another Ohime each player takes it once. The engine still adds the pieces into one total per player.
++		{
++			int32_t dmg[2] = { 0, 0 };
++			for(uint8_t p = 0; p < 2; ++p) {
++				int32_t v = core.battle_damage[p];
++				if(!v)
++					continue;
++				if(reflect[p]) {
++					dmg[1 - p] += v;
++				} else if(also[p]) {
++					dmg[p] += v;
++					dmg[1 - p] += v;
+ 				} else {
+-					core.battle_damage[1 - damp] += core.battle_damage[damp];
+-					core.battle_damage[damp] += core.battle_damage[1 - damp];
+-					core.battle_damage[1 - damp] = 0;
++					dmg[p] += v;
+ 				}
+ 			}
++			core.battle_damage[0] = dmg[0];
++			core.battle_damage[1] = dmg[1];
+ 		}
+ 		effect_set eset;
+ 		reason_card->filter_effect(EFFECT_CHANGE_BATTLE_DAMAGE, &eset, FALSE);

@@ -1,0 +1,27 @@
+diff --git a/official/c81756619.lua b/official/c81756619.lua
+index 6321891c..9ff7fec6 100644
+--- a/official/c81756619.lua
++++ b/official/c81756619.lua
+@@ -53,7 +53,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	e3:SetCode(EFFECT_CHANGE_BATTLE_DAMAGE)
+ 	e3:SetTargetRange(LOCATION_MZONE,0)
+ 	e3:SetTarget(s.doubledmgtg)
+-	e3:SetValue(aux.ChangeBattleDamage(1,DOUBLE_DAMAGE))
++	e3:SetValue(s.doubledmgval)
+ 	Duel.RegisterEffect(e3,tp)
+ end
+ function s.aclimit(e,re,tp)
+@@ -64,6 +64,13 @@ function s.doubledmgtg(e,c)
+ 	local bc=c:GetBattleTarget()
+ 	return bc and bc:IsControler(1-e:GetHandlerPlayer())
+ end
++--JudgemanAI 2026-11-23: double only the damage your monster inflicts. Konami FAQ 24087: battle damage the opponent
++--takes through "Ohime the Manifested Mikanko" or "Recite Starling" is inflicted by the opponent's monster and is not doubled.
++function s.doubledmgval(e,damp,rc)
++	local p=e:GetOwnerPlayer()
++	if damp==1-p and rc and rc:IsControler(p) then return DOUBLE_DAMAGE end
++	return -1
++end
+ function s.thfilter(c)
+ 	return c:IsSetCard(SET_MORGANITE) and c:IsAbleToHand()
+ end

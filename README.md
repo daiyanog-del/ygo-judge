@@ -7,6 +7,15 @@
 >   Monsters in the Extra Deck (`extra_deck_faceup`); the board shows "(face-up)" for the latter.
 > - 2026-11-21: `ygo-judge-http` (`src/ygo_judge/http_api.py`), a small HTTP API over the tools for callers that
 >   are not MCP clients, with Japanese card-name lookup. The image workflow builds for amd64 instead of arm64.
+> - 2026-11-23: `patches/` changes the fetched EDOPro core and card scripts where they differ from Konami's official
+>   Q&As, and `scripts/fetch-data.sh` applies them (`tests/test_judgeman_rulings.py` checks each one):
+>   - core `operations.cpp`: a card that survives a destruction by an indestructibility effect still counts as being
+>     destroyed while destruction replacements are checked (FAQ 24071, "Hugin the Runick Wings").
+>   - core `processor.cpp`: "takes it instead" and "also takes it" battle damage effects apply to each piece of
+>     damage separately and never to damage one of them created (FAQ 23822, "Double-Edged Sword" with
+>     "Ohime the Manifested Mikanko").
+>   - card script `c81756619.lua`, "Succumbing-Song Morganite": doubles only the battle damage your own monster
+>     inflicts (FAQ 24087).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends g++ git ca-cert
 	&& rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY scripts ./scripts
+COPY patches ./patches
 # A new DATA_VERSION (e.g. today's date) refetches the engine, scripts and databases instead of
 # reusing the cached layer.
 ARG DATA_VERSION=
