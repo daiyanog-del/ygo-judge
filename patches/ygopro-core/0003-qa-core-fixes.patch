@@ -1,0 +1,126 @@
+diff --git a/card.cpp b/card.cpp
+index 12928b9..fbe2eac 100644
+--- a/card.cpp
++++ b/card.cpp
+@@ -3721,8 +3721,59 @@ int32_t card::is_capable_cost_to_grave(uint8_t playerid, effect* reason_effect)
+ 	sendto_param = op_param;
+ 	if(dest != LOCATION_GRAVE)
+ 		return FALSE;
++	if(leave_reenables_grave_redirect())
++		return FALSE;
+ 	return TRUE;
+ }
++// Is there an EFFECT_TO_GRAVE_REDIRECT that is negated only by this card's own
++// continuous effects, and so starts applying the moment this card leaves?
++// (e.g. Macro Cosmos negated by Jinzo, Shenshen negated by Skill Drain)
++// JudgemanAI 2026-11-23, Konami FAQ 6878 and 23801: such a card cannot be sent to the GY as a cost.
++bool card::leave_reenables_grave_redirect() {
++	if(!(current.location & LOCATION_ONFIELD))
++		return false;
++	auto rg = pduel->game_field->effects.aura_effect.equal_range(EFFECT_TO_GRAVE_REDIRECT);
++	for(auto eit = rg.first; eit != rg.second; ++eit) {
++		effect* peff = eit->second;
++		card* phandler = peff->get_handler();
++		if(phandler == this || peff->is_flag(EFFECT_FLAG_CANNOT_DISABLE))
++			continue;
++		if(!phandler->get_status(STATUS_DISABLED) || peff->is_available())
++			continue;
++		effect_set dis;
++		phandler->filter_effect(EFFECT_DISABLE, &dis, FALSE);
++		if(dis.empty())
++			continue;
++		bool only_by_this = true;
++		for(const auto& d : dis) {
++			if(d->get_handler() != this || !(d->type & (EFFECT_TYPE_FIELD | EFFECT_TYPE_EQUIP | EFFECT_TYPE_TARGET))) {
++				only_by_this = false;
++				break;
++			}
++		}
++		if(!only_by_this)
++			continue;
++		phandler->set_status(STATUS_DISABLED, FALSE);
++		bool applies = peff->is_available() && peff->is_target(this)
++			&& (peff->is_flag(EFFECT_FLAG_IGNORE_IMMUNE) || is_affect_by_effect(peff));
++		uint32_t redirect = 0;
++		if(applies) {
++			pduel->lua->add_param<LuaParam::INT>(REASON_COST);
++			redirect = peff->get_value(this, 1);
++		}
++		phandler->set_status(STATUS_DISABLED, TRUE);
++		if(!applies)
++			continue;
++		uint8_t p = peff->get_handler_player();
++		if((redirect & LOCATION_HAND) && is_capable_send_to_hand(p, REASON_EFFECT, peff))
++			return true;
++		if((redirect & LOCATION_DECK) && is_capable_send_to_deck(p, REASON_EFFECT, peff))
++			return true;
++		if((redirect & LOCATION_REMOVED) && is_removeable(p, POS_FACEUP, REASON_EFFECT, peff))
++			return true;
++	}
++	return false;
++}
+ int32_t card::is_capable_cost_to_hand(uint8_t playerid, effect* reason_effect) {
+ 	uint32_t redirect = 0;
+ 	uint32_t dest = LOCATION_HAND;
+diff --git a/card.h b/card.h
+index 08a358c..9bc9b0b 100644
+--- a/card.h
++++ b/card.h
+@@ -346,6 +346,7 @@ public:
+ 	int32_t is_capable_send_to_deck(uint8_t playerid, uint32_t reason, effect* reason_effect);
+ 	int32_t is_capable_send_to_extra(uint8_t playerid, uint32_t reason, effect* reason_effect);
+ 	int32_t is_capable_cost_to_grave(uint8_t playerid, effect* reason_effect);
++	bool leave_reenables_grave_redirect();
+ 	int32_t is_capable_cost_to_hand(uint8_t playerid, effect* reason_effect);
+ 	int32_t is_capable_cost_to_deck(uint8_t playerid, effect* reason_effect);
+ 	int32_t is_capable_cost_to_extra(uint8_t playerid, effect* reason_effect);
+diff --git a/field.cpp b/field.cpp
+index 6fab98c..52b307b 100644
+--- a/field.cpp
++++ b/field.cpp
+@@ -513,6 +513,9 @@ void field::set_control(card* pcard, uint8_t playerid, uint16_t reset_phase, uin
+ 		if(!(peffect->reset_flag & (RESET_SELF_TURN | RESET_OPPO_TURN)))
+ 			peffect->reset_flag |= (RESET_SELF_TURN | RESET_OPPO_TURN);
+ 		peffect->reset_count = reset_count;
++		// JudgemanAI 2026-11-23: control for a set period ends when the monster is banished temporarily (Konami FAQ 17476): it comes back
++		// to the zone it left and then goes back to its owner at once. Control with no period is kept.
++		peffect->reset_flag |= RESET_TEMP_REMOVE;
+ 	}
+ 	pcard->add_effect(peffect);
+ 	pcard->current.controler = playerid;
+diff --git a/libduel.cpp b/libduel.cpp
+index 69e1771..0370f84 100644
+--- a/libduel.cpp
++++ b/libduel.cpp
+@@ -4006,6 +4006,17 @@ LUA_STATIC_FUNCTION(AddCustomActivityCounter) {
+ 	counter_map.emplace(counter_id, processor::action_value_t{ counter_filter, { 0, 0 } });
+ 	return 0;
+ }
++// JudgemanAI 2026-11-23 (Konami FAQ 24193, 12712): a card activated by another card's effect without starting a Chain Link (Duel.ActivateFieldSpell):
++// count it on the ACTIVITY_CHAIN counters like an activation that starts a Chain Link.
++LUA_STATIC_FUNCTION(CheckChainCounter) {
++	check_param_count(L, 2);
++	auto peffect = lua_get<effect*, true>(L, 1);
++	auto playerid = lua_get<uint8_t>(L, 2);
++	if(playerid != 0 && playerid != 1)
++		return 0;
++	delete pduel->game_field->check_chain_counter(peffect, playerid, 0);
++	return 0;
++}
+ LUA_STATIC_FUNCTION(GetCustomActivityCount) {
+ 	check_param_count(L, 3);
+ 	auto counter_id = lua_get<uint32_t>(L, 1);
+diff --git a/operations.cpp b/operations.cpp
+index cffebaa..03aed6d 100644
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -5351,6 +5351,9 @@ bool field::process(Processors::ChangePos& arg) {
+ 				pcard->summon.type &= 0xdf00ffff;
+ 				if((pcard->summon.type & SUMMON_TYPE_PENDULUM) == SUMMON_TYPE_PENDULUM)
+ 					pcard->summon.type &= 0xf000ffff;
++				// JudgemanAI 2026-11-23: a monster turned face-down is no longer "Special Summoned from the Extra Deck" (Konami FAQ 23476).
++				if(pcard->summon.location == LOCATION_EXTRA)
++					pcard->summon.location = 0;
+ 				pcard->spsummon_counter[0] = pcard->spsummon_counter[1] = 0;
+ 				pcard->spsummon_counter_rst[0] = pcard->spsummon_counter_rst[1] = 0;
+ 			}

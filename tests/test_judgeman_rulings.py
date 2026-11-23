@@ -603,3 +603,115 @@ def test_cyberdarkness_cannot_send_set_equip_spell_as_cost():
     out = d.play([0])
     assert "Cyberdarkness Dragon" not in d.describe_decision()
     assert "P2 draws" in out
+
+
+# ---------------------------------------------------------------- a cost that would re-enable a GY redirect (FAQ 6878, 23801, core)
+FORTRESS_BOARD = {"monsters": [{"card": "Cyber Dragon", "zone": 1}, {"card": "Jinzo", "zone": 2}],
+                  "spells_traps": [{"card": "Macro Cosmos", "face_up": True}], "extra_deck": ["Chimeratech Fortress Dragon"], "deck_filler": 10}
+
+
+def test_fortress_cannot_use_jinzo_that_negates_macro_cosmos():
+    # Jinzo would be banished by Macro Cosmos the moment it leaves, so it cannot be sent to the GY for the summon
+    d = start(FORTRESS_BOARD, {"deck_filler": 10})
+    assert "Special Summon Chimeratech Fortress Dragon" not in d.describe_decision()
+
+
+def test_fortress_still_uses_other_machines_while_jinzo_negates_macro_cosmos():
+    # guard: Macro Cosmos stays negated by Jinzo, so the other two Machine monsters can be sent
+    board = {**FORTRESS_BOARD, "monsters": FORTRESS_BOARD["monsters"] + [{"card": "Proto-Cyber Dragon", "zone": 3}]}
+    d = start(board, {"deck_filler": 10})
+    d.play(["Special Summon Chimeratech Fortress Dragon"])
+    assert "Jinzo" not in d.describe_decision() and "Proto-Cyber Dragon" in d.describe_decision()
+
+
+def droplet(spells_traps):
+    d = start({"hand": ["Forbidden Droplet"], "monsters": [{"card": "Virtual World Kyubi - Shenshen"}], "spells_traps": spells_traps,
+               "deck_filler": 10}, {"monsters": [{"card": "Cyber Dragon"}], "deck_filler": 10})
+    d.play(["Activate Forbidden Droplet", 0])
+    return d.describe_decision()
+
+
+def test_forbidden_droplet_cannot_send_the_skill_drain_that_negates_shenshen():
+    assert "Skill Drain" not in droplet([{"card": "Skill Drain", "face_up": True}])
+
+
+def test_forbidden_droplet_can_send_one_of_two_skill_drains():
+    # guard: the other Skill Drain keeps Shenshen negated
+    assert "Skill Drain" in droplet([{"card": "Skill Drain", "face_up": True}, {"card": "Skill Drain", "face_up": True}])
+
+
+# ---------------------------------------------------------------- Metaverse activates a Spell Card (FAQ 24193, 12712, core + utility.lua)
+def test_dark_magician_of_destruction_counts_a_field_spell_activated_by_metaverse():
+    d = start({"monsters": [{"card": "Dark Magician"}], "spells_traps": [{"card": "Metaverse"}], "deck": ["The Sanctuary in the Sky"],
+               "deck_filler": 5, "extra_deck": ["Dark Magician of Destruction"]}, {"deck_filler": 5})
+    d.play([1, 1, 0, "Activate it"])  # to Main Phase 1, Metaverse: activate The Sanctuary in the Sky
+    assert "The Sanctuary in the Sky" in d.board()
+    assert "Special Summon Dark Magician of Destruction" in d.describe_decision()
+
+
+# ---------------------------------------------------------------- control for a set period and a temporary banish (FAQ 17476, core)
+def control_then_banish(take, steps):
+    p1 = {"hand": ["Change of Heart"], "spells_traps": [{"card": "Interdimensional Matter Forwarder", "face_up": True}], "deck_filler": 5}
+    if take == "bigeye":
+        p1["monsters"] = [{"card": "Number 11: Big Eye", "materials": ["Mystical Shine Ball", "Mystical Shine Ball"], "zone": 3}]
+    d = start(p1, {"monsters": [{"card": "Blue-Eyes White Dragon"}], "deck_filler": 5})
+    for s in steps:
+        d.play(s)
+    return d.board()
+
+
+def test_change_of_heart_control_ends_when_the_monster_is_banished_temporarily():
+    board = control_then_banish("coh", [["Activate Change of Heart", 0, "Blue-Eyes White Dragon", 0],
+                                        ["Activate Interdimensional Matter Forwarder", "Blue-Eyes White Dragon", 0, 0]])
+    p2 = board.split("P2:")[1]
+    assert "Blue-Eyes White Dragon" in p2  # back to its owner at once
+
+
+def test_big_eye_control_is_kept_after_a_temporary_banish():
+    # guard: control with no set period stays (FAQ 17476 (A))
+    board = control_then_banish("bigeye", [["Activate Number 11: Big Eye", 0, "Blue-Eyes White Dragon", 0],
+                                           ["Activate Interdimensional Matter Forwarder", "Blue-Eyes White Dragon", 0]])
+    p1 = board.split("P2:")[0]
+    assert "Blue-Eyes White Dragon" in p1
+
+
+# ---------------------------------------------------------------- Special Summoned from the Extra Deck, then face-down (FAQ 23476, core)
+def okami_board(turn_face_down):
+    hand = ["Gizmek Okami, the Dreaded Deluge Dragon"] + (["Book of Moon"] if turn_face_down else [])
+    return start({"hand": hand, "monsters": [{"card": "Performapal Celestial Magician", "position": "set" if turn_face_down else "attack",
+                                              "summoned": "special", "summoned_from": "extra deck"}], "deck_filler": 10},
+                 {"monsters": [{"card": "Performapal Momoncarpet", "position": "attack", "summoned": "pendulum", "summoned_from": "extra deck"}],
+                  "deck_filler": 10})
+
+
+def test_okami_does_not_count_a_monster_turned_face_down():
+    d = okami_board(turn_face_down=True)
+    d.play([0, 0])  # Book of Moon on the opponent's Momoncarpet
+    assert "Gizmek Okami" not in d.describe_decision()
+
+
+def test_okami_counts_face_up_monsters_from_the_extra_deck():
+    d = okami_board(turn_face_down=False)
+    assert "Gizmek Okami" in d.describe_decision()
+
+
+# ---------------------------------------------------------------- Dueltaining and a redone coin toss (FAQ 11503, card script)
+def test_dueltaining_counts_a_redone_coin_toss_once():
+    d = start({"field_spell": {"card": "Dueltaining"}, "spells_traps": [{"card": "Second Coin Toss", "face_up": True}],
+               "monsters": [{"card": "Barrel Dragon"}], "deck_filler": 10},
+              {"monsters": [{"card": "Mystical Shine Ball"}], "deck_filler": 10})
+    out = d.play(["Pass (don't respond)"]) if "Pass (don't respond)" in d.describe_decision() else ""
+    out += d.play(["Activate Barrel Dragon"])
+    out += d.play([0])  # redo the coin tosses with Second Coin Toss
+    for _ in range(4):
+        if "Pass (don't respond)" in d.describe_decision():
+            out += d.play(["Pass (don't respond)"])
+    assert "Coin toss" in out
+    assert "Dueltaining's effect applies" not in out
+
+
+# ---------------------------------------------------------------- Proxy Horse with Micro Coder (FAQ 23161, card script)
+def test_proxy_horse_and_micro_coder_apply_at_the_same_time():
+    d = start({"monsters": [{"card": "Proxy Horse"}], "hand": ["Micro Coder", "Cyberse Gadget"], "extra_deck": ["Decode Talker"],
+               "deck_filler": 10}, {"deck_filler": 10})
+    assert "Special Summon Decode Talker" in d.describe_decision()

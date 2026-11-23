@@ -1,0 +1,64 @@
+diff --git a/official/c16684346.lua b/official/c16684346.lua
+index 385744a3..1648a536 100644
+--- a/official/c16684346.lua
++++ b/official/c16684346.lua
+@@ -42,8 +42,24 @@ end
+ function s.extrafilter(c,tp)
+ 	return c:IsLocation(LOCATION_MZONE) and c:IsControler(tp)
+ end
++--A hand card that is also used through its own "can be used as material from the hand" effect
++--(e.g. "Micro Coder") does not count toward this card's limit of 1 (JudgemanAI 2026-11-23, Konami FAQ 23161)
++function s.othercover(tc,tp,sg,mg,lc)
++	for _,te in ipairs({Duel.GetPlayerEffect(tp,EFFECT_EXTRA_MATERIAL)}) do
++		local oc=te:GetOwner()
++		if te:GetHandler()==tc and not oc:IsOriginalCode(id) and te:CheckCountLimit(tp)
++			and tc:HasFlagEffect(oc:GetOriginalCode()) then
++			local op=te:GetOperation()
++			if not op or op(tc,te,tp,sg,mg,lc,Group.FromCards(tc),0) then return true end
++		end
++	end
++	return false
++end
++function s.ownmat(tc,tp,sg,mg,lc)
++	return tc:HasFlagEffect(id) and not s.othercover(tc,tp,sg,mg,lc)
++end
+ function s.extracon(c,e,tp,sg,mg,lc,og,chk)
+-	local ct=sg:FilterCount(Card.HasFlagEffect,nil,id)
++	local ct=sg:FilterCount(s.ownmat,nil,tp,sg,mg,lc)
+ 	return ct==0 or ((sg+mg):Filter(s.extrafilter,nil,e:GetHandlerPlayer()):IsExists(Card.IsCode,1,og,id) and ct<2)
+ end
+ function s.extraval(chk,summon_type,e,...)
+diff --git a/official/c19162134.lua b/official/c19162134.lua
+index e1a404f5..63aaa25a 100644
+--- a/official/c19162134.lua
++++ b/official/c19162134.lua
+@@ -97,6 +97,9 @@ function s.chcon(p)
+ 	end
+ end
+ function s.tossop(e,tp,eg,ep,ev,re,r,rp)
++	--JudgemanAI 2026-11-23: a coin toss redone by an effect such as "Second Coin Toss" is counted once, with the redone
++	--result (Konami FAQ 11503); the toss made inside the redo is not counted on its own. The same for redone dice rolls.
++	if re and re:GetCode()==EVENT_TOSS_COIN_NEGATE then return end
+ 	local c=e:GetHandler()
+ 	local count=aux.GetCoinCountFromEv(ev)
+ 	local flag_id=id+(ep==tp and 1 or 2)
+@@ -109,6 +112,7 @@ function s.tossop(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ end
+ function s.diceop(e,tp,eg,ep,ev,re,r,rp)
++	if re and re:GetCode()==EVENT_TOSS_DICE_NEGATE then return end
+ 	local c=e:GetHandler()
+ 	local ct1=aux.GetDiceCountSelfFromEv(ev)
+ 	local ct2=aux.GetDiceCountOppoFromEv(ev)
+diff --git a/utility.lua b/utility.lua
+index de5e303f..06fcc07c 100644
+--- a/utility.lua
++++ b/utility.lua
+@@ -2741,6 +2741,7 @@ function Duel.ActivateFieldSpell(c,e,tp,eg,ep,ev,re,r,rp,target_p)
+ 		local tep=c:GetControler()
+ 		local cost=te:GetCost()
+ 		if cost then cost(te,tep,eg,ep,ev,re,r,rp,1) end
++		Duel.CheckChainCounter(te,tp)
+ 		Duel.RaiseEvent(c,4179255,te,0,tp,target_p,Duel.GetCurrentChain())
+ 		return true
+ 	end

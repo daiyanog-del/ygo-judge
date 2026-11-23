@@ -31,6 +31,13 @@
 >   - card scripts found by testing 100 official Q&As on the engine: "Myutant Mist" (FAQ 23652), "Rose Girl"
 >     (23082), "Senet Switch" (23651), "Super Strident Blaze" (23781), "Parasomnia Pillow" (23544), "Raiza the Mega
 >     Monarch" (23458), "EN Wave" (23634) and "Cyberdarkness Dragon" (12429).
+>   - core patch 0003: a card cannot be sent to the GY as a cost when its leaving would re-enable a "sent to the GY
+>     is banished instead" effect it negates (FAQ 6878, 23801); `Duel.CheckChainCounter`, which
+>     `Duel.ActivateFieldSpell` (script patch 0006) calls so a Field Spell activated by "Metaverse" counts as an
+>     activation (FAQ 24193, 12712); control for a set period ends on a temporary banish (FAQ 17476); a monster
+>     turned face-down is no longer "Special Summoned from the Extra Deck" (FAQ 23476).
+>   - script patch 0006: also "Dueltaining" counts a redone coin toss once (FAQ 11503) and "Proxy Horse" works
+>     together with "Micro Coder" (FAQ 23161).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
