@@ -239,3 +239,77 @@ def test_loka_samsara_does_not_take_back_a_negated_activation():
               {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "deck_filler": 10})
     d.play(["Activate Loka Samsara", 0, "Face-up attack"])  # the first zone, Attack Position
     assert "activate/use the effect of Tearlaments Kaleido-Heart" in d.describe_decision()
+
+
+# ---------------------------------------------------------------- Archfiend Matriarch (FAQ 24264, card script)
+def test_ghost_belle_can_respond_to_archfiend_matriarch_in_the_main_monster_zone():
+    d = start({"hand": ["Archfiend Matriarch", "Throne of the Archfiends", "Dark Magician"], "deck_filler": 10},
+              {"hand": ["Ghost Belle & Haunted Mansion"], "spells_traps": [{"card": "Mirror Force", "face_up": False}],
+               "graveyard": ["Pot of Greed"], "deck_filler": 10})
+    # Ritual Summon it to a Main Monster Zone (the opponent passes on the Ritual Spell), then activate its effect
+    d.play(["Activate Throne of the Archfiends (P1 hand)", "P1 Spell & Trap Zone 1", "Pass", "Dark Magician (P1 hand)",
+            "P1 Monster Zone 3", "Face-up attack", "Yes"])
+    assert "Activate Ghost Belle & Haunted Mansion" in d.describe_decision()
+
+
+# ---------------------------------------------------------------- Blue-Eyes Twin Burst Dragon (FAQ 23430, card script)
+def twin_burst_attacks(target):
+    d = start({"monsters": [{"card": "Blue-Eyes Twin Burst Dragon", "zone": 3, "summoned": "special", "properly_summoned": True}],
+               "deck_filler": 10}, {"monsters": [{"card": target, "zone": 3}], "deck_filler": 10})
+    out = d.play(["End the turn", "End the turn", "Enter the Battle Phase", "Attack with Blue-Eyes Twin Burst Dragon (P1 Monster Zone 3)",
+                  f"{target} (P2 Monster Zone 3)"])
+    return d, out
+
+
+def test_twin_burst_cannot_banish_after_an_effect_destroys_it_in_the_damage_step():
+    # Bloom Diva survives the battle and destroys Twin Burst Dragon with its effect after damage calculation
+    d, out = twin_burst_attacks("Bloom Diva the Melodious Choir")
+    out += d.play(["Yes"])  # the opponent activates Bloom Diva's effect
+    assert "Blue-Eyes Twin Burst Dragon: P1 Monster Zone 3 → P1 GY — destroyed by an effect" in out
+    assert "activate/use the effect of Blue-Eyes Twin Burst Dragon" not in d.describe_decision()
+
+
+def test_twin_burst_still_banishes_a_monster_that_survived_the_battle():
+    # guard: Marshmallon is not destroyed by battle and Twin Burst Dragon stays on the field
+    d, _ = twin_burst_attacks("Marshmallon")
+    assert "activate/use the effect of Blue-Eyes Twin Burst Dragon" in d.describe_decision()
+
+
+# ---------------------------------------------------------------- attacking all monsters after a direct attack (FAQ 16016, core)
+def pick(d, want):
+    """Pass every other response window until the decision offers `want`, then choose it."""
+    for _ in range(40):
+        text = d.describe_decision()
+        if want in text:
+            return d.play([want])
+        assert "Pass" in text, text
+        d.play(["Pass"])
+    raise AssertionError(f"never offered: {want}")
+
+
+def tecuhtlica_board(dust_tornado):
+    p2 = {"monsters": [{"card": "Gene-Warped Warwolf"}, {"card": "Celtic Guardian"}], "deck_filler": 5}
+    if dust_tornado:
+        p2["spells_traps"] = [{"card": "Dust Tornado", "face_up": False}]
+    d = start({"monsters": [{"card": "Mementoal Tecuhtlica - Combined Creation", "summoned": "special", "properly_summoned": True}],
+               "spells_traps": [{"card": "Shooting Star Bow - Ceal", "face_up": True,
+                                 "equipped_to": "p1:Mementoal Tecuhtlica - Combined Creation"}], "deck_filler": 5}, p2)
+    for want in ("End the turn", "End the turn", "Enter the Battle Phase"):
+        pick(d, want)
+    return d
+
+
+def test_tecuhtlica_cannot_attack_another_monster_after_a_replayed_direct_attack():
+    # (D): it declared a direct attack (Shooting Star Bow), the Bow was destroyed, and the replay made it attack a monster
+    d = tecuhtlica_board(dust_tornado=True)
+    for want in ("Attack with Mementoal", "Yes", "Activate Dust Tornado", "Yes", "Gene-Warped Warwolf"):
+        pick(d, want)
+    assert "Attack with Mementoal" not in d.describe_decision()
+
+
+def test_tecuhtlica_still_attacks_each_monster_once():
+    # guard: without a direct attack it attacks every monster once
+    d = tecuhtlica_board(dust_tornado=False)
+    for want in ("Attack with Mementoal", "No", "Gene-Warped Warwolf"):
+        pick(d, want)
+    assert "Attack with Mementoal" in d.describe_decision()

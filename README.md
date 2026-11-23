@@ -23,6 +23,11 @@
 >   - card scripts of "Inspector Boarder" (its count of monster effects is no longer reset when a Spell/Trap Card's
 >     activation is negated) and "Loka Samsara" (the summoned monster's 1 activation counts even if negated), by the
 >     same rule (FAQ 21490, 7813, 23158).
+>   - core `processor.cpp`: a monster that declares a direct attack can no longer attack all monsters, even if a
+>     replay makes it attack a monster (FAQ 16016, "Mementoal Tecuhtlica - Combined Creation").
+>   - card scripts of "Archfiend Matriarch" (the cards it may banish are in the GY, so "Ghost Belle & Haunted
+>     Mansion" can respond; FAQ 24264) and "Blue-Eyes Twin Burst Dragon" (its banish effect needs it to be still on
+>     the field or destroyed by battle; FAQ 23430).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

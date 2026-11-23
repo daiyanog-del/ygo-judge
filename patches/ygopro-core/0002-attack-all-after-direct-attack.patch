@@ -1,0 +1,15 @@
+diff --git a/processor.cpp b/processor.cpp
+index 1c139de..0144276 100644
+--- a/processor.cpp
++++ b/processor.cpp
+@@ -2101,6 +2101,10 @@ bool field::process(Processors::BattleCommand& arg) {
+ 			++core.attack_state_count[infos.turn_player];
+ 			check_card_counter(core.attacker, ACTIVITY_ATTACK, infos.turn_player);
+ 			++core.attacker->attack_announce_count;
++			// JudgemanAI 2026-11-23: a monster that declares a direct attack can no longer attack all monsters, even if a
++			// replay then makes it attack a monster. Konami FAQ 16016 (D): Mementoal Tecuhtlica - Combined Creation.
++			if(!core.attack_target)
++				core.attacker->attack_all_target = FALSE;
+ 		}
+ 		if(arg.attack_announce_failed) {
+ 			++core.attacker->announce_count;

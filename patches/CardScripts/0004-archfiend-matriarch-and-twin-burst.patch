@@ -1,0 +1,30 @@
+diff --git a/official/c2129638.lua b/official/c2129638.lua
+index d529c7f2..b0e275fd 100644
+--- a/official/c2129638.lua
++++ b/official/c2129638.lua
+@@ -48,7 +48,10 @@ function s.rmcon(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local bc=c:GetBattleTarget()
+ 	e:SetLabelObject(bc)
++	--JudgemanAI 2026-11-23: only while this card is still on the field, or after it was destroyed by battle. Konami FAQ
++	--23430: if an effect makes it leave the field before the end of the Damage Step, this effect cannot be activated.
+ 	return c==Duel.GetAttacker() and bc and c:IsStatus(STATUS_OPPO_BATTLE) and bc:IsOnField() and bc:IsRelateToBattle()
++		and (c:IsOnField() or c:IsReason(REASON_BATTLE))
+ end
+ function s.rmtg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return e:GetLabelObject():IsAbleToRemove() end
+diff --git a/official/c78744660.lua b/official/c78744660.lua
+index 45d0b371..59bb3619 100644
+--- a/official/c78744660.lua
++++ b/official/c78744660.lua
+@@ -62,7 +62,9 @@ function s.destg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local g=Duel.GetMatchingGroup(Card.IsSpellTrap,tp,0,LOCATION_ONFIELD,nil)
+ 	if chk==0 then return #g>0 end
+ 	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,#g,tp,0)
+-	Duel.SetPossibleOperationInfo(0,CATEGORY_REMOVE,nil,1,1-tp,LOCATION_REMOVED)
++	--JudgemanAI 2026-11-23: the cards it may banish are in the opponent's GY (was LOCATION_REMOVED). Konami FAQ 24264:
++	--"Ghost Belle & Haunted Mansion" can be activated in response, even when this card is in the Main Monster Zone.
++	Duel.SetPossibleOperationInfo(0,CATEGORY_REMOVE,nil,1,1-tp,LOCATION_GRAVE)
+ end
+ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
