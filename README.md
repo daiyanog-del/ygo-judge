@@ -38,6 +38,12 @@
 >     turned face-down is no longer "Special Summoned from the Extra Deck" (FAQ 23476).
 >   - script patch 0006: also "Dueltaining" counts a redone coin toss once (FAQ 11503) and "Proxy Horse" works
 >     together with "Micro Coder" (FAQ 23161).
+>   - script patch 0007, found by testing another 100 official Q&As: "Cyber Dragon Infinity" (FAQ 15005), "Lord of
+>     the Heavenly Prison" (24116), "Raidraptor - Vanishing Lanius" (24030), "Graydle Alligator" (10018), "Goblin
+>     Biker Boom Mach" (24024), "Burst Breath" (23605), "The Six Samurai - Yaichi" (10502), "World Legacy Clash"
+>     (21250), "Rage with Eyes of Blue" (12596), "Prior of the Ice Barrier" (23144), "Tellus the Little Angel" (23167).
+>   - `scenario.py`: a board setup that puts both players' monsters in one shared Extra Monster Zone (P1's left is
+>     P2's right) is refused; it crashed the engine.
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

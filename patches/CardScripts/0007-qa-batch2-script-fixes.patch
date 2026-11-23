@@ -1,0 +1,249 @@
+diff --git a/official/c10443957.lua b/official/c10443957.lua
+index 077bf9ff..2e7a6c28 100644
+--- a/official/c10443957.lua
++++ b/official/c10443957.lua
+@@ -45,7 +45,8 @@ function s.ovfilter(c,tp,lc)
+ end
+ function s.xyzop(e,tp,chk)
+ 	if chk==0 then return Duel.GetFlagEffect(tp,id)==0 end
+-	Duel.RegisterFlagEffect(tp,id,RESET_PHASE|PHASE_END,0,1)
++	--JudgemanAI 2026-11-23: register the once-per-turn flag with EFFECT_FLAG_OATH so the core removes it when the Xyz Summon is negated. Konami FAQ 15005: if the Summon on "Cyber Dragon Nova" is negated, you can Xyz Summon this way again that turn.
++	Duel.RegisterFlagEffect(tp,id,RESET_PHASE|PHASE_END,EFFECT_FLAG_OATH,1)
+ 	return true
+ end
+ function s.atkval(e,c)
+diff --git a/official/c19280589.lua b/official/c19280589.lua
+index ab68ae1d..4a000e60 100644
+--- a/official/c19280589.lua
++++ b/official/c19280589.lua
+@@ -70,7 +70,8 @@ function s.filter(c)
+ 	return c:IsCode(id+1) and c:IsType(TYPE_TOKEN)
+ end
+ function s.spcon(e,tp,eg,ep,ev,re,r,rp)
+-	return Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_MZONE,0,1,nil)
++	--JudgemanAI 2026-11-23: Check the whole field (LOCATION_ONFIELD) instead of only the Monster Zone. Konami FAQ 23167: a "Tellus Wing Token" in your Spell & Trap Zone as an Equip Card also counts as "Tellus Wing Token" on your field.
++	return Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_ONFIELD,0,1,nil)
+ end
+ 	--Activation legality
+ function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+diff --git a/official/c27868563.lua b/official/c27868563.lua
+index bdcd6d6f..91941cd6 100644
+--- a/official/c27868563.lua
++++ b/official/c27868563.lua
+@@ -18,7 +18,8 @@ function s.initial_effect(c)
+ end
+ function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local c=e:GetHandler()
+-	if chk==0 then return Duel.CheckRemoveOverlayCard(tp,1,1,1,REASON_EFFECT) and not c:IsStatus(STATUS_CHAINING)
++	--JudgemanAI 2026-11-23: Block only while this card is still related to its own activation on the chain (STATUS_CHAINING stays set after it leaves the hand). Konami FAQ 24024: if it is discarded to the GY while effect 1 is on the chain, its effect 1 can be activated again from the GY at Chain Link 3 or later.
++	if chk==0 then return Duel.CheckRemoveOverlayCard(tp,1,1,1,REASON_EFFECT) and not (c:IsStatus(STATUS_CHAINING) and c:IsRelateToEffect(e))
+ 		and Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false) end
+ 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,c,1,tp,0)
+ end
+diff --git a/official/c29432790.lua b/official/c29432790.lua
+index c10953ee..81c7adb7 100644
+--- a/official/c29432790.lua
++++ b/official/c29432790.lua
+@@ -46,6 +46,11 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_DECK,0,1,nil,e,tp)
+ 		and #g>0 and Duel.GetMZoneCount(tp,g)>0 end
+ 	Duel.SetOperationInfo(0,CATEGORY_REMOVE,g,#g,tp,LOCATION_HAND|LOCATION_ONFIELD|LOCATION_GRAVE)
++	--JudgemanAI 2026-11-23: Declare that the effect affects cards in the GY even when they cannot be banished (e.g. under Necrovalley), so Necrovalley negates it. Konami FAQ 12596: if your GY has cards at resolution under Necrovalley, the effect affects GY cards and is negated.
++	local gy=Duel.GetFieldGroupCount(tp,LOCATION_GRAVE,0)
++	if gy>0 then
++		Duel.SetOperationInfo(0,CATEGORY_LEAVE_GRAVE,nil,gy,tp,LOCATION_GRAVE)
++	end
+ 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_DECK)
+ end
+ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c50088247.lua b/official/c50088247.lua
+index c3b075fa..961292c5 100644
+--- a/official/c50088247.lua
++++ b/official/c50088247.lua
+@@ -9,8 +9,16 @@ function s.initial_effect(c)
+ 	e1:SetProperty(EFFECT_FLAG_UNCOPYABLE)
+ 	e1:SetRange(LOCATION_HAND)
+ 	e1:SetCondition(s.spcon)
+-	e1:SetOperation(s.spop)
++	--JudgemanAI 2026-11-23: Mark the summon as SUMMON_TYPE_SPECIAL+1 and apply the Level 5+ lock on EVENT_SPSUMMON_SUCCESS instead of when the summon is performed. Konami FAQ 23144: the lock applies only if the Special Summon by effect 1 actually succeeds; if it is negated, you can still Special Summon Level 5+ monsters that turn.
++	e1:SetValue(1)
+ 	c:RegisterEffect(e1)
++	local e3=Effect.CreateEffect(c)
++	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
++	e3:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
++	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
++	e3:SetCondition(function(e) return e:GetHandler():IsSummonType(SUMMON_TYPE_SPECIAL+1) end)
++	e3:SetOperation(s.spop)
++	c:RegisterEffect(e3)
+ 	--special summon
+ 	local e2=Effect.CreateEffect(c)
+ 	e2:SetDescription(aux.Stringid(id,0))
+@@ -38,8 +46,8 @@ function s.spcon(e,c)
+ 		and Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+ 		and Duel.IsExistingMatchingCard(s.cfilter,tp,LOCATION_MZONE,0,1,nil)
+ end
+-function s.spop(e,tp,eg,ep,ev,re,r,rp,c)
+-	local e1=Effect.CreateEffect(c)
++function s.spop(e,tp,eg,ep,ev,re,r,rp)
++	local e1=Effect.CreateEffect(e:GetHandler())
+ 	e1:SetType(EFFECT_TYPE_FIELD)
+ 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+ 	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+diff --git a/official/c53251824.lua b/official/c53251824.lua
+index a23f38a2..57b945f4 100644
+--- a/official/c53251824.lua
++++ b/official/c53251824.lua
+@@ -9,10 +9,20 @@ function s.initial_effect(c)
+ 	e1:SetType(EFFECT_TYPE_IGNITION)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetCountLimit(1)
+-	e1:SetCondition(function(e) return e:GetHandler():IsStatus(STATUS_SUMMON_TURN|STATUS_SPSUMMON_TURN) end)
++	--JudgemanAI 2026-11-23: require a flag set on Summon success that is reset when the card is turned face-down (RESET_TURN_SET in RESETS_STANDARD). Konami FAQ 24030: it must stay face-up from its Summon until activation; after being face-down it cannot activate.
++	e1:SetCondition(function(e) return e:GetHandler():HasFlagEffect(id) end)
+ 	e1:SetTarget(s.sptg)
+ 	e1:SetOperation(s.spop)
+ 	c:RegisterEffect(e1)
++	local e2=Effect.CreateEffect(c)
++	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
++	e2:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
++	e2:SetCode(EVENT_SUMMON_SUCCESS)
++	e2:SetOperation(function(e) e:GetHandler():RegisterFlagEffect(id,RESETS_STANDARD_PHASE_END,0,1) end)
++	c:RegisterEffect(e2)
++	local e3=e2:Clone()
++	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
++	c:RegisterEffect(e3)
+ end
+ s.listed_series={SET_RAIDRAPTOR}
+ function s.spfilter(c,e,tp)
+diff --git a/official/c64398890.lua b/official/c64398890.lua
+index 445f2eee..726200c3 100644
+--- a/official/c64398890.lua
++++ b/official/c64398890.lua
+@@ -38,7 +38,8 @@ function s.descost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	e1:SetType(EFFECT_TYPE_SINGLE)
+ 	e1:SetCode(EFFECT_CANNOT_ATTACK_ANNOUNCE)
+ 	e1:SetReset(RESETS_STANDARD_PHASE_END)
+-	e1:SetProperty(EFFECT_FLAG_OATH)
++	--JudgemanAI 2026-11-23: Added EFFECT_FLAG_CANNOT_DISABLE so negating this card (e.g. Skill Drain) does not lift the restriction. Konami FAQ 10502: it still cannot declare an attack that turn, whether Skill Drain is chained to the effect or activated after it resolves.
++	e1:SetProperty(EFFECT_FLAG_OATH+EFFECT_FLAG_CANNOT_DISABLE)
+ 	e:GetHandler():RegisterEffect(e1)
+ end
+ function s.desfilter(c)
+diff --git a/official/c66451379.lua b/official/c66451379.lua
+index 45c2d1b0..ca154496 100644
+--- a/official/c66451379.lua
++++ b/official/c66451379.lua
+@@ -18,11 +18,19 @@ function s.eqcon(e,tp,eg,ep,ev,re,r,rp)
+ 	return (c:IsReason(REASON_BATTLE) or (c:IsReason(REASON_EFFECT) and re and re:IsSpellEffect()))
+ 		and c:IsReason(REASON_DESTROY) and c:IsPreviousControler(tp) and c:IsPreviousLocation(LOCATION_MZONE)
+ end
++--JudgemanAI 2026-11-23: own target filter = aux.CheckStealEquip without the IsControlerCanBeChanged check. Konami FAQ 10018: a monster whose control cannot change (e.g. "Botanical Lion") can be targeted and equipped; control is not gained, but the destroy effect still applies.
++function s.eqfilter(c,e,tp)
++	if c:IsFacedown() or not c:IsControler(1-tp) then return false end
++	if not Duel.IsDuelType(DUEL_TRAP_MONSTERS_NOT_USE_ZONE) and c:IsType(TYPE_TRAPMONSTER) then
++		return Duel.GetLocationCount(tp,LOCATION_SZONE,tp,LOCATION_REASON_CONTROL)>0 and Duel.GetLocationCount(tp,LOCATION_SZONE,tp,0)>=2
++	end
++	return true
++end
+ function s.eqtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+-	if chkc then return chkc:IsLocation(LOCATION_MZONE) and aux.CheckStealEquip(chkc,e,tp) end
+-	if chk==0 then return Duel.IsExistingTarget(aux.CheckStealEquip,tp,0,LOCATION_MZONE,1,nil,e,tp) end
++	if chkc then return chkc:IsLocation(LOCATION_MZONE) and s.eqfilter(chkc,e,tp) end
++	if chk==0 then return Duel.IsExistingTarget(s.eqfilter,tp,0,LOCATION_MZONE,1,nil,e,tp) end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_EQUIP)
+-	Duel.SelectTarget(tp,aux.CheckStealEquip,tp,0,LOCATION_MZONE,1,1,nil,e,tp)
++	Duel.SelectTarget(tp,s.eqfilter,tp,0,LOCATION_MZONE,1,1,nil,e,tp)
+ 	Duel.SetOperationInfo(0,CATEGORY_EQUIP,e:GetHandler(),1,0,0)
+ 	Duel.SetOperationInfo(0,CATEGORY_LEAVE_GRAVE,e:GetHandler(),1,0,0)
+ end
+@@ -32,7 +40,7 @@ end
+ function s.eqop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local tc=Duel.GetFirstTarget()
+-	if c:IsRelateToEffect(e) and tc and aux.CheckStealEquip(tc,e,tp) and Duel.Equip(tp,c,tc,true) then
++	if c:IsRelateToEffect(e) and tc and s.eqfilter(tc,e,tp) and Duel.Equip(tp,c,tc,true) then
+ 		--Add Equip limit
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+diff --git a/official/c80163754.lua b/official/c80163754.lua
+index 259afb5f..498693d1 100644
+--- a/official/c80163754.lua
++++ b/official/c80163754.lua
+@@ -31,7 +31,8 @@ function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	Duel.Release(rg,REASON_COST)
+ end
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+-	if chk==0 then return e:GetLabel()==0 end
++	--JudgemanAI 2026-11-23: Also require that this is Burst Breath's own activation (copy effects call this target with their own effect, so the label guard never stopped them). Konami FAQ 23605: Trap of Darkness, Fake Feather, Transaction Rollback and Labrynth Barrage cannot apply Burst Breath's effect, because its resolution needs the ATK of the monster Tributed as its cost.
++	if chk==0 then return e:GetLabel()==0 and e:GetHandler():IsOriginalCode(id) end
+ 	local dg=Duel.GetMatchingGroup(aux.FaceupFilter(Card.IsDefenseBelow,e:GetLabel()),tp,LOCATION_MZONE,LOCATION_MZONE,nil)
+ 	Duel.SetOperationInfo(0,CATEGORY_DESTROY,dg,#dg,0,0)
+ end
+diff --git a/official/c93236220.lua b/official/c93236220.lua
+index c12f33e5..002aba39 100644
+--- a/official/c93236220.lua
++++ b/official/c93236220.lua
+@@ -28,6 +28,8 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 		and Duel.IsExistingTarget(Card.IsFaceup,tp,0,LOCATION_MZONE,1,nil) end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
+ 	local rc=Duel.SelectMatchingCard(tp,s.cfilter,tp,LOCATION_MZONE,0,1,1,nil):GetFirst()
++	--JudgemanAI 2026-11-23: Remember the banished monster's original ATK/DEF before banishing it (a Trap Monster has no ATK/DEF once banished). Konami FAQ 21250: banishing Swamp Mirrorer (a monster) makes the target lose 1800 ATK and 1000 DEF.
++	e:SetLabel(rc:GetBaseAttack(),rc:GetBaseDefense())
+ 	if Duel.Remove(rc,POS_FACEUP,REASON_COST+REASON_TEMPORARY)~=0 then
+ 		e:SetLabelObject(rc)
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+@@ -46,8 +48,8 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+ 	local rc=e:GetLabelObject()
+ 	if rc and tc:IsRelateToEffect(e) and tc:IsFaceup() then
+-		local atk=rc:GetBaseAttack()
+-		local def=rc:GetBaseDefense()
++		--JudgemanAI 2026-11-23: Use the ATK/DEF remembered at activation instead of reading the banished card. Konami FAQ 21250: Swamp Mirrorer as cost lowers the target by 1800/1000.
++		local atk,def=e:GetLabel()
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_UPDATE_ATTACK)
+diff --git a/official/c9822220.lua b/official/c9822220.lua
+index af0b3d86..c8e4024c 100644
+--- a/official/c9822220.lua
++++ b/official/c9822220.lua
+@@ -89,25 +89,35 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+ 		e1:SetCode(EVENT_PHASE+PHASE_END)
+ 		e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+-		e1:SetLabel(Duel.GetTurnCount()+1)
++		--JudgemanAI 2026-11-23: track the Set card with a flag that survives moves between the Spell & Trap Zone and the Monster Zone (an effect relation is cut by those moves). Konami FAQ 24116: an "Argostars" card Set by this effect that Special Summons itself and is placed back in the Spell & Trap Zone is still banished.
++		local fid=c:GetFieldID()
++		tc:RegisterFlagEffect(id,RESET_EVENT|(RESETS_STANDARD&~(RESET_TOFIELD|RESET_LEAVE|RESET_TURN_SET))|RESET_PHASE|PHASE_END,0,2,fid)
++		e1:SetLabel(Duel.GetTurnCount()+1,fid)
+ 		e1:SetLabelObject(tc)
+ 		e1:SetCountLimit(1)
+ 		e1:SetCondition(s.rmcon)
+ 		e1:SetOperation(s.rmop)
+ 		e1:SetReset(RESET_PHASE|PHASE_END,2)
+ 		Duel.RegisterEffect(e1,tp)
+-		tc:CreateEffectRelation(e1)
+ 	end
+ end
+ function s.rmcon(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=e:GetLabelObject()
+-	if tc:IsRelateToEffect(e) then
+-		return Duel.GetTurnCount()==e:GetLabel()
++	local turn,fid=e:GetLabel()
++	--JudgemanAI 2026-11-23: check the flag set by s.spop instead of an effect relation. Konami FAQ 24116: the card is still banished after moving to the Monster Zone and back to the Spell & Trap Zone.
++	if tc:IsOnField() and s.hasfid(tc,fid) then
++		return Duel.GetTurnCount()==turn
+ 	else
+ 		e:Reset()
+ 		return false
+ 	end
+ end
++function s.hasfid(tc,fid)
++	for _,lab in ipairs({tc:GetFlagEffectLabel(id)}) do
++		if lab==fid then return true end
++	end
++	return false
++end
+ function s.rmop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=e:GetLabelObject()
+ 	Duel.Remove(tc,POS_FACEUP,REASON_EFFECT)

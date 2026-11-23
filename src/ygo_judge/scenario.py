@@ -187,6 +187,7 @@ def build_puzzle(setup: Setup, cards: CardDB) -> str:
         f"Debug.SetPlayerInfo(1,{setup.p2.lp},0,1)",
     ]
     links: list[tuple[int, str, SpellTrap]] = []
+    emz_owner: dict[str, str] = {}  # the 2 Extra Monster Zones are shared: P1's left is P2's right
     for player, ps in enumerate((setup.p1, setup.p2)):
         tag = f"P{player + 1}"
         b.lines.append(f"--{tag}")
@@ -234,6 +235,12 @@ def build_puzzle(setup: Setup, cards: CardDB) -> str:
                 raise ValueError(f"{card.name} is not a monster; put it in spells_traps.")
             if m.zone in ("EMZ left", "EMZ right"):
                 seq = 5 if m.zone == "EMZ left" else 6
+                # JudgemanAI 2026-11-23: two monsters in one shared Extra Monster Zone crashed the engine
+                slot = m.zone if player == 0 else ("EMZ right" if m.zone == "EMZ left" else "EMZ left")
+                if slot in emz_owner and emz_owner[slot] != tag:
+                    raise ValueError(f"{tag}'s {m.zone} is {emz_owner[slot]}'s {slot}, already used by {emz_owner[slot]}: "
+                                     "the 2 Extra Monster Zones are shared (P1's left is P2's right). Use the other one.")
+                emz_owner[slot] = tag
             elif m.zone is None:
                 seq = next((s for s in range(5) if s not in used), None)
                 if seq is None:
