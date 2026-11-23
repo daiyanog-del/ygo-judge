@@ -28,6 +28,9 @@
 >   - card scripts of "Archfiend Matriarch" (the cards it may banish are in the GY, so "Ghost Belle & Haunted
 >     Mansion" can respond; FAQ 24264) and "Blue-Eyes Twin Burst Dragon" (its banish effect needs it to be still on
 >     the field or destroyed by battle; FAQ 23430).
+>   - card scripts found by testing 100 official Q&As on the engine: "Myutant Mist" (FAQ 23652), "Rose Girl"
+>     (23082), "Senet Switch" (23651), "Super Strident Blaze" (23781), "Parasomnia Pillow" (23544), "Raiza the Mega
+>     Monarch" (23458), "EN Wave" (23634) and "Cyberdarkness Dragon" (12429).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

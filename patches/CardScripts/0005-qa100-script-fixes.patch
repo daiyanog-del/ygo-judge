@@ -1,0 +1,165 @@
+diff --git a/official/c18967507.lua b/official/c18967507.lua
+index 3e3ff90c..42d23b98 100644
+--- a/official/c18967507.lua
++++ b/official/c18967507.lua
+@@ -63,7 +63,8 @@ function s.negcon(e,tp,eg,ep,ev,re,r,rp)
+ 	return not e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED) and ep~=tp and Duel.IsChainNegatable(ev)
+ end
+ function s.negfilter(c)
+-	return c:IsFaceup() and c:IsType(TYPE_EQUIP) and c:IsAbleToGraveAsCost()
++	--JudgemanAI 2026-11-23: Also accept a face-down card that is equipped to a monster (the core gives it TYPE_EQUIP); a Set Equip Spell with no equip target stays excluded. Konami FAQ 12429: a monster equipped face-down by Relinquished can be sent to the GY as this cost.
++	return (c:IsFaceup() or c:GetEquipTarget()~=nil) and c:IsType(TYPE_EQUIP) and c:IsAbleToGraveAsCost()
+ end
+ function s.negcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return Duel.IsExistingMatchingCard(s.negfilter,tp,LOCATION_ONFIELD,0,1,nil) end
+diff --git a/official/c29177818.lua b/official/c29177818.lua
+index 8ec163f6..c3bc24c4 100644
+--- a/official/c29177818.lua
++++ b/official/c29177818.lua
+@@ -29,7 +29,9 @@ function s.initial_effect(c)
+ 	c:RegisterEffect(e2)
+ end
+ function s.confilter(c,tp)
++	--JudgemanAI 2026-11-23: Also require the monster to be a Plant in the GY. Konami FAQ 23082: the monster must be a Plant both on the field and in the GY; a monster that was a Plant only on the field does not satisfy this condition.
+ 	return c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousControler(tp) and c:IsPreviousPosition(POS_FACEUP) and c:GetPreviousRaceOnField()&RACE_PLANT==RACE_PLANT
++		and c:IsRace(RACE_PLANT)
+ end
+ function s.spcon(e,tp,eg,ep,ev,re,r,rp)
+ 	return eg:IsExists(s.confilter,1,nil,tp)
+diff --git a/official/c44092304.lua b/official/c44092304.lua
+index b00a0d2b..52213458 100644
+--- a/official/c44092304.lua
++++ b/official/c44092304.lua
+@@ -41,7 +41,8 @@ end
+ function s.spcon(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local ec=c:GetPreviousEquipTarget()
+-	return c:IsReason(REASON_LOST_TARGET) and ec and ec:IsReason(REASON_DESTROY) and ec:IsLocation(LOCATION_GRAVE)
++	--JudgemanAI 2026-11-23: also require the equipped monster to exist as a monster in the GY (not e.g. a Trap Monster that became a Trap Card). Konami FAQ 23544: cannot activate unless the destroyed equipped monster is in the GY as a monster.
++	return c:IsReason(REASON_LOST_TARGET) and ec and ec:IsReason(REASON_DESTROY) and ec:IsLocation(LOCATION_GRAVE) and ec:IsMonster()
+ end
+ 	--Activation legality
+ function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+diff --git a/official/c61089209.lua b/official/c61089209.lua
+index 73b9a6ff..24cb72a5 100644
+--- a/official/c61089209.lua
++++ b/official/c61089209.lua
+@@ -18,8 +18,9 @@ function s.initial_effect(c)
+ 	e1:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+ 	e1:SetCode(EFFECT_CANNOT_BE_EFFECT_TARGET)
+ 	e1:SetRange(LOCATION_MZONE)
++	--JudgemanAI 2026-11-23: Check the player activating the effect (rp) instead of the controller of the Spell. Konami FAQ 23652: your opponent cannot target this card when they activate a Spell effect, even the effect of a Field Spell you control (e.g. "Vaylantz World - Konig Wissen").
+ 	e1:SetValue(function(e,re,rp)
+-		return re:GetHandlerPlayer()==1-e:GetHandlerPlayer() and re:IsSpellEffect()
++		return rp==1-e:GetHandlerPlayer() and re:IsSpellEffect()
+ 	end)
+ 	c:RegisterEffect(e1)
+ 	--When your opponent activates a Trap Card or effect (Quick Effect): You can banish 1 card from your hand or field; draw 2 cards
+diff --git a/official/c63394872.lua b/official/c63394872.lua
+index 27db7e1f..f943c88c 100644
+--- a/official/c63394872.lua
++++ b/official/c63394872.lua
+@@ -19,7 +19,8 @@ function s.initial_effect(c)
+ 	c:RegisterEffect(e2)
+ end
+ function s.seqtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+-	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and chkc:CheckAdjacent() end
++	--JudgemanAI 2026-11-23: a new target (e.g. via Cairngorgon) must be next to the zone already chosen (label), not just next to any empty zone. Konami FAQ 23651: the target can only be switched to a monster in a zone adjacent to the designated zone.
++	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and chkc:GetSequence()<5 and math.abs(chkc:GetSequence()-e:GetLabel())==1 end
+ 	if chk==0 then return Duel.IsExistingTarget(Card.CheckAdjacent,tp,LOCATION_MZONE,0,1,nil) end
+ 	Duel.Hint(HINT_SELECTMSG,tp,aux.Stringid(id,1))
+ 	local tc=Duel.SelectTarget(tp,Card.CheckAdjacent,tp,LOCATION_MZONE,0,1,1,nil):GetFirst()
+diff --git a/official/c69327790.lua b/official/c69327790.lua
+index 21ae96b8..91f339f1 100644
+--- a/official/c69327790.lua
++++ b/official/c69327790.lua
+@@ -42,27 +42,37 @@ function s.tdcon(e,tp,eg,ep,ev,re,r,rp)
+ end
+ function s.tdtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chkc then return false end
+-	if chk==0 then return true end
+-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
+-	local g1=Duel.SelectTarget(tp,nil,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,nil)
+-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
+-	local g2=Duel.SelectTarget(tp,nil,tp,LOCATION_GRAVE,LOCATION_GRAVE,1,1,nil)
++	--JudgemanAI 2026-11-23: the "return to Deck" targets (1 field card + 1 GY card) are only taken when both exist, so the effect can target only 1 field card for the "return to hand" part; it does not activate when nothing can be targeted. Konami FAQ 23458: with no cards in either GY, it activates targeting only 1 field card to return to the hand.
++	local can_todeck=Duel.IsExistingTarget(nil,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,nil)
++		and Duel.IsExistingTarget(nil,tp,LOCATION_GRAVE,LOCATION_GRAVE,1,nil)
++	if chk==0 then return can_todeck
++		or (e:GetLabel()==1 and Duel.IsExistingTarget(Card.IsAbleToHand,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,nil)) end
++	local g1=nil
++	if can_todeck then
++		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
++		g1=Duel.SelectTarget(tp,nil,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,nil)
++		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
++		local g2=Duel.SelectTarget(tp,nil,tp,LOCATION_GRAVE,LOCATION_GRAVE,1,1,nil)
++		Duel.SetOperationInfo(0,CATEGORY_TODECK,g1+g2,2,0,0)
++	end
++	local ex=g1 and g1:GetFirst() or nil
++	--Without "return to Deck" targets, the "return to hand" part is the whole effect, so it is not optional then
+ 	if e:GetLabel()==1
+-		and Duel.IsExistingTarget(Card.IsAbleToHand,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,g1:GetFirst())
+-		and Duel.SelectYesNo(tp,aux.Stringid(id,2)) then
++		and Duel.IsExistingTarget(Card.IsAbleToHand,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,ex)
++		and (not can_todeck or Duel.SelectYesNo(tp,aux.Stringid(id,2))) then
+ 		e:SetLabel(0)
+-		e:SetCategory(CATEGORY_TODECK+CATEGORY_TOHAND)
++		e:SetCategory(can_todeck and CATEGORY_TODECK+CATEGORY_TOHAND or CATEGORY_TOHAND)
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RTOHAND)
+-		local g3=Duel.SelectTarget(tp,Card.IsAbleToHand,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,g1:GetFirst())
++		local g3=Duel.SelectTarget(tp,Card.IsAbleToHand,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,ex)
+ 		Duel.SetOperationInfo(0,CATEGORY_TOHAND,g3,1,0,0)
++	else
++		e:SetCategory(CATEGORY_TODECK)
+ 	end
+-	g1:Merge(g2)
+-	Duel.SetOperationInfo(0,CATEGORY_TODECK,g1,2,0,0)
+ end
+ function s.tdop(e,tp,eg,ep,ev,re,r,rp)
+ 	local ex,g1=Duel.GetOperationInfo(0,CATEGORY_TODECK)
+ 	local ex2,g2=Duel.GetOperationInfo(0,CATEGORY_TOHAND)
+-	local sg1=g1:Filter(Card.IsRelateToEffect,nil,e)
++	local sg1=g1 and g1:Filter(Card.IsRelateToEffect,nil,e) or Group.CreateGroup()
+ 	if #sg1>0 and Duel.SendtoDeck(sg1,nil,SEQ_DECKTOP,REASON_EFFECT)>1 then
+ 		local tc1=sg1:GetFirst()
+ 		local tc2=sg1:GetNext()
+diff --git a/official/c81193865.lua b/official/c81193865.lua
+index 3cbea8f0..70e534e1 100644
+--- a/official/c81193865.lua
++++ b/official/c81193865.lua
+@@ -85,8 +85,19 @@ function s.actcon(e)
+ 	local ph=Duel.GetCurrentPhase()
+ 	return Duel.GetTurnPlayer()==e:GetHandler():GetControler() and Duel.IsBattlePhase()
+ end
++--JudgemanAI 2026-11-23: also require that the equipped monster has used up its own attacks (EFFECT_EXTRA_ATTACK). Konami FAQ 23781: with Cyberdark End Dragon able to attack twice, this cannot be activated after the 1st attack, only after the 2nd.
++function s.noattackleft(c)
++	local extra=0
++	for _,te in ipairs({c:GetCardEffect(EFFECT_EXTRA_ATTACK)}) do
++		local v=te:GetValue()
++		if type(v)=="function" then v=v(te,c) end
++		if v>extra then extra=v end
++	end
++	return c:GetAttackAnnouncedCount()>extra
++end
+ function s.cacon(e,tp,eg,ep,ev,re,r,rp)
+-	return Duel.GetAttacker()==e:GetHandler():GetEquipTarget() and Duel.GetAttackTarget()~=nil
++	local ec=e:GetHandler():GetEquipTarget()
++	return Duel.GetAttacker()==ec and Duel.GetAttackTarget()~=nil and s.noattackleft(ec)
+ end
+ function s.cafilter(c)
+ 	return c:IsSetCard(SET_CYBER_DRAGON) and c:IsAbleToRemoveAsCost()
+diff --git a/official/c89058026.lua b/official/c89058026.lua
+index 79ab7830..a1c6595f 100644
+--- a/official/c89058026.lua
++++ b/official/c89058026.lua
+@@ -38,7 +38,9 @@ end
+ s.listed_names={CARD_NEOS}
+ s.listed_series={SET_ELEMENTAL_HERO,SET_NEO_SPACIAN}
+ function s.dspconfilter(c,tp)
+-	return c:IsSetCard(SET_ELEMENTAL_HERO) and c:IsPreviousControler(tp) and c:IsLocation(LOCATION_GRAVE|LOCATION_REMOVED)
++	--JudgemanAI 2026-11-23: Check the archetype the material had on the field (IsPreviousSetCard) instead of in the GY/banishment. Konami FAQ 23634: a monster whose name became an "Elemental HERO" monster in the Monster Zone and is sent to the GY as Fusion Material satisfies this condition.
++	return (c:IsPreviousLocation(LOCATION_ONFIELD) and c:IsPreviousSetCard(SET_ELEMENTAL_HERO) or not c:IsPreviousLocation(LOCATION_ONFIELD) and c:IsSetCard(SET_ELEMENTAL_HERO))
++		and c:IsPreviousControler(tp) and c:IsLocation(LOCATION_GRAVE|LOCATION_REMOVED)
+ 		and c:IsFaceup() and (c:IsMonster() or c:IsPreviousLocation(LOCATION_MZONE))
+ end
+ function s.dspcon(e,tp,eg,ep,ev,re,r,rp)

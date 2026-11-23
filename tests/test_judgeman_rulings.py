@@ -313,3 +313,293 @@ def test_tecuhtlica_still_attacks_each_monster_once():
     for want in ("Attack with Mementoal", "No", "Gene-Warped Warwolf"):
         pick(d, want)
     assert "Attack with Mementoal" in d.describe_decision()
+
+
+# ---------------------------------------------------------------- Myutant Mist (FAQ 23652) and Rose Girl (FAQ 23082), card scripts
+
+
+def _mist_opponent(extra_p2=None):
+    p2 = {"monsters": [{"card": "Myutant Mist", "zone": 5, "summoned": "special", "properly_summoned": True}],
+          "deck_filler": 10}
+    p2.update(extra_p2 or {})
+    return p2
+
+
+def test_myutant_mist_cannot_be_targeted_by_opponent_activating_its_controllers_field_spell():
+    # FAQ 23652: No. When your opponent activates the (2) effect of "Vaylantz World - Konig Wissen" in your Field Zone, they cannot target your "Myutant Mist".
+    d = start(
+        {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}],
+         "field_spell": {"card": "Vaylantz World - Shinra Bansho", "face_up": True}, "deck_filler": 10},
+        _mist_opponent({"field_spell": {"card": "Vaylantz World - Konig Wissen", "face_up": True}}),
+    )
+    decision = d.describe_decision()
+    assert "Konig Wissen" not in decision, decision
+
+
+def test_myutant_mist_still_cannot_be_targeted_by_opponents_own_spell():
+    # Guard: the opponent's own Spell Card ("Book of Moon") still cannot target "Myutant Mist".
+    d = start({"hand": ["Book of Moon"], "deck_filler": 10}, _mist_opponent())
+    decision = d.describe_decision()
+    assert "Activate Book of Moon" not in decision, decision
+
+
+def _rose_girl_board(monster):
+    return {"hand": ["Rose Girl", "Tribute to the Doomed", "Mystical Shine Ball"],
+            "monsters": [{"card": monster}], "extra_deck": ["Queen of Thorns"], "deck_filler": 10}
+
+
+def _destroy_with_tribute_to_the_doomed(d):
+    d.play([0])
+    d.play([0])
+    return d.play(["Mystical Shine Ball (P1 hand)"])
+
+
+def test_rose_girl_cannot_activate_when_monster_was_plant_only_on_field():
+    # FAQ 23082: No. "Assault Sentinel" that became a Plant with its own effect is a Beast-Warrior again in the GY, so "Rose Girl" (1) cannot be activated.
+    d = start(_rose_girl_board("Assault Sentinel"), {"deck_filler": 10})
+    d.play(["Activate Assault Sentinel (P1 Monster Zone 1)"])  # reveal Queen of Thorns: becomes Plant
+    out = _destroy_with_tribute_to_the_doomed(d)
+    assert "Assault Sentinel: P1 Monster Zone 1 → P1 GY" in out, out
+    assert "Activate Rose Girl" not in d.describe_decision(), out + "\n" + d.describe_decision()
+
+
+def test_rose_girl_activates_when_real_plant_is_sent_to_gy():
+    # Guard: a monster that is a Plant both on the field and in the GY still lets "Rose Girl" (1) be activated.
+    d = start(_rose_girl_board("Lonefire Blossom"), {"deck_filler": 10})
+    out = _destroy_with_tribute_to_the_doomed(d)
+    assert "Lonefire Blossom: P1 Monster Zone 1 → P1 GY" in out, out
+    assert "Activate Rose Girl" in d.describe_decision(), out + "\n" + d.describe_decision()
+
+
+# ---------------------------------------------------------------- Senet Switch (FAQ 23651) and Super Strident Blaze (FAQ 23781), card scripts
+
+
+SENET_P1 = {
+    "monsters": [
+        {"card": "Cyber Dragon", "zone": 1},
+        {"card": "Mystical Shine Ball", "zone": 3},
+        {"card": "Blue-Eyes White Dragon", "zone": 5},
+    ],
+    "spells_traps": [{"card": "Senet Switch", "face_up": True}],
+    "deck_filler": 10,
+}
+SENET_P2 = {
+    "monsters": [{"card": "Cairngorgon, Antiluminescent Knight",
+                  "materials": ["Mystical Shine Ball", "Mystical Shine Ball"]}],
+    "deck_filler": 10,
+}
+
+
+def test_senet_switch_cairngorgon_only_adjacent_to_designated_zone():
+    # FAQ 23651: Cairngorgon can switch Senet Switch's target, but only to a monster in a zone adjacent to the designated zone.
+    d = start(SENET_P1, SENET_P2)
+    d.play(["Activate Senet Switch", "Cyber Dragon"])  # designated zone = Monster Zone 2 (only option)
+    out = d.play(["Activate Cairngorgon, Antiluminescent Knight", 0])
+    # Blue-Eyes (zone 5) is not adjacent to zone 2, so the only valid new target is Shine Ball (zone 3)
+    # (picked without a choice); then Shine Ball moves to zone 2 and Blue-Eyes stays in zone 5.
+    assert "Targets: Mystical Shine Ball (P1 Monster Zone 3)" in out
+    dec = d.describe_decision()
+    assert "Mystical Shine Ball (P1 Monster Zone 2)" in dec
+    assert "Blue-Eyes White Dragon (P1 Monster Zone 5)" in dec
+    assert "Cyber Dragon (P1 Monster Zone 1)" in dec
+
+
+def test_senet_switch_without_cairngorgon_moves_target():
+    # Normal case: Senet Switch moves its target into the designated adjacent zone.
+    d = start(SENET_P1, SENET_P2)
+    d.play(["Activate Senet Switch", "Cyber Dragon", "Pass"])
+    dec = d.describe_decision()
+    assert "Cyber Dragon (P1 Monster Zone 2)" in dec
+
+
+BLAZE_P1 = {
+    "hand": ["Super Strident Blaze"],
+    "monsters": [{"card": "Cyberdark End Dragon"}],
+    "graveyard": ["Cyber Dragon", "Cyber Dragon", "Mystical Shine Ball"],
+    "deck_filler": 10,
+}
+BLAZE_P2 = {
+    "monsters": [{"card": "Mystical Shine Ball", "position": "defense"} for _ in range(3)],
+    "deck_filler": 10,
+}
+
+
+def blaze_to_battle():
+    d = start(BLAZE_P1, BLAZE_P2)
+    d.play(["End the turn", "End the turn", 1, 0, 0, "Activate Super Strident Blaze", 0, "Enter the Battle Phase"])
+    return d
+
+
+def test_strident_blaze_not_after_first_of_two_attacks():
+    # FAQ 23781: With 2 equips, Cyberdark End Dragon attacks twice; Blaze's chain attack can't be activated after the 1st attack, only after the 2nd.
+    d = blaze_to_battle()
+    out = d.play(["Attack with Cyberdark End Dragon", 0])
+    assert "destroyed by battle" in out
+    dec = d.describe_decision()
+    assert "Super Strident Blaze" not in dec
+    assert "Attack with Cyberdark End Dragon" in dec
+
+
+def test_strident_blaze_after_second_attack_gives_third():
+    # FAQ 23781: After the 2nd attack, Blaze can be activated and Cyberdark End Dragon attacks a 3rd time.
+    d = blaze_to_battle()
+    d.play(["Attack with Cyberdark End Dragon", 0, "Attack with Cyberdark End Dragon", 0])
+    dec = d.describe_decision()
+    assert "Super Strident Blaze" in dec
+    d.play(["Super Strident Blaze"])
+    for _ in range(5):
+        dec = d.describe_decision()
+        if "Attack with Cyberdark End Dragon" in dec:
+            break
+        d.play([0])
+    assert "Attack with Cyberdark End Dragon" in d.describe_decision()
+    out = d.play(["Attack with Cyberdark End Dragon", 0])
+    assert "destroyed by battle" in out
+
+
+# ---------------------------------------------------------------- Parasomnia Pillow (FAQ 23544) and Raiza the Mega Monarch (FAQ 23458), card scripts
+
+
+def test_parasomnia_pillow_trap_monster_destroyed_no_effect2():
+    # Konami FAQ 23544: if the equipped Trap Monster (Conquistador) is destroyed, Pillow's (2) cannot be activated (it must be in the GY as a monster).
+    d = start({"hand": ["Parasomnia Pillow"],
+               "spells_traps": [{"card": "Conquistador of the Golden Land"}], "deck_filler": 10},
+              {"deck_filler": 10})
+    d.play([0, 0, 0, 0, 1, "End the turn"])
+    assert "Parasomnia Pillow (P1 Spell & Trap Zone 2)?" in d.describe_decision()
+    out = d.play([0])
+    assert "Conquistador of the Golden Land: P1 Monster Zone 1 → P1 GY" in out
+    assert "Parasomnia Pillow: P1 Spell & Trap Zone 2 → P1 GY" in out
+    assert "Parasomnia Pillow (P1 GY)" not in out
+    assert "Parasomnia Pillow (P1 GY)" not in d.describe_decision()
+
+
+def test_parasomnia_pillow_normal_monster_destroyed_effect2_still_available():
+    # Guard: when an ordinary equipped monster is destroyed and sent to the GY, Pillow's (2) can still be activated.
+    d = start({"hand": ["Parasomnia Pillow"], "monsters": [{"card": "Dark Magician"}], "deck_filler": 10},
+              {"deck_filler": 10})
+    out = d.play([0, 0])
+    assert "equipped to Dark Magician (P1 Monster Zone 1)" in out
+    d.play(["End the turn"])
+    assert "Parasomnia Pillow (P1 Spell & Trap Zone 1)?" in d.describe_decision()
+    out = d.play([0])
+    assert "Dark Magician: P1 Monster Zone 1 → P1 GY" in out
+    assert "activate/use the effect of Parasomnia Pillow (P1 GY)?" in d.describe_decision()
+
+
+RAIZA_P1 = {"hand": ["Raiza the Mega Monarch"],
+            "monsters": [{"card": "Floowandereeze & Eglen"}, {"card": "Floowandereeze & Robina"}],
+            "deck_filler": 10}
+
+
+def test_raiza_empty_graveyards_targets_only_return_to_hand():
+    # Konami FAQ 23458: with no cards in either GY, after tributing WIND monsters Raiza can activate targeting only 1 field card to return to the hand.
+    d = start(RAIZA_P1, {"monsters": [{"card": "Dark Magician"}], "deck_filler": 10})
+    d.play([0, [0, 1], 0])
+    dec = d.describe_decision()
+    assert "return to the hand" in dec
+    assert "return to the Deck" not in dec
+    out = d.play(["Dark Magician (P2 Monster Zone 1)"])
+    assert "Targets: Dark Magician (P2 Monster Zone 1)" in out
+    out = d.play(["Pass (don't respond)"])
+    while "respond" in d.describe_decision():
+        out += d.play(["Pass (don't respond)"])
+    assert "Dark Magician: P2 Monster Zone 1 → P2 hand" in out
+    assert "→ P2 Deck" not in out
+
+
+def test_raiza_with_graveyard_card_still_targets_deck_return_first():
+    # Guard: with a card in the GY, Raiza still targets 1 field card and 1 GY card for the Deck, then may add the return-to-hand target.
+    d = start(RAIZA_P1, {"monsters": [{"card": "Dark Magician"}], "graveyard": ["Mystical Shine Ball"],
+                         "deck_filler": 10})
+    d.play([0, [0, 1], 0])
+    assert "return to the Deck" in d.describe_decision()
+    out = d.play(["Dark Magician (P2 Monster Zone 1)"])
+    assert "Targets: Dark Magician (P2 Monster Zone 1)" in out
+    assert "Targets: Mystical Shine Ball (P2 GY)" in out
+    assert "return to hand" in d.describe_decision()
+    out = d.play(["Yes"])
+    assert "Targets: Raiza the Mega Monarch (P1 Monster Zone 1)" in out
+    out = d.play(["Pass (don't respond)"])
+    while "respond" in d.describe_decision():
+        out += d.play(["Pass (don't respond)"])
+    assert "Dark Magician: P2 Monster Zone 1 → P2 Deck" in out
+    assert "Mystical Shine Ball: P2 GY → P2 Deck" in out
+
+
+# ---------------------------------------------------------------- EN Wave (FAQ 23634) and Cyberdarkness Dragon (FAQ 12429), card scripts
+
+
+def _en_wave_board(first_material):
+    return {
+        "hand": ["Polymerization"],
+        "monsters": [{"card": first_material}, {"card": "Neo-Spacian Aqua Dolphin"}],
+        "spells_traps": [{"card": "EN Wave", "face_up": True}],
+        "extra_deck": ["Elemental HERO Absolute Zero"],
+        "deck": ["Neo-Spacian Grand Mole", "Elemental HERO Neos"],
+        "deck_filler": 10,
+    }
+
+
+def test_en_wave_triggers_when_dark_panther_copied_elemental_hero_name():
+    # FAQ 23634: Yes. A monster whose name became an "Elemental HERO" monster in the Monster Zone and is sent to the GY as Fusion Material satisfies EN Wave's (1) condition.
+    d = start(_en_wave_board("Neo-Spacian Dark Panther"), {"monsters": [{"card": "Elemental HERO Neos"}], "deck_filler": 10})
+    d.play([0])  # Dark Panther copies the opponent's Neos
+    d.play([0, 0])  # Polymerization
+    d.play(["Select Neo-Spacian Dark Panther (P1 Monster Zone 1)", "Select Neo-Spacian Aqua Dolphin (P1 Monster Zone 2)"])
+    d.play([0])
+    out = d.play([0])
+    assert "EN Wave" in d.describe_decision(), out + "\n" + d.describe_decision()
+
+
+def test_en_wave_triggers_with_real_elemental_hero_material():
+    # Guard: a real "Elemental HERO" monster used as Fusion Material still lets EN Wave's (1) be activated.
+    d = start(_en_wave_board("Elemental HERO Bubbleman"), {"deck_filler": 10})
+    d.play([0, 0])
+    d.play(["Select Elemental HERO Bubbleman (P1 Monster Zone 1)", "Select Neo-Spacian Aqua Dolphin (P1 Monster Zone 2)"])
+    d.play([0])
+    out = d.play([0])
+    assert "EN Wave" in d.describe_decision(), out + "\n" + d.describe_decision()
+
+
+def _cyberdarkness_duel(p2_monster):
+    d = start(
+        {"monsters": [{"card": "Relinquished", "summoned": "ritual", "properly_summoned": True},
+                      {"card": "Cyberdarkness Dragon", "summoned": "fusion", "properly_summoned": True}],
+         "deck_filler": 10},
+        {"hand": ["Pot of Greed"], "monsters": [p2_monster], "deck_filler": 10},
+    )
+    d.play([0])  # Relinquished equips the opponent's monster
+    d.play([0])
+    d.play(["End the turn"])
+    d.play([0])  # opponent activates Pot of Greed
+    out = d.play([0])
+    return d, out
+
+
+def test_cyberdarkness_can_send_face_down_equipped_monster_as_cost():
+    # FAQ 12429: Yes. A monster equipped by Relinquished while face-down is an Equip Card, so it can be sent to the GY for Cyberdarkness Dragon's (3) cost.
+    d, out = _cyberdarkness_duel({"card": "Celtic Guardian", "position": "set"})
+    assert "Cyberdarkness Dragon" in d.describe_decision(), out + "\n" + d.describe_decision()
+
+
+def test_cyberdarkness_can_send_face_up_equipped_monster_as_cost():
+    # Guard: a monster equipped face-up by Relinquished can still be used for Cyberdarkness Dragon's (3) cost.
+    d, out = _cyberdarkness_duel({"card": "Celtic Guardian"})
+    assert "Negate effect" in d.describe_decision(), out + "\n" + d.describe_decision()
+
+
+def test_cyberdarkness_cannot_send_set_equip_spell_as_cost():
+    # Guard: a Set Equip Spell that is not equipped to anything is not an Equip Card, so it cannot pay Cyberdarkness Dragon's (3) cost.
+    d = start(
+        {"monsters": [{"card": "Cyberdarkness Dragon", "summoned": "fusion", "properly_summoned": True}],
+         "spells_traps": [{"card": "Axe of Despair"}],
+         "deck_filler": 10},
+        {"hand": ["Pot of Greed"], "deck_filler": 10},
+    )
+    assert "Activate Axe of Despair" in d.describe_decision()  # the Equip Spell is Set face-down
+    d.play(["End the turn"])
+    d.play([0])  # opponent activates Pot of Greed
+    out = d.play([0])
+    assert "Cyberdarkness Dragon" not in d.describe_decision()
+    assert "P2 draws" in out
