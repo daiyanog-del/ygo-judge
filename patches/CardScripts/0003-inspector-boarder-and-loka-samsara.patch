@@ -1,0 +1,81 @@
+diff --git a/official/c15397015.lua b/official/c15397015.lua
+index 2c7154f3..80e3428e 100644
+--- a/official/c15397015.lua
++++ b/official/c15397015.lua
+@@ -22,12 +22,9 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetOperation(s.aclimit1)
+ 	c:RegisterEffect(e2)
+-	local e3=Effect.CreateEffect(c)
+-	e3:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_FIELD)
+-	e3:SetCode(EVENT_CHAIN_NEGATED)
+-	e3:SetRange(LOCATION_MZONE)
+-	e3:SetOperation(s.aclimit2)
+-	c:RegisterEffect(e3)
++	--JudgemanAI 2026-11-23: the count of monster effects is no longer reset when a Spell/Trap Card's activation is
++	--negated: that activation is not a monster effect (the limit is on monster effects; Konami FAQ 21490 counts even
++	--a negated monster effect).
+ 	local e4=Effect.CreateEffect(c)
+ 	e4:SetType(EFFECT_TYPE_FIELD)
+ 	e4:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+@@ -40,9 +37,6 @@ function s.initial_effect(c)
+ 	local e5=e2:Clone()
+ 	e5:SetOperation(s.aclimit3)
+ 	c:RegisterEffect(e5)
+-	local e6=e3:Clone()
+-	e6:SetOperation(s.aclimit4)
+-	c:RegisterEffect(e6)
+ 	local e7=e4:Clone()
+ 	e7:SetCondition(s.econ2)
+ 	e7:SetTargetRange(0,1)
+@@ -64,10 +58,6 @@ function s.aclimit1(e,tp,eg,ep,ev,re,r,rp)
+ 	if ep==1-tp or not re:IsMonsterEffect() then return end
+ 	e:GetHandler():RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD_DISABLE|RESET_CONTROL|RESET_PHASE|PHASE_END,0,1)
+ end
+-function s.aclimit2(e,tp,eg,ep,ev,re,r,rp)
+-	if ep~=tp or not re:IsHasType(EFFECT_TYPE_ACTIVATE) then return end
+-	e:GetHandler():ResetFlagEffect(id)
+-end
+ function s.econ1(e)
+ 	local g=Duel.GetMatchingGroup(s.cfilter,e:GetHandlerPlayer(),LOCATION_MZONE,LOCATION_MZONE,nil)
+ 	local ct=g:GetClassCount(s.typecount)
+@@ -77,10 +67,6 @@ function s.aclimit3(e,tp,eg,ep,ev,re,r,rp)
+ 	if ep==tp or not re:IsMonsterEffect() then return end
+ 	e:GetHandler():RegisterFlagEffect(id+1,RESET_EVENT|RESETS_STANDARD_DISABLE|RESET_CONTROL|RESET_PHASE|PHASE_END,0,1)
+ end
+-function s.aclimit4(e,tp,eg,ep,ev,re,r,rp)
+-	if ep==tp or not re:IsHasType(EFFECT_TYPE_ACTIVATE) then return end
+-	e:GetHandler():ResetFlagEffect(id+1)
+-end
+ function s.econ2(e)
+ 	local g=Duel.GetMatchingGroup(s.cfilter,e:GetHandlerPlayer(),LOCATION_MZONE,LOCATION_MZONE,nil)
+ 	local ct=g:GetClassCount(s.typecount)
+diff --git a/official/c2116237.lua b/official/c2116237.lua
+index 4bb55a7e..c736c388 100644
+--- a/official/c2116237.lua
++++ b/official/c2116237.lua
+@@ -63,9 +63,8 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		e1:SetOperation(s.aclimit)
+ 		e1:SetReset(RESET_EVENT|RESETS_STANDARD)
+ 		sc:RegisterEffect(e1)
+-		local e2=e1:Clone()
+-		e2:SetCode(EVENT_CHAIN_NEGATED)
+-		sc:RegisterEffect(e2)
++		--JudgemanAI 2026-11-23: a negated activation still counts as its 1 activation ("can only activate its effects
++		--once"), as for other limits on how many effects you can activate (Konami FAQ 7813, 21490, 23158).
+ 		local e3=Effect.CreateEffect(e:GetHandler())
+ 		e3:SetType(EFFECT_TYPE_SINGLE)
+ 		e3:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+@@ -81,11 +80,7 @@ end
+ function s.aclimit(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	if re:GetHandler()~=c then return end
+-	if e:GetCode()==EVENT_CHAINING then
+-		c:RegisterFlagEffect(id+1,RESET_EVENT|RESETS_STANDARD,0,1)
+-	else
+-		c:ResetFlagEffect(id+1)
+-	end
++	c:RegisterFlagEffect(id+1,RESET_EVENT|RESETS_STANDARD,0,1)
+ end
+ function s.cfilter(c,tp)
+ 	return c:IsSummonPlayer(1-tp) and c:IsSummonLocation(LOCATION_EXTRA)

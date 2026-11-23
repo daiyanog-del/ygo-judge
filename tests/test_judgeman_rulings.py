@@ -195,3 +195,47 @@ def test_soul_crossing_still_limits_you_to_one_activation():
     out = d.play(["Activate Pot of Greed", "P1 Spell & Trap Zone 1", "Pass"])
     assert "P1 draws" in out
     assert "Activate Pot of Greed" not in d.describe_decision()
+
+
+# ---------------------------------------------------------------- Inspector Boarder (FAQ 21490, card script)
+def inspector_board(trap):
+    # the opponent's Inspector Boarder with 1 kind of Extra Deck monster on the field: 1 monster effect per turn
+    return start({"monsters": [{"card": "Card Trooper", "zone": 1}, {"card": "Card Trooper", "zone": 2}], "hand": ["Pot of Greed"],
+                  "deck_filler": 20},
+                 {"monsters": [{"card": "Inspector Boarder", "zone": 1, "summoned": "special", "properly_summoned": True},
+                               {"card": "Linkuriboh", "zone": 2, "summoned": "link", "properly_summoned": True}],
+                  "spells_traps": [{"card": trap, "face_up": False}], "deck_filler": 10})
+
+
+def test_inspector_boarder_count_is_kept_when_a_spell_activation_is_negated():
+    d = inspector_board("Solemn Judgment")
+    d.play([1, 1])  # Card Trooper's effect: the 1 monster effect of this turn
+    assert "Activate Card Trooper" not in d.describe_decision()
+    out = d.play(["Activate Pot of Greed", "P1 Spell & Trap Zone 1", "Activate Solemn Judgment"])
+    assert "its activation is negated" in out
+    assert "Activate Card Trooper" not in d.describe_decision()
+
+
+def test_inspector_boarder_counts_a_negated_monster_effect():
+    # FAQ 21490 (unchanged by the patch; guard)
+    d = inspector_board("Solemn Strike")
+    d.play(["Activate Card Trooper (P1 Monster Zone 1)"])
+    while "Solemn Strike" not in d.describe_decision():
+        d.play([1] if "declare" in d.describe_decision().lower() or "number" in d.describe_decision().lower() else [0])
+    out = d.play(["Activate Solemn Strike"])
+    assert "its activation is negated" in out
+    assert "Activate Card Trooper" not in d.describe_decision()
+
+
+# ---------------------------------------------------------------- Loka Samsara (card script)
+def test_loka_samsara_does_not_take_back_a_negated_activation():
+    # Its monster "can only activate its effects once"; a negated activation counts as that once (the rule of FAQ 7813,
+    # 21490 and 23158 for limits on activating effects). No board in the card pool shows the difference (every
+    # 3000 ATK "Heart" monster has its own once per turn limit), so this checks the script and that it still runs.
+    script = (db.scripts / "official" / "c2116237.lua").read_text(encoding="utf-8")
+    assert "EVENT_CHAIN_NEGATED" not in script
+    d = start({"monsters": [{"card": "Visas Starfrost", "zone": 1}], "spells_traps": [{"card": "Loka Samsara", "face_up": False}],
+               "extra_deck": ["Tearlaments Kaleido-Heart"], "deck_filler": 15},
+              {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "deck_filler": 10})
+    d.play(["Activate Loka Samsara", 0, "Face-up attack"])  # the first zone, Attack Position
+    assert "activate/use the effect of Tearlaments Kaleido-Heart" in d.describe_decision()

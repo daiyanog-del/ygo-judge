@@ -20,6 +20,9 @@
 >     counts for their limits on how many effects you can activate (FAQ 23158, 7813). They count activations with a
 >     flag, because the core takes negated activations back from activity counters. The core is left as it is, since
 >     limits on how many *cards* you can activate do not count a negated card activation (FAQ 11730, 22010).
+>   - card scripts of "Inspector Boarder" (its count of monster effects is no longer reset when a Spell/Trap Card's
+>     activation is negated) and "Loka Samsara" (the summoned monster's 1 activation counts even if negated), by the
+>     same rule (FAQ 21490, 7813, 23158).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
