@@ -1,0 +1,181 @@
+diff --git a/official/c42141493.lua b/official/c42141493.lua
+index 50f20ebc..e27291ff 100644
+--- a/official/c42141493.lua
++++ b/official/c42141493.lua
+@@ -16,12 +16,23 @@ function s.initial_effect(c)
+ 	e1:SetOperation(s.effop)
+ 	c:RegisterEffect(e1)
+ 	--Keep track of the activations of a "Mulcharmy" monster's effect
+-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,function(re) return not (re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect()) end)
++	--JudgemanAI 2026-11-23: count these activations with a flag instead of AddCustomActivityCounter, which the engine
++	--takes back when an activation is negated. Konami FAQ 7813: a negated activation still counts for this restriction.
++	aux.GlobalCheck(s,function()
++		local ge=Effect.CreateEffect(c)
++		ge:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
++		ge:SetCode(EVENT_CHAINING)
++		ge:SetOperation(function(_,_,_,_,ev,re,_,rp)
++			local filter=function(re) return not (re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect()) end
++			if not filter(re,rp,ev) then Duel.RegisterFlagEffect(rp,id+100,RESET_PHASE|PHASE_END,0,1) end
++		end)
++		Duel.RegisterEffect(ge,0)
++	end)
+ end
+ s.listed_series={SET_MULCHARMY}
+ function s.effcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local c=e:GetHandler()
+-	if chk==0 then return c:IsDiscardable() and Duel.GetCustomActivityCount(id,tp,ACTIVITY_CHAIN)<2 end
++	if chk==0 then return c:IsDiscardable() and Duel.GetFlagEffect(tp,id+100)<2 end
+ 	Duel.SendtoGrave(c,REASON_COST|REASON_DISCARD)
+ 	--You can only activate 1 other "Mulcharmy" monster effect, the turn you activate this effect
+ 	local e1=Effect.CreateEffect(c)
+@@ -30,7 +41,7 @@ function s.effcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CLIENT_HINT+EFFECT_FLAG_OATH)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetTargetRange(1,0)
+-	e1:SetCondition(function(e) return Duel.GetCustomActivityCount(id,e:GetHandlerPlayer(),ACTIVITY_CHAIN)>=2 end)
++	e1:SetCondition(function(e) return Duel.GetFlagEffect(e:GetHandlerPlayer(),id+100)>=2 end)
+ 	e1:SetValue(function(e,re,tp) return re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect() end)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
+diff --git a/official/c5253985.lua b/official/c5253985.lua
+index a7d7fa88..52a55726 100644
+--- a/official/c5253985.lua
++++ b/official/c5253985.lua
+@@ -13,7 +13,18 @@ function s.initial_effect(c)
+ 	e1:SetTarget(s.target)
+ 	e1:SetOperation(s.activate)
+ 	c:RegisterEffect(e1)
+-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,s.chainfilter)
++	--JudgemanAI 2026-11-23: count these activations with a flag instead of AddCustomActivityCounter, which the engine
++	--takes back when an activation is negated. Konami FAQ 23158: a negated activation still counts for this restriction.
++	aux.GlobalCheck(s,function()
++		local ge=Effect.CreateEffect(c)
++		ge:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
++		ge:SetCode(EVENT_CHAINING)
++		ge:SetOperation(function(_,_,_,_,ev,re,_,rp)
++			local filter=s.chainfilter
++			if not filter(re,rp,ev) then Duel.RegisterFlagEffect(rp,id+100,RESET_PHASE|PHASE_END,0,1) end
++		end)
++		Duel.RegisterEffect(ge,0)
++	end)
+ end
+ function s.chainfilter(re,tp,cid)
+ 	if Duel.GetFlagEffect(tp,id)==0 then return true end
+@@ -92,7 +103,7 @@ function s.sumsuc(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ end
+ function s.accon(e)
+-	return Duel.GetCustomActivityCount(id,e:GetHandlerPlayer(),ACTIVITY_CHAIN)>0
++	return Duel.GetFlagEffect(e:GetHandlerPlayer(),id+100)>0
+ end
+ function s.aclimit(e,re,tp)
+ 	return re:IsSpellTrapEffect() or not re:GetHandler():IsRace(RACE_DIVINE)
+diff --git a/official/c84192580.lua b/official/c84192580.lua
+index bff3985b..c69c0ff0 100644
+--- a/official/c84192580.lua
++++ b/official/c84192580.lua
+@@ -17,12 +17,23 @@ function s.initial_effect(c)
+ 	e1:SetOperation(s.effop)
+ 	c:RegisterEffect(e1)
+ 	--Keep track of the activations of a "Mulcharmy" monster's effect
+-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,function(re) return not (re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect()) end)
++	--JudgemanAI 2026-11-23: count these activations with a flag instead of AddCustomActivityCounter, which the engine
++	--takes back when an activation is negated. Konami FAQ 7813: a negated activation still counts for this restriction.
++	aux.GlobalCheck(s,function()
++		local ge=Effect.CreateEffect(c)
++		ge:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
++		ge:SetCode(EVENT_CHAINING)
++		ge:SetOperation(function(_,_,_,_,ev,re,_,rp)
++			local filter=function(re) return not (re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect()) end
++			if not filter(re,rp,ev) then Duel.RegisterFlagEffect(rp,id+100,RESET_PHASE|PHASE_END,0,1) end
++		end)
++		Duel.RegisterEffect(ge,0)
++	end)
+ end
+ s.listed_series={SET_MULCHARMY}
+ function s.effcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local c=e:GetHandler()
+-	if chk==0 then return c:IsDiscardable() and Duel.GetCustomActivityCount(id,tp,ACTIVITY_CHAIN)<2 end
++	if chk==0 then return c:IsDiscardable() and Duel.GetFlagEffect(tp,id+100)<2 end
+ 	Duel.SendtoGrave(c,REASON_COST|REASON_DISCARD)
+ 	--You can only activate the effects of other "Mulcharmy" monsters once the turn you activate this effect
+ 	local e1=Effect.CreateEffect(c)
+@@ -31,7 +42,7 @@ function s.effcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CLIENT_HINT+EFFECT_FLAG_OATH)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetTargetRange(1,0)
+-	e1:SetCondition(function(e) return Duel.GetCustomActivityCount(id,e:GetHandlerPlayer(),ACTIVITY_CHAIN)>=2 end)
++	e1:SetCondition(function(e) return Duel.GetFlagEffect(e:GetHandlerPlayer(),id+100)>=2 end)
+ 	e1:SetValue(function(e,re,tp) return re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect() end)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
+diff --git a/official/c856784.lua b/official/c856784.lua
+index 6ecae763..95e65d87 100644
+--- a/official/c856784.lua
++++ b/official/c856784.lua
+@@ -59,12 +59,8 @@ function s.drop(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	e2:SetReset(RESET_PHASE|PHASE_END)
+ 	e2:SetOperation(s.aclimit1)
+ 	Duel.RegisterEffect(e2,tp)
+-	local e3=Effect.CreateEffect(e:GetHandler())
+-	e3:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_FIELD)
+-	e3:SetCode(EVENT_CHAIN_NEGATED)
+-	e3:SetReset(RESET_PHASE|PHASE_END)
+-	e3:SetOperation(s.aclimit2)
+-	Duel.RegisterEffect(e3,tp)
++	--JudgemanAI 2026-11-23: a negated activation still counts (Konami FAQ 23158: after "Draw of Fate" resolves, you cannot
++	--activate another effect even if the activation of the first one was negated), so it is no longer taken back here.
+ 	local e4=Effect.CreateEffect(e:GetHandler())
+ 	e4:SetType(EFFECT_TYPE_FIELD)
+ 	e4:SetCode(EFFECT_CANNOT_ACTIVATE)
+@@ -85,10 +81,6 @@ function s.aclimit1(e,tp,eg,ep,ev,re,r,rp)
+ 	if ep~=tp then return end
+ 	Duel.RegisterFlagEffect(tp,id,RESET_PHASE|PHASE_END,0,1)
+ end
+-function s.aclimit2(e,tp,eg,ep,ev,re,r,rp)
+-	if ep~=tp then return end
+-	Duel.ResetFlagEffect(tp,id)
+-end
+ function s.econ(e)
+ 	return Duel.GetFlagEffect(e:GetHandlerPlayer(),id)~=0
+ end
+\ No newline at end of file
+diff --git a/official/c87126721.lua b/official/c87126721.lua
+index 65c8f862..019785c1 100644
+--- a/official/c87126721.lua
++++ b/official/c87126721.lua
+@@ -16,12 +16,23 @@ function s.initial_effect(c)
+ 	e1:SetOperation(s.effop)
+ 	c:RegisterEffect(e1)
+ 	--Keep track of the activations of a "Mulcharmy" monster's effect
+-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,function(re) return not (re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect()) end)
++	--JudgemanAI 2026-11-23: count these activations with a flag instead of AddCustomActivityCounter, which the engine
++	--takes back when an activation is negated. Konami FAQ 7813: a negated activation still counts for this restriction.
++	aux.GlobalCheck(s,function()
++		local ge=Effect.CreateEffect(c)
++		ge:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
++		ge:SetCode(EVENT_CHAINING)
++		ge:SetOperation(function(_,_,_,_,ev,re,_,rp)
++			local filter=function(re) return not (re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect()) end
++			if not filter(re,rp,ev) then Duel.RegisterFlagEffect(rp,id+100,RESET_PHASE|PHASE_END,0,1) end
++		end)
++		Duel.RegisterEffect(ge,0)
++	end)
+ end
+ s.listed_series={SET_MULCHARMY}
+ function s.effcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local c=e:GetHandler()
+-	if chk==0 then return c:IsDiscardable() and Duel.GetCustomActivityCount(id,tp,ACTIVITY_CHAIN)<2 end
++	if chk==0 then return c:IsDiscardable() and Duel.GetFlagEffect(tp,id+100)<2 end
+ 	Duel.SendtoGrave(c,REASON_COST|REASON_DISCARD)
+ 	--You can only activate 1 other "Mulcharmy" monster effect, the turn you activate this effect
+ 	local e1=Effect.CreateEffect(c)
+@@ -30,7 +41,7 @@ function s.effcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CLIENT_HINT+EFFECT_FLAG_OATH)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetTargetRange(1,0)
+-	e1:SetCondition(function(e) return Duel.GetCustomActivityCount(id,e:GetHandlerPlayer(),ACTIVITY_CHAIN)>=2 end)
++	e1:SetCondition(function(e) return Duel.GetFlagEffect(e:GetHandlerPlayer(),id+100)>=2 end)
+ 	e1:SetValue(function(e,re,tp) return re:GetHandler():IsSetCard(SET_MULCHARMY) and re:IsMonsterEffect() end)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)

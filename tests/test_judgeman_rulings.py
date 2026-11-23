@@ -128,3 +128,70 @@ def test_morganite_does_not_double_damage_that_recital_starling_shares():
 
 def test_morganite_still_doubles_damage_your_monster_inflicts():
     assert morganite_battle(BEWD, {"card": "Dark Magician", "position": "attack"}) == {"P1": 0, "P2": 1000}
+
+
+# ---------------------------------------------------------------- negated activations still count (FAQ 23158, 7813)
+SOLEMN = {"spells_traps": [{"card": "Solemn Judgment", "face_up": False}], "deck_filler": 10}
+
+
+def test_soul_crossing_counts_a_negated_activation():
+    # FAQ 23158: after Soul Crossing, a negated activation still uses the 1 activation you have
+    d = start({"hand": ["Soul Crossing", "Obelisk the Tormentor", "Pot of Greed", "Pot of Greed"], "deck_filler": 15},
+              {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}, {"card": "Mystical Shine Ball", "zone": 2}], **SOLEMN})
+    d.play(["Set Soul Crossing", "P1 Spell & Trap Zone 1", "End the turn", "End the turn",
+            "Normal Summon Mystical Shine Ball", "P1 Monster Zone 1", "Pass", "Activate Soul Crossing", "Pass",
+            [0, 1, 2], "P1 Monster Zone 1"])  # Tribute Summon Obelisk with your monster and the opponent's two
+    out = d.play(["Activate Pot of Greed", "P1 Spell & Trap Zone 1", "Activate Solemn Judgment"])
+    assert "its activation is negated" in out
+    assert "Activate Pot of Greed" not in d.describe_decision()
+
+
+def test_draw_of_fate_counts_a_negated_activation():
+    # FAQ 23158 (same for Draw of Fate)
+    # Draw of Fate needs lower LP than the opponent, the opponent's monster with the highest ATK and 3 different cards in the Deck
+    d = start({"lp": 7000, "spells_traps": [{"card": "Draw of Fate", "face_up": False}], "hand": ["Pot of Greed", "Pot of Greed"],
+               "deck": ["Dark Magician", "Mystical Elf", "Celtic Guardian", "Kuriboh", "Feral Imp", "Giant Soldier of Stone"]},
+              {"monsters": [{"card": "Blue-Eyes White Dragon"}], **SOLEMN})
+    d.play(["Activate Draw of Fate", "Pass", [0, 1, 2]])  # reveal 3 cards; the opponent picks the one you draw
+    out = d.play(["Activate Pot of Greed", "P1 Spell & Trap Zone 2", "Activate Solemn Judgment"])
+    assert "its activation is negated" in out
+    assert "Activate Pot of Greed" not in d.describe_decision()
+
+
+def test_once_per_turn_card_can_be_activated_again_after_its_activation_is_negated():
+    # FAQ 21245: "only 1 per turn" counts a card only if its activation was not negated (unchanged by the patch; guard)
+    d = start({"hand": ["Pot of Desires", "Pot of Desires"], "deck_filler": 30}, SOLEMN)
+    d.play([1, 1, "Activate Pot of Desires", "P1 Spell & Trap Zone 1"])
+    out = d.play(["Activate Solemn Judgment"])
+    assert "its activation is negated" in out
+    assert "Activate Pot of Desires" in d.describe_decision()
+
+
+def test_mulcharmy_counts_a_negated_activation():
+    # FAQ 7813 (B): a Mulcharmy effect whose activation was negated still counts, so after the 2nd one resolves,
+    # a 3rd Mulcharmy effect cannot be activated that turn
+    d = start({"hand": ["Mulcharmy Fuwalos", "Mulcharmy Fuwalos", "Mulcharmy Fuwalos"], "deck_filler": 15},
+              {"spells_traps": [{"card": "Solemn Strike", "face_up": False}], "deck_filler": 10})
+    out = d.play(["Activate Mulcharmy Fuwalos", "Activate Solemn Strike"])
+    assert "its activation is negated" in out
+    d.play(["Activate Mulcharmy Fuwalos"])  # the 2nd one is allowed
+    while "Pass" in d.describe_decision() and "Mulcharmy" not in d.describe_decision():
+        d.play(["Pass"])
+    for _ in range(4):  # the following Draw/Standby/Main Phase windows
+        assert "Activate Mulcharmy Fuwalos" not in d.describe_decision()
+        if "Main Phase 1: choose an action" in d.describe_decision():
+            break
+        d.play(["Pass"])
+    assert "Main Phase 1: choose an action" in d.describe_decision()
+
+
+def test_soul_crossing_still_limits_you_to_one_activation():
+    # guard: after Soul Crossing, a resolved activation uses up the 1 activation you have (unchanged)
+    d = start({"hand": ["Soul Crossing", "Obelisk the Tormentor", "Pot of Greed", "Pot of Greed"], "deck_filler": 15},
+              {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}, {"card": "Mystical Shine Ball", "zone": 2}], **SOLEMN})
+    d.play(["Set Soul Crossing", "P1 Spell & Trap Zone 1", "End the turn", "End the turn",
+            "Normal Summon Mystical Shine Ball", "P1 Monster Zone 1", "Pass", "Activate Soul Crossing", "Pass",
+            [0, 1, 2], "P1 Monster Zone 1"])
+    out = d.play(["Activate Pot of Greed", "P1 Spell & Trap Zone 1", "Pass"])
+    assert "P1 draws" in out
+    assert "Activate Pot of Greed" not in d.describe_decision()

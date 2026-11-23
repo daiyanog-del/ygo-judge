@@ -16,6 +16,10 @@
 >     "Ohime the Manifested Mikanko").
 >   - card script `c81756619.lua`, "Succumbing-Song Morganite": doubles only the battle damage your own monster
 >     inflicts (FAQ 24087).
+>   - card scripts of "Soul Crossing", "Draw of Fate" and the three "Mulcharmy" monsters: a negated activation still
+>     counts for their limits on how many effects you can activate (FAQ 23158, 7813). They count activations with a
+>     flag, because the core takes negated activations back from activity counters. The core is left as it is, since
+>     limits on how many *cards* you can activate do not count a negated card activation (FAQ 11730, 22010).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
