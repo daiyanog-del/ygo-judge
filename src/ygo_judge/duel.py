@@ -4,6 +4,7 @@ Every response sent to the engine is recorded, so a duel can be rebuilt (after a
 undo decisions) by replaying the same setup and responses: the engine is deterministic.
 """
 
+import re
 import struct
 from collections import deque
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ from dataclasses import dataclass
 from . import engine as E
 from .cards import CardDB, normalize
 from .messages import PROMPTS, Loc, Msg, decode
-from .scenario import Setup, build_puzzle
+from .scenario import Setup, StartActivation, build_duel_script, build_puzzle
 
 PHASES = {
     0x01: "Draw Phase",
@@ -101,7 +102,8 @@ class Duel:
         self.cards = cards
         self.setup = setup
         self.id = duel_id
-        self.puzzle = build_puzzle(setup, cards)
+        self.puzzle = build_puzzle(setup, cards)  # exported for EDOPro
+        script, activations = build_duel_script(setup, cards)
         self.log: list[str] = []
         self.errors: list[str] = []
         self.responses: list[tuple[bytes, bool]] = []  # (response, chosen by the agent)
@@ -121,12 +123,16 @@ class Duel:
             for lib in ("constant.lua", "utility.lua"):
                 if not self.engine.load_script(cards.script(lib) or b"", lib):
                     raise RuntimeError(f"Could not load {lib}: {self.errors[-1:] or 'missing'}")
-            if not self.engine.load_script(self.puzzle.encode(), "scenario.lua"):
+            if not self.engine.load_script(script.encode(), "scenario.lua"):
                 raise ValueError("The board setup failed in the engine: " + " | ".join(self.errors[-3:]))
             self.ensure_valid()
             decode(self.engine.messages())  # setup messages (field reload, hint); nothing to log
             self.engine.start()
             self._run()
+            for activation in activations:
+                self._activate_at_start(activation)
+            self.responses.clear()  # rebuilt from the setup, like the rest of the board
+            self.decisions = 0
             for response, chosen in responses:
                 self._send(response, chosen)
         except Exception:
@@ -182,6 +188,53 @@ class Duel:
             if chosen:
                 self.decisions -= 1
             raise ChoiceError("The engine rejected that answer (not a legal selection).")
+
+    _START_LOG = re.compile(r"(.+ changes to another Position|Chain Link 1: P[12] activates .+|Targets: .+|Resolving Chain Link 1 \(.+\)"
+                            r"|.+ now targets .+|.+ is equipped to .+|The chain has resolved\.)")
+
+    def _activate_at_start(self, a: StartActivation) -> None:
+        """Activate a Set Trap of the setup on its monsters (scenario.build_duel_script), with both players passing.
+        It stands for an activation on an earlier turn, so anything else happening is an error."""
+        trap = self.label(a.card.code, Loc(a.player, E.LOCATION_SZONE, a.zone))
+        targets = [self.label(card.code, Loc(p, E.LOCATION_MZONE, seq)) for p, seq, card in a.targets]
+        fail = f"Can't set up {trap} face-up on {', '.join(targets)}"
+        hint = "; Set it (face_up false) and activate it yourself, or leave its targets empty."
+        start, activated, targeted = len(self.log), False, False
+        try:
+            for _ in range(MAX_STEPS):
+                d = self.decision
+                if d is None:
+                    raise ValueError(f"{fail}: the duel ended{hint}")
+                if not activated:
+                    options = [o for o in d.options if o.label.startswith(f"Activate {trap}")]
+                    if len(options) == 1 and d.player == a.player:
+                        self._send(options[0].response, False)
+                        activated = True
+                    elif not options and d.kind == "chain" and d.player != a.player and not self.chain:
+                        self._send(_i32(-1), False)  # the other player's window comes first
+                    else:
+                        why = "it has several ways to activate" if options else "it can't be activated on this board"
+                        raise ValueError(f"{fail}: {why}{hint}")
+                elif d.kind == "cards" and d.player == a.player and not targeted:
+                    picks = [i for i, o in enumerate(d.options) if o.label in targets]
+                    if len(picks) != len(targets) or not d.pick[0] <= len(picks) <= d.pick[1]:
+                        raise ValueError(f"{fail}: it can't target {', '.join(targets)}{hint}")
+                    self._send(self._multi(d, picks), False)
+                    targeted = True
+                elif d.kind == "chain" and self.chain and d.options[-1].label.startswith("Pass"):
+                    self._send(_i32(-1), False)
+                else:
+                    raise ValueError(f"{fail}: its activation asks {d.title}{hint}")
+                if "The chain has resolved." in self.log[start:]:
+                    break
+        except ChoiceError as e:
+            raise ValueError(f"{fail}: {e}{hint}") from None
+        log = self.log[start:]
+        other = [line for line in log if not self._START_LOG.fullmatch(line)]
+        missing = [t for t in targets if f"{trap} now targets {t}" not in log and f"{trap} is equipped to {t}" not in log]
+        if other or missing or "The chain has resolved." not in log:
+            raise ValueError(f"{fail}: activating it {'also did: ' + ' / '.join(other) if other else 'did not end on those monsters'}{hint}")
+        self.log[start:] = [f"Setup: {trap} was activated on {', '.join(targets)} on an earlier turn, so its activation's effects apply"]
 
     # ------------------------------------------------------------------ playing
     def play(self, choices: list) -> str:

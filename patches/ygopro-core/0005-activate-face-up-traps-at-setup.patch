@@ -1,0 +1,36 @@
+diff --git a/libdebug.cpp b/libdebug.cpp
+index b38629f..e39a328 100644
+--- a/libdebug.cpp
++++ b/libdebug.cpp
+@@ -6,6 +6,7 @@
+  */
+ #include "card.h"
+ #include "duel.h"
++#include "effect.h"
+ #include "field.h"
+ #include "scriptlib.h"
+ 
+@@ -194,6 +195,23 @@ LUA_STATIC_FUNCTION(ReloadFieldEnd) {
+ 		return yield();
+ 	return 0;
+ }
++// JudgemanAI: a Trap set up face-up is activated when the duel starts, so the effects its activation applies
++// exist (scenario.py). That activation stands for one made on an earlier turn: forget what it left in this turn's
++// records (once-per-turn counts, activity counters, effects that last until the End Phase).
++LUA_STATIC_FUNCTION(ResetTurnRecords) {
++	auto& field = pduel->game_field;
++	auto& core = field->core;
++	core.effect_count_code.clear();
++	for(auto& peffect : field->effects.rechargeable)
++		if(!peffect->is_flag(EFFECT_FLAG_NO_TURN_RESET))
++			peffect->recharge();
++	for(auto* counter : { &core.summon_counter, &core.normalsummon_counter, &core.spsummon_counter,
++	                      &core.flipsummon_counter, &core.attack_counter, &core.chain_counter })
++		for(auto& iter : *counter)
++			iter.second.player_amount[0] = iter.second.player_amount[1] = 0;
++	field->reset_phase(PHASE_END);
++	return 0;
++}
+ template<int message_code, size_t max_len>
+ int32_t write_string_message(lua_State* L) {
+ 	check_param_count(L, 1);

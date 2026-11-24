@@ -1240,3 +1240,79 @@ def test_pendulum_monster_whose_normal_summon_is_negated_still_goes_to_the_gy():
               {"spells_traps": [{"card": "Solemn Judgment", "face_up": False}], "deck_filler": 10})
     out = d.play(["Normal Summon Performapal Momoncarpet", "P1 Monster Zone 1", "Activate Solemn Judgment"])
     assert "Performapal Momoncarpet: P1 Monster Zone 1 → P1 GY" in out
+
+
+# ---------------------------------------------------------------- face-up Traps in the setup are activated when the duel starts
+_RARE_METALMORPH_BOARD = {
+    "hand": ["The Big Cattle Drive", "Book of Moon"],
+    "monsters": [{"card": "Cyber Dragon"}, {"card": "Gazelle the King of Mythical Beasts"}],
+    "spells_traps": [{"card": "Rare Metalmorph", "face_up": True, "targets": ["Cyber Dragon"]}],
+    "deck_filler": 10,
+}
+
+
+def _s_main_phase(d):
+    while d.decision.kind != "idle":
+        d.play(["Pass (don't respond)"])
+    return d.describe_decision()
+
+
+def test_face_up_rare_metalmorph_in_the_setup_negates_a_spell_targeting_its_monster():
+    # Its negation is applied by its activation, so a Trap only placed face-up did not have it.
+    d = start(_RARE_METALMORPH_BOARD, {"deck_filler": 10})
+    assert "Setup: Rare Metalmorph (P1 Spell & Trap Zone 1) was activated on Cyber Dragon (P1 Monster Zone 1)" in "\n".join(d.log)
+    assert "Cyber Dragon, face-up Attack, ATK 2600" in d.board()
+    _s_main_phase(d)
+    out = d.play(["Activate Book of Moon", "P1 Spell & Trap Zone 2", "Cyber Dragon"])
+    assert "Chain Link 1 (Book of Moon): its effect is negated" in out
+
+
+def test_activation_at_the_start_is_not_counted_in_this_turns_records():
+    # The Big Cattle Drive can't be activated after a Spell/Trap activation this turn; the setup's activation is from an earlier turn.
+    d = start(_RARE_METALMORPH_BOARD, {"deck_filler": 10})
+    assert "Activate The Big Cattle Drive (P1 hand)" in _s_main_phase(d)
+
+
+def test_face_up_equip_trap_in_the_setup_applies_its_activation():
+    d = start({"monsters": [{"card": "Cyber Dragon"}], "spells_traps": [{"card": "Metalmorph", "face_up": True, "equipped_to": "Cyber Dragon"}],
+               "deck_filler": 10}, {"deck_filler": 10})
+    assert "Cyber Dragon, face-up Attack, ATK 2400/DEF 1900" in d.board()
+    assert "Metalmorph, face-up, equipped to the card in P1 Monster Zone 1" in d.board()
+
+
+def test_face_up_trap_whose_activation_summons_keeps_its_target_set_directly():
+    # Call of the Haunted targets a monster in the GY, so it can't be activated again on the monster it revived.
+    d = start({"monsters": [{"card": "Cyber Dragon"}], "spells_traps": [{"card": "Call of the Haunted", "face_up": True, "targets": ["Cyber Dragon"]}],
+               "deck_filler": 10}, {"deck_filler": 10})
+    assert not any(line.startswith("Setup:") for line in d.log)
+    assert "Call of the Haunted, face-up" in d.board()
+
+
+def test_face_up_trap_that_cant_be_activated_on_its_target_is_an_error():
+    with pytest.raises(ValueError, match="Can't set up Rare Metalmorph .* it can't target Gazelle"):
+        start({"monsters": [{"card": "Gazelle the King of Mythical Beasts"}, {"card": "Cyber Dragon"}],
+               "spells_traps": [{"card": "Rare Metalmorph", "face_up": True, "targets": ["Gazelle the King of Mythical Beasts"]}], "deck_filler": 10},
+              {"deck_filler": 10})
+
+
+def test_which_traps_are_activated_at_the_start():
+    from ygo_judge.scenario import replays_activation
+    for name, replays in [("Rare Metalmorph", True), ("Metalmorph", True), ("Fiendish Chain", True), ("Spellbinding Circle", True),
+                          ("Call of the Haunted", False), ("Seal of Wickedness", False), ("Mystical Space Typhoon", False)]:
+        assert replays_activation(db.resolve(name), db) == replays, name
+
+
+def test_exported_puzzle_keeps_the_face_up_trap_and_its_target():
+    # EDOPro has no Debug.ResetTurnRecords, and players open the board as it was described.
+    d = start(_RARE_METALMORPH_BOARD, {"deck_filler": 10})
+    assert "Debug.PreSetTarget(" in d.puzzle and "ResetTurnRecords" not in d.puzzle
+    assert ",LOCATION_SZONE,0,POS_FACEUP) --Rare Metalmorph" in d.puzzle
+
+
+def test_undo_after_the_start_activation_rebuilds_the_same_board():
+    d = start(_RARE_METALMORPH_BOARD, {"deck_filler": 10})
+    _s_main_phase(d)
+    before, made = d.board(), d.decisions
+    d.play(["Activate Book of Moon", "P1 Spell & Trap Zone 2", "Cyber Dragon"])
+    d.undo(d.decisions - made)
+    assert d.board() == before and d.decision.kind == "idle"

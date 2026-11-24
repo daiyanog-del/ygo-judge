@@ -6,6 +6,7 @@ aux.BeginPuzzle).
 """
 
 import re
+from dataclasses import dataclass
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -19,6 +20,7 @@ from .cards import (
     TYPE_RITUAL,
     TYPE_SPSUMMON,
     TYPE_SYNCHRO,
+    TYPE_TRAP,
     TYPE_XYZ,
     Card,
     CardDB,
@@ -142,6 +144,7 @@ class _Builder:
         self.cards = cards
         self.lines: list[str] = []
         self.placed: list[tuple[int, str, Card]] = []  # (player, variable, card) on the field
+        self.zones: dict[str, tuple[str, int]] = {}  # variable -> (location, sequence)
         self.count = 0
 
     def card(self, ref: CardRef) -> Card:
@@ -152,6 +155,7 @@ class _Builder:
         var = f"c{self.count}"
         extra = ",true" if proc else ""
         self.lines.append(f"local {var}=Debug.AddCard({card.code},{player},{player},{location},{seq},{position}{extra}) --{card.name}")
+        self.zones[var] = (location, seq)
         return var
 
     def counters(self, var: str, counters: dict[str, int]) -> None:
@@ -160,6 +164,10 @@ class _Builder:
             if counter is None:
                 raise ValueError(f'Unknown counter "{name}".')
             self.lines.append(f"Debug.PreAddCounter({var},{counter:#x},{count})")
+
+    def placed_at(self, var: str) -> tuple[int, Card]:
+        """(controller, card) of a variable from `placed`."""
+        return next((p, c) for p, v, c in self.placed if v == var)
 
     def find(self, ref: str, player: int) -> str:
         """Variable of a card on the field from "name", "p1:name" or "p2:name"."""
@@ -174,9 +182,32 @@ class _Builder:
         return matches[0]
 
 
+@dataclass
+class StartActivation:
+    """A face-up Trap the duel activates when it starts (see build_duel_script)."""
+
+    player: int
+    card: Card
+    zone: int  # Spell & Trap Zone sequence
+    targets: list[tuple[int, int, Card]]  # (controller, Monster Zone sequence, card)
+
+
 def build_puzzle(setup: Setup, cards: CardDB) -> str:
     """EDOPro puzzle script for a setup; raises ValueError on an invalid setup."""
+    return _build(setup, cards, activate=False)[0]
+
+
+def build_duel_script(setup: Setup, cards: CardDB) -> tuple[str, list[StartActivation]]:
+    """The script the engine runs. Unlike the exported puzzle, a face-up Trap whose activation only targets or
+    equips to monsters (replays_activation) is Set, and the duel activates it on them when it starts, so the
+    effects its activation applies exist (Rare Metalmorph's negation, an Equip Trap's ATK gain...).
+    Debug.ResetTurnRecords (patches/ygopro-core) then forgets that activation in this turn's records."""
+    return _build(setup, cards, activate=True)
+
+
+def _build(setup: Setup, cards: CardDB, activate: bool) -> tuple[str, list[StartActivation]]:
     b = _Builder(cards)
+    activations: list[StartActivation] = []
     b.lines += [
         f"--YGO Judge scenario{': ' + setup.title.splitlines()[0] if setup.title else ''}",
         "--Both players are yours: play P2's responses too.",
@@ -186,7 +217,7 @@ def build_puzzle(setup: Setup, cards: CardDB) -> str:
         f"Debug.SetPlayerInfo(0,{setup.p1.lp},0,1)",
         f"Debug.SetPlayerInfo(1,{setup.p2.lp},0,1)",
     ]
-    links: list[tuple[int, str, SpellTrap]] = []
+    links: list[tuple[int, str, SpellTrap, bool]] = []
     emz_owner: dict[str, str] = {}  # the 2 Extra Monster Zones are shared: P1's left is P2's right
     for player, ps in enumerate((setup.p1, setup.p2)):
         tag = f"P{player + 1}"
@@ -289,25 +320,83 @@ def build_puzzle(setup: Setup, cards: CardDB) -> str:
             if seq in used:
                 raise ValueError(f"{tag} Spell & Trap Zone {seq + 1} is already used.")
             used.add(seq)
-            var = b.add(card, player, "LOCATION_SZONE", seq, "POS_FACEUP" if st.face_up else "POS_FACEDOWN")
+            replay = activate and st.face_up and bool(st.targets or st.equipped_to) and replays_activation(card, cards)
+            var = b.add(card, player, "LOCATION_SZONE", seq, "POS_FACEUP" if st.face_up and not replay else "POS_FACEDOWN")
             b.placed.append((player, var, card))
-            links.append((player, var, st))
+            links.append((player, var, st, replay))
         if ps.field_spell:
             card = b.card(ps.field_spell.card)
             var = b.add(card, player, "LOCATION_FZONE", 0, "POS_FACEUP" if ps.field_spell.face_up else "POS_FACEDOWN")
             b.placed.append((player, var, card))
             b.counters(var, ps.field_spell.counters)
 
-    for player, var, st in links:  # equips and targets can point at either player's cards
-        if st.equipped_to:
-            b.lines.append(f"Debug.PreEquip({var},{b.find(st.equipped_to, player)})")
-        for ref in st.targets:
-            b.lines.append(f"Debug.PreSetTarget({var},{b.find(ref, player)})")
+    for player, var, st, replay in links:  # equips and targets can point at either player's cards
+        if replay:
+            targets = []
+            for ref in ([st.equipped_to] if st.equipped_to else []) + st.targets:
+                target = b.find(ref, player)
+                location, seq = b.zones[target]
+                controller, card = b.placed_at(target)
+                if location != "LOCATION_MZONE":
+                    raise ValueError(f"{b.placed_at(var)[1].name} can only target monsters, not {card.name}.")
+                targets.append((controller, seq, card))
+            activations.append(StartActivation(player, b.placed_at(var)[1], b.zones[var][1], targets))
+        else:
+            if st.equipped_to:
+                b.lines.append(f"Debug.PreEquip({var},{b.find(st.equipped_to, player)})")
+            for ref in st.targets:
+                b.lines.append(f"Debug.PreSetTarget({var},{b.find(ref, player)})")
         b.counters(var, st.counters)
+    if activations:
+        b.lines += [
+            "--The Set Traps above are activated when the duel starts; afterwards, forget those activations.",
+            "local reset=Effect.GlobalEffect()",
+            "reset:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)",
+            "reset:SetCode(EVENT_CHAIN_END)",
+            f"reset:SetLabel({len(activations)})",
+            "reset:SetOperation(function(e) Debug.ResetTurnRecords() e:SetLabel(e:GetLabel()-1) if e:GetLabel()==0 then e:Reset() end end)",
+            "Duel.RegisterEffect(reset,0)",
+        ]
     b.lines.append("Debug.ReloadFieldEnd()")
     if setup.title:
         b.lines.append(f"Debug.ShowHint({_lua_string(setup.title)})")
-    return "\n".join(b.lines) + "\n"
+    return "\n".join(b.lines) + "\n", activations
+
+
+# Duel functions an activation may call and still be rebuilt by activating it again on the same monsters.
+_REPLAYABLE_CALL = re.compile(r"(Get|Is|Check)\w*|Equip|EquipComplete|Hint|HintSelection|SetOperationInfo|RegisterEffect|RegisterFlagEffect|AdjustInstantly")
+
+
+def replays_activation(card: Card, cards: CardDB) -> bool:
+    """Whether a Trap's activation only targets or equips to monsters (and may apply effects to itself or to them),
+    so activating it again on those monsters rebuilds it exactly. Traps whose activation does more, such as
+    Special Summoning the target (Call of the Haunted), keep their target set directly."""
+    if not card.is_(TYPE_TRAP):
+        return False
+    source = (cards.script(f"c{card.code}.lua") or b"").decode("utf-8", errors="replace")
+    funcs = {m[1]: m[0] for m in re.finditer(r"^function s\.(\w+)\(.*?^end", source, re.S | re.M)}
+    init = funcs.get("initial_effect", "")
+    todo = [  # the operations of activations that always target (Seal of Wickedness targets only sometimes)
+        op
+        for var in re.findall(r"(\w+):SetType\(EFFECT_TYPE_ACTIVATE\)", init)
+        if re.search(var + r":SetProperty\([^)\n]*EFFECT_FLAG_CARD_TARGET", init)
+        for op in re.findall(var + r":SetOperation\(s\.(\w+)\)", init)
+    ]
+    persistent = re.search(r"aux\.AddPersistentProcedure\(([^\n]*)\)", init)
+    if persistent:  # its 11th argument is the operation; the procedure itself sets the target
+        args = [a.strip() for a in persistent[1].split(",")]
+        todo += [args[10][2:]] if len(args) > 10 and args[10].startswith("s.") else []
+    body, seen = "", set()
+    while todo:
+        name = todo.pop()
+        if name in seen or name not in funcs:
+            continue
+        seen.add(name)
+        body += funcs[name]
+        todo += re.findall(r"s\.(\w+)\(", funcs[name])
+    if not (persistent or "SetCardTarget" in body or re.search(r"Duel\.Equip\(\w+,\s*(c|e:GetHandler\(\))", body)):
+        return False
+    return all(_REPLAYABLE_CALL.fullmatch(call) for call in re.findall(r"Duel\.(\w+)\(", body))
 
 
 def _needs_procedure(card: Card) -> bool:

@@ -51,6 +51,10 @@
 >     Traps that Special Summon themselves, become Equip Cards or shuffle themselves into the Deck cannot be copied
 >     by "Trap of Darkness", "Fake Feather", "Transaction Rollback", "Junk Collector", "Labrynth Barrage",
 >     "Dinomorphia Kentregina" or "Traptrix Rafflesia" (FAQ 23603, 23606, 23607).
+>   - `scenario.py`, `duel.py` and core patch 0005: a face-up Trap set up with a target or an equipped monster, whose
+>     activation only targets or equips to monsters, is Set and activated on them when the duel starts, so the
+>     effects its activation applies exist ("Rare Metalmorph" negating a Spell, Equip Traps staying equipped).
+>     `Debug.ResetTurnRecords` then forgets that activation in this turn's records. The exported puzzle is unchanged.
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
