@@ -1896,3 +1896,16 @@ def test_exodia_does_not_win_when_graceful_charity_discards_a_piece():
     hand = [o.label for o in d.decision.options]
     out += d.play([[hand.index(next(h for h in hand if "Exodia the Forbidden One" in h)), hand.index(next(h for h in hand if "Kuriboh" in h))]])
     assert "P1 wins" not in out, out
+
+
+def test_grandsoil_skips_the_next_battle_phase_even_under_skill_drain():
+    # FAQ 12644: the skip still applies when it left the field while negated by "Skill Drain"
+    for drain in (True, False):
+        d = start({"monsters": [{"card": "Grandsoil the Elemental Lord", "zone": 1, "summoned": "special", "properly_summoned": True}],
+                   "spells_traps": [{"card": "Skill Drain", "face_up": True}] if drain else [], "deck_filler": 10},
+                  {"hand": ["Dark Hole"], "deck_filler": 10})
+        d.play(["End the turn", "Activate Dark Hole", "P2 Spell & Trap Zone 1"])
+        assert "Grandsoil the Elemental Lord" in d.board().split("GY:")[1], d.board()
+        _b4_turn(d, 3)
+        out = d.play(["Enter the Battle Phase"])
+        assert "P1 enters the End Phase" in out and d.turn == 4, out
