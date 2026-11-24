@@ -71,6 +71,11 @@ class CardDB:
             self.by_name.setdefault(normalize(card.name), []).append(card)
         self.system, self.counters, self.victory = self._load_strings(data_dir / "strings.conf")
         self.counter_by_name = {normalize(v): k for k, v in self.counters.items()}
+        # Counters only one card uses are named 'Counter ("Card")': also find them by "Card" and "Card Counter".
+        for code, name in self.counters.items():
+            if m := re.fullmatch(r'Counter \("(.+)"\)', name):
+                for alias in (m[1], m[1] + " Counter"):
+                    self.counter_by_name.setdefault(normalize(alias), code)
         self._setcode_buffers: dict[int, C.Array] = {}
 
     def _load(self, path: Path) -> None:

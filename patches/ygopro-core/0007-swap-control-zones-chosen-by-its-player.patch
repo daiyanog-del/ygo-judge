@@ -1,0 +1,40 @@
+diff --git a/operations.cpp b/operations.cpp
+index adad077..7e7a6ca 100644
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -1266,12 +1266,15 @@ bool field::process(Processors::SwapControl& arg) {
+ 		uint32_t flag;
+ 		get_useable_count(nullptr, p1, LOCATION_MZONE, reason_player, LOCATION_REASON::CONTROL, 0xff, &flag);
+ 		flag = (flag & ~(1 << s1) & 0xff) | ~0x1f;
++		// JudgemanAI: the player applying the swap chooses both zones (FAQ 23069)
++		if(p1 != reason_player)
++			flag = ((flag & 0xff) << 16) | ~(0xffu << 16);
+ 		card* pcard2 = *targets2->it;
+ 		auto message = pduel->new_message(MSG_HINT);
+ 		message->write<uint8_t>(HINT_SELECTMSG);
+-		message->write<uint8_t>(p1);
++		message->write<uint8_t>(reason_player);
+ 		message->write<uint64_t>(pcard2->data.code);
+-		emplace_process<Processors::SelectPlace>(p1, flag, 1);
++		emplace_process<Processors::SelectPlace>(reason_player, flag, 1);
+ 		return FALSE;
+ 	}
+ 	case 2: {
+@@ -1282,12 +1285,15 @@ bool field::process(Processors::SwapControl& arg) {
+ 		uint32_t flag;
+ 		get_useable_count(nullptr, p2, LOCATION_MZONE, reason_player, LOCATION_REASON::CONTROL, 0xff, &flag);
+ 		flag = (flag & ~(1 << s2) & 0xff) | ~0x1f;
++		// JudgemanAI: the player applying the swap chooses both zones (FAQ 23069)
++		if(p2 != reason_player)
++			flag = ((flag & 0xff) << 16) | ~(0xffu << 16);
+ 		card* pcard1 = *targets1->it;
+ 		auto message = pduel->new_message(MSG_HINT);
+ 		message->write<uint8_t>(HINT_SELECTMSG);
+-		message->write<uint8_t>(p2);
++		message->write<uint8_t>(reason_player);
+ 		message->write<uint64_t>(pcard1->data.code);
+-		emplace_process<Processors::SelectPlace>(p2, flag, 1);
++		emplace_process<Processors::SelectPlace>(reason_player, flag, 1);
+ 		return FALSE;
+ 	}
+ 	case 3: {

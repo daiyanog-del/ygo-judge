@@ -1447,3 +1447,132 @@ def test_battleguard_rage_returns_a_trap_monster_it_destroys_to_the_hand():
     _b4_turn(d, 3)
     out = d.play(["Enter the Battle Phase", "Attack with Axe Raider", "Embodiment of Apophis"])
     assert "Embodiment of Apophis: P2 Monster Zone 1 → P2 hand" in out
+
+
+# ---------------------------------------------------------------- the 3 left from the fourth batch
+def test_the_sun_does_not_count_a_normal_pendulum_monster_outside_the_pendulum_zone():
+    # FAQ 24114 (B): Tempura of Fortune - EBI in the Monster Zone is not a card with a coin toss effect.
+    d = start({"hand": ["Arcana Force XIX - The Sun"], "monsters": [{"card": "Tempura of Fortune - EBI"}], "deck_filler": 10}, {"deck_filler": 10})
+    assert "Arcana Force XIX - The Sun" not in d.describe_decision()
+
+
+def test_the_sun_counts_tempura_of_fortune_ebi_in_the_pendulum_zone():
+    d = start({"hand": ["Arcana Force XIX - The Sun"], "pendulum_zones": ["Tempura of Fortune - EBI"], "deck_filler": 10}, {"deck_filler": 10})
+    assert "Arcana Force XIX - The Sun" in d.describe_decision()
+
+
+def test_minimum_ray_destroyed_by_blast_sphere_cannot_activate_on_that_damage():
+    # FAQ 22657: "destroy it, and inflict damage" happen at the same time, so Minimum Ray was not in the GY yet.
+    d = start({"monsters": [{"card": "Vision HERO Minimum Ray"}], "deck_filler": 10},
+              {"monsters": [{"card": "Blast Sphere", "position": "set"}], "deck_filler": 10})
+    _b4_turn(d, 3)
+    d.play(["Enter the Battle Phase", "Attack with Vision HERO Minimum Ray", "Blast Sphere", "P2 Spell & Trap Zone 1"])
+    _b4_turn(d, 5)
+    assert "Vision HERO Minimum Ray: P1 Monster Zone 1 → P1 GY — destroyed by an effect" in d.log
+    assert "Minimum Ray" not in d.describe_decision()
+
+
+def test_minimum_ray_already_in_the_gy_activates_on_damage():
+    d = start({"graveyard": ["Vision HERO Minimum Ray"], "deck_filler": 10}, {"hand": ["Ookazi"], "deck_filler": 10})
+    _b4_turn(d, 2)
+    d.play(["Activate Ookazi", "P2 Spell & Trap Zone 1"])
+    assert "activate/use the effect of Vision HERO Minimum Ray (P1 GY)" in d.describe_decision()
+
+
+def test_mereologic_aggregator_sent_for_ext_ryzeal_activates_after_the_summon_is_negated():
+    # FAQ 24102: after Sauravis negates and banishes Ext Ryzeal, Aggregator's effect activates as Chain Link 1.
+    # (The engine was already right; the board needs a face-up card whose effects can be negated.)
+    d = start({"hand": ["Ext Ryzeal"], "extra_deck": ["Mereologic Aggregator"], "monsters": [{"card": "Sangan"}], "deck_filler": 10},
+              {"monsters": [{"card": "Sauravis, the Ancient and Ascended"}], "deck_filler": 10})
+    d.play(["Special Summon Ext Ryzeal", "Select Mereologic Aggregator (P1 Extra Deck)", "P1 Monster Zone 2", "Face-up attack"])
+    out = d.play(["Activate Sauravis, the Ancient and Ascended"])
+    assert "Ext Ryzeal: P1 Monster Zone 2 → P1 banished — by an effect" in out
+    assert "activate/use the effect of Mereologic Aggregator (P1 GY)" in d.describe_decision()
+
+
+def test_a_counter_only_one_card_uses_goes_by_that_card_name():
+    d = start({"field_spell": {"card": "Sacred Scrolls of the Gizmek Legend", "counters": {"Sacred Scrolls of the Gizmek Legend": 10}},
+               "deck_filler": 10}, {"deck_filler": 10})
+    assert '10 Counter ("Sacred Scrolls of the Gizmek Legend")' in d.board()
+
+
+def test_an_unknown_counter_lists_similar_ones():
+    with pytest.raises(ValueError, match=r'Similar: .*Sacred Scrolls of the Gizmek Legend'):
+        start({"field_spell": {"card": "Sacred Scrolls of the Gizmek Legend", "counters": {"Gizmek Counter": 10}}, "deck_filler": 10},
+              {"deck_filler": 10})
+
+
+# ---------------------------------------------------------------- fifth batch of 100 Q&As
+def test_evil_twin_present_lets_its_player_choose_both_zones():
+    # FAQ 23069: the player who activated it chooses where both monsters go.
+    d = start({"monsters": [{"card": "Live☆Twin Ki-sikil", "zone": 1}, {"card": "Live☆Twin Lil-la", "zone": 2}],
+               "spells_traps": [{"card": "Evil★Twin Present"}], "deck_filler": 10},
+              {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "deck_filler": 10})
+    d.play(["Activate Evil★Twin Present", "Live☆Twin Ki-sikil", "Mystical Shine Ball", "P1 Monster Zone 3"])
+    assert d.decision.player == 0 and "P2 Monster Zone 4" in d.describe_decision()
+    d.play(["P2 Monster Zone 4"])
+    assert "P1 Monster Zone 3: Mystical Shine Ball" in d.board() and "P2 Monster Zone 4: Live☆Twin Ki-sikil" in d.board()
+
+
+def _numerounia(book_of_moon):
+    d = start({"hand": ["Book of Moon"], "monsters": [{"card": "Number C1000: Numerounius", "zone": 2, "materials": ["Mystical Shine Ball"] * 5}],
+               "extra_deck": ["Number iC1000: Numerounius Numerounia"], "deck_filler": 10},
+              {"hand": ["Mystical Shine Ball"], "spells_traps": [{"card": "Raigeki Break"}], "deck_filler": 10})
+    d.play(["Pass (don't respond)", "Activate Raigeki Break", "Pass (don't respond)", "Yes", "P1 Monster Zone 2", "Face-up attack"])
+    if book_of_moon:
+        d.play(["Activate Book of Moon", "P1 Spell & Trap Zone 1"])
+        _b4_turn(d, 3)
+        d.play(["Change the battle position of Number iC1000"])
+    return d
+
+
+def test_numerounia_turned_face_down_no_longer_wins():
+    # FAQ 23248: once face-down it is no longer the monster Special Summoned by Numerounius.
+    d = _numerounia(book_of_moon=True)
+    out = ""
+    for _ in range(30):
+        if d.turn == 5:
+            break
+        out += d.play(["Pass (don't respond)"] if d.decision.kind == "chain" else ["End the turn"])
+    assert d.turn == 5 and "wins" not in out
+
+
+def test_numerounia_summoned_by_numerounius_wins_at_the_end_phase():
+    # FAQ 23250
+    d = _numerounia(book_of_moon=False)
+    out = ""
+    for _ in range(30):
+        if "wins" in out:
+            break
+        out += d.play(["Pass (don't respond)"] if d.decision.kind == "chain" else ["End the turn"])
+    assert 'P1 wins (Victory by the effect of "Number iC1000: Numerounius Numerounia")' in out
+
+
+def test_different_dimension_ground_does_not_banish_shade_brigandine():
+    # FAQ 23545: it goes to the GY (a Trap Card Special Summoned as a monster, like FAQ 7959).
+    d = start({"spells_traps": [{"card": "The Phantom Knights of Shade Brigandine"}, {"card": "Different Dimension Ground"}], "deck_filler": 10},
+              {"hand": ["Raigeki"], "deck_filler": 10})
+    d.play(["Activate The Phantom Knights of Shade Brigandine", "Pass (don't respond)", "P1 Monster Zone 1"])
+    _b4_turn(d, 2)
+    out = d.play(["Activate Raigeki", "P2 Spell & Trap Zone 1", "Activate Different Dimension Ground"])
+    out += d.play(["Pass (don't respond)"] * 2)
+    assert "The Phantom Knights of Shade Brigandine: P1 Monster Zone 1 → P1 GY — destroyed by an effect" in out
+
+
+def test_dimensional_fissure_does_not_banish_a_trap_card_summoned_as_a_monster():
+    # FAQ 7959: such monsters are sent to the GY as usual, even ones "not treated as a Trap".
+    d = start({"spells_traps": [{"card": "The Phantom Knights of Shade Brigandine"}, {"card": "Dimensional Fissure", "face_up": True}],
+               "monsters": [{"card": "Axe Raider", "zone": 3}], "deck_filler": 10}, {"hand": ["Raigeki"], "deck_filler": 10})
+    d.play(["Activate The Phantom Knights of Shade Brigandine", "P1 Monster Zone 1"])
+    _b4_turn(d, 2)
+    out = d.play(["Activate Raigeki", "P2 Spell & Trap Zone 1"])
+    assert "The Phantom Knights of Shade Brigandine: P1 Monster Zone 1 → P1 GY — destroyed by an effect" in out
+    assert "Axe Raider: P1 Monster Zone 3 → P1 banished — destroyed by an effect" in out
+
+
+def test_shade_brigandine_turned_face_down_stays_in_the_monster_zone():
+    # FAQ 8627 (B): a monster "not treated as a Trap" is not Set in the Spell & Trap Zone.
+    d = start({"hand": ["Book of Moon"], "spells_traps": [{"card": "The Phantom Knights of Shade Brigandine"}], "deck_filler": 10}, {"deck_filler": 10})
+    d.play(["Activate The Phantom Knights of Shade Brigandine", "P1 Monster Zone 1"])
+    d.play(["Activate Book of Moon", "P1 Spell & Trap Zone 2", "The Phantom Knights of Shade Brigandine"])
+    assert "P1 Monster Zone 1: The Phantom Knights of Shade Brigandine, face-down Defense" in d.board()

@@ -81,7 +81,7 @@ class Monster(ScenarioModel):
         None, description="Whether its required summon procedure was completed. Inferred for the natural Fusion/Ritual/Synchro/Xyz/Link summon; otherwise specify it for revival-restricted monsters."
     )
     materials: list[CardRef] = Field(default_factory=list, description="Xyz Materials attached to it.")
-    counters: dict[str, int] = Field(default_factory=dict, description='Counters on it, e.g. {"Spell Counter": 2}.')
+    counters: dict[str, int] = Field(default_factory=dict, description='Counters on it, e.g. {"Spell Counter": 2}; a counter only one card uses goes by the name of that card.')
 
 
 class SpellTrap(ScenarioModel):
@@ -162,7 +162,9 @@ class _Builder:
         for name, count in counters.items():
             counter = self.cards.counter_by_name.get(normalize(name))
             if counter is None:
-                raise ValueError(f'Unknown counter "{name}".')
+                words = set(normalize(name).split()) - {"counter"}
+                near = sorted({v for v in self.cards.counters.values() if words & set(normalize(v).split())})[:8]
+                raise ValueError(f'Unknown counter "{name}".' + (f" Similar: {', '.join(near)}." if near else ""))
             self.lines.append(f"Debug.PreAddCounter({var},{counter:#x},{count})")
 
     def placed_at(self, var: str) -> tuple[int, Card]:

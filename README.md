@@ -60,6 +60,12 @@
 >   - script patch 0009, found by testing a fourth 100 official Q&As: "Update Jammer" (FAQ 22202), "Wind Pegasus
 >     @Ignister" (22856), "Valiant Shark Lancer" (22945), "Mirror of the Ice Barrier" (10199), "Salamangreat Emerald
 >     Eagle" (22051) and "Sky Striker Mecha Modules - Multirole" (22468).
+>   - core patch 0007: the player who applies a control swap chooses the zones of both monsters (FAQ 23069).
+>   - script patch 0010, found by testing the rest of the fourth and a fifth 100 official Q&As: "Arcana Force XIX -
+>     The Sun" (FAQ 24114), "Vision HERO Minimum Ray" (22657), "Number iC1000: Numerounius Numerounia" (23248),
+>     "Different Dimension Ground" (23545) and "Dimensional Fissure" (7959).
+>   - `cards.py`: a counter only one card uses (`Counter ("Card")`) is also found by that card's name, and an
+>     unknown counter's error lists similar ones.
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
