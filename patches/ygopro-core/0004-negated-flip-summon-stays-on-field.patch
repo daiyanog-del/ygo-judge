@@ -1,0 +1,60 @@
+--- a/card.h
++++ b/card.h
+@@ -139,6 +139,8 @@
+ 	uint8_t announce_count{};
+ 	uint8_t attacked_count{};
+ 	uint8_t attack_all_target{};
++	//JudgemanAI 2026-11-24: set while this card is being Flip Summoned (see field::process(Processors::FlipSummon&) and Duel.NegateSummon).
++	bool flip_summoning{};
+ 	uint8_t attack_controler{};
+ 	uint32_t cardid{};
+ 	uint32_t fieldid{};
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -2378,6 +2378,7 @@
+ 		else {
+ 			target->set_status(STATUS_SUMMONING, TRUE);
+ 			target->set_status(STATUS_SUMMON_DISABLED, FALSE);
++			target->flip_summoning = true;
+ 			raise_event(target, EVENT_FLIP_SUMMON, nullptr, 0, sumplayer, sumplayer, 0);
+ 			process_instant_event();
+ 			emplace_process<Processors::PointEvent>(true, true, true);
+@@ -2385,6 +2386,7 @@
+ 		return FALSE;
+ 	}
+ 	case 2: {
++		target->flip_summoning = false;
+ 		if(target->is_status(STATUS_SUMMONING))
+ 			return FALSE;
+ 		for(const auto& peffect : arg.flip_summon_cost_effects)
+--- a/libduel.cpp
++++ b/libduel.cpp
+@@ -1630,16 +1630,22 @@
+ 	if(pcard) {
+ 		sumplayer = pcard->summon.player;
+ 		pcard->set_status(STATUS_SUMMONING, FALSE);
+-		pcard->set_status(STATUS_SUMMON_DISABLED, TRUE);
+-		if((pcard->summon.type & SUMMON_TYPE_PENDULUM) != SUMMON_TYPE_PENDULUM)
+-			pcard->set_status(STATUS_PROC_COMPLETE, FALSE);
++		//JudgemanAI 2026-11-24: a monster whose Flip Summon is negated stays a monster on the field and is destroyed there,
++		//so a Pendulum Monster goes face-up to the Extra Deck. Konami FAQ 24012 (Performapal Momoncarpet).
++		if(!pcard->flip_summoning) {
++			pcard->set_status(STATUS_SUMMON_DISABLED, TRUE);
++			if((pcard->summon.type & SUMMON_TYPE_PENDULUM) != SUMMON_TYPE_PENDULUM)
++				pcard->set_status(STATUS_PROC_COMPLETE, FALSE);
++		}
+ 	} else {
+ 		for(auto& _pcard : pgroup->container) {
+ 			sumplayer = _pcard->summon.player;
+ 			_pcard->set_status(STATUS_SUMMONING, FALSE);
+-			_pcard->set_status(STATUS_SUMMON_DISABLED, TRUE);
+-			if((_pcard->summon.type & SUMMON_TYPE_PENDULUM) != SUMMON_TYPE_PENDULUM)
+-				_pcard->set_status(STATUS_PROC_COMPLETE, FALSE);
++			if(!_pcard->flip_summoning) {
++				_pcard->set_status(STATUS_SUMMON_DISABLED, TRUE);
++				if((_pcard->summon.type & SUMMON_TYPE_PENDULUM) != SUMMON_TYPE_PENDULUM)
++					_pcard->set_status(STATUS_PROC_COMPLETE, FALSE);
++			}
+ 		}
+ 	}
+ 	uint32_t event_code = 0;

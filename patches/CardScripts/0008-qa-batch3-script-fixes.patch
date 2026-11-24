@@ -1,0 +1,210 @@
+--- a/utility.lua
++++ b/utility.lua
+@@ -160,6 +160,72 @@
+ 	return c:GetType()==TYPE_TRAP
+ end
+ 
++--JudgemanAI 2026-11-24: Normal Traps that do not go to the GY after activation because they Special Summon themselves,
++--become Equip Cards, or shuffle themselves into the Deck. Konami FAQ 23603, 23606, 23607: their effects cannot be copied
++--("Trap of Darkness", "Fake Feather", "Transaction Rollback", "Junk Collector", "Labrynth Barrage").
++--Normal Traps that only Set themselves again can still be copied (FAQ 23608).
++--tests/test_judgeman_rulings.py rebuilds this list from the scripts and fails if a card is missing.
++Auxiliary.NormalTrapsKeptAfterActivation={
++	[259314]=true, --Inzektor Gauntlet
++	[879958]=true, --Parallel Port Armor
++	[2542230]=true, --Red Cocoon
++	[6112401]=true, --At One With the Sword
++	[6691855]=true, --Spikeshield with Chain
++	[11035075]=true, --Shichi-Go-San
++	[13235258]=true, --Corrosive Scales
++	[13317419]=true, --Rocket Hand
++	[15684835]=true, --Evil Blast
++	[18096222]=true, --Gemini Booster
++	[18446701]=true, --Gagagashield
++	[20007374]=true, --Converging Wishes
++	[20447641]=true, --Qlife's End
++	[20989253]=true, --Amazement Family Faces
++	[21350571]=true, --Horn of the Phantom Beast
++	[23122036]=true, --Intrigue Shield
++	[26647858]=true, --Hero Ring
++	[30155789]=true, --Brutal Potion
++	[35146019]=true, --Altergeist Manifestation
++	[36247316]=true, --The Phantom Knights of Lost Vambrace
++	[37390589]=true, --Kunai with Chain
++	[38643567]=true, --Inzektor Orb
++	[43405287]=true, --D - Chain
++	[47819246]=true, --Super Quantal Mech Sword - Magnaslayer
++	[49551909]=true, --Heroic Retribution Sword
++	[51606429]=true, --The Phantom Knights of Tomb Shield
++	[51686645]=true, --Revenge Rally
++	[53656677]=true, --Power Frame
++	[54451023]=true, --Plant Food Chain
++	[57135971]=true, --Red-Eyes Fang with Chain
++	[57470761]=true, --Tyrant Wing
++	[58272005]=true, --Survival of the Fittest
++	[59490397]=true, --Gergonne's End
++	[62091148]=true, --Salamandra with Chain
++	[62645025]=true, --The Phantom Knights of Wrong Magnetring
++	[62753201]=true, --Borrel Cooling
++	[62868900]=true, --D - Shield
++	[63049052]=true, --Bujin Regalia - The Jewel
++	[63571750]=true, --Pharaoh's Treasure
++	[68054593]=true, --Fiery Fervor
++	[68540058]=true, --Metalmorph
++	[68721020]=true, --Malefic Force
++	[74577599]=true, --Traptrix Holeutea
++	[75361204]=true, --Graydle Split
++	[75987257]=true, --Butterflyoke
++	[78586116]=true, --Power-Up Adapter
++	[80143954]=true, --Altergeist Camouflage
++	[80320877]=true, --DoomZ Destruction
++	[85257384]=true, --The Phantom Knights of Umbrage Veil
++	[86607583]=true, --Limit Code
++	[87043568]=true, --Assault Spirits
++	[93655221]=true, --Shield Handler
++	[95915457]=true, --Mirror Barrier
++	[98239899]=true, --Blast with Chain
++	[98827725]=true, --The Phantom Knights of Shade Brigandine
++}
++function Card.IsCopyableNormalTrap(c)
++	return c:IsNormalTrap() and not Auxiliary.NormalTrapsKeptAfterActivation[c:GetOriginalCodeRule()]
++end
++
+ function Card.IsNormalSpellTrap(c)
+ 	return c:IsNormalSpell() or c:IsNormalTrap()
+ end
+--- a/official/c22628574.lua
++++ b/official/c22628574.lua
+@@ -24,7 +24,8 @@
+ 	Duel.SendtoGrave(g,REASON_COST)
+ end
+ function s.filter(c)
+-	return c:IsNormalTrap() and not c:IsCode(id) and c:CheckActivateEffect(false,true,false)~=nil
++	--JudgemanAI 2026-11-24: IsCopyableNormalTrap leaves out Normal Traps kept after activation (Konami FAQ 23603, 23606, 23607).
++	return c:IsCopyableNormalTrap() and not c:IsCode(id) and c:CheckActivateEffect(false,true,false)~=nil
+ end
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chkc then
+--- a/official/c58242947.lua
++++ b/official/c58242947.lua
+@@ -15,7 +15,8 @@
+ 	c:RegisterEffect(e1)
+ end
+ function s.filter(c)
+-	return c:IsNormalTrap() and c:IsAbleToRemoveAsCost() and c:CheckActivateEffect(false,true,false)~=nil
++	--JudgemanAI 2026-11-24: IsCopyableNormalTrap leaves out Normal Traps kept after activation (Konami FAQ 23603, 23606, 23607).
++	return c:IsCopyableNormalTrap() and c:IsAbleToRemoveAsCost() and c:CheckActivateEffect(false,true,false)~=nil
+ end
+ function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local c=e:GetHandler()
+--- a/official/c6351147.lua
++++ b/official/c6351147.lua
+@@ -28,7 +28,8 @@
+ 	Duel.PayLPCost(tp,Duel.GetLP(tp)//2)
+ end
+ function s.tgfilter(c)
+-	return c:IsNormalTrap() and not c:IsCode(id) and c:CheckActivateEffect(false,true,false)~=nil
++	--JudgemanAI 2026-11-24: IsCopyableNormalTrap leaves out Normal Traps kept after activation (Konami FAQ 23603, 23606, 23607).
++	return c:IsCopyableNormalTrap() and not c:IsCode(id) and c:CheckActivateEffect(false,true,false)~=nil
+ end
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chkc then
+--- a/official/c68779682.lua
++++ b/official/c68779682.lua
+@@ -17,7 +17,8 @@
+ 	local rc=re:GetHandler()
+ 	return re:IsHasType(EFFECT_TYPE_ACTIVATE) and not rc:IsStatus(STATUS_ACT_FROM_HAND) 
+ 		and rc:IsPreviousPosition(POS_FACEDOWN) and rp==tp 
+-		and rc:IsNormalTrap() and not rc:IsCode(id)
++		--JudgemanAI 2026-11-24: IsCopyableNormalTrap leaves out Normal Traps kept after activation (Konami FAQ 23603, 23606, 23607).
++		and rc:IsCopyableNormalTrap() and not rc:IsCode(id)
+ 		and rc:CheckActivateEffect(false,true,true)~=nil
+ end
+ function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
+--- a/official/c79766336.lua
++++ b/official/c79766336.lua
+@@ -18,7 +18,8 @@
+ 	return Duel.GetLP(tp)<=3000
+ end
+ function s.filter(c)
+-	return c:IsNormalTrap() and not c:IsCode(id) and c:IsAbleToRemove() and c:CheckActivateEffect(false,true,false)~=nil
++	--JudgemanAI 2026-11-24: IsCopyableNormalTrap leaves out Normal Traps kept after activation (Konami FAQ 23603, 23606, 23607).
++	return c:IsCopyableNormalTrap() and not c:IsCode(id) and c:IsAbleToRemove() and c:CheckActivateEffect(false,true,false)~=nil
+ end
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chkc then
+--- a/official/c48832775.lua
++++ b/official/c48832775.lua
+@@ -48,7 +48,8 @@
+ 	return c:IsSummonCode(fc,sumtype,tp,code) and not c:IsHasEffect(511002961)
+ end
+ function s.effilter(c)
+-	return c:IsAbleToRemoveAsCost() and c:IsSetCard(SET_DINOMORPHIA) and c:IsNormalTrap()
++	--JudgemanAI 2026-11-24: IsCopyableNormalTrap leaves out Normal Traps kept after activation (Konami FAQ 23603, 23606, 23607).
++	return c:IsAbleToRemoveAsCost() and c:IsSetCard(SET_DINOMORPHIA) and c:IsCopyableNormalTrap()
+ 		and c:CheckActivateEffect(false,true,false)~=nil 
+ end
+ function s.efcost(e,tp,eg,ep,ev,re,r,rp,chk)
+--- a/official/c6511113.lua
++++ b/official/c6511113.lua
+@@ -48,7 +48,8 @@
+ s.listed_names={id}
+ s.listed_series={SET_TRAPTRIX,SET_TRAP_HOLE,SET_HOLE}
+ function s.copyfilter(c)
+-	return c:IsNormalTrap() and c:IsSetCard({SET_HOLE,SET_TRAP_HOLE}) and c:IsAbleToGraveAsCost()
++	--JudgemanAI 2026-11-24: IsCopyableNormalTrap leaves out Normal Traps kept after activation (Konami FAQ 23603, 23606, 23607).
++	return c:IsCopyableNormalTrap() and c:IsSetCard({SET_HOLE,SET_TRAP_HOLE}) and c:IsAbleToGraveAsCost()
+ 		and c:CheckActivateEffect(false,true,true)~=nil
+ end
+ function s.effcost(e,tp,eg,ep,ev,re,r,rp,chk)
+--- a/official/c77058170.lua
++++ b/official/c77058170.lua
+@@ -37,6 +37,8 @@
+ 	local g=Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS)
+ 	local tc2=g:GetFirst()
+ 	if tc1==tc2 then tc2=g:GetNext() end
++	--JudgemanAI 2026-11-24: nothing happens if this card is no longer on the field. Konami FAQ 21486.
++	if not e:GetHandler():IsRelateToEffect(e) then return end
+ 	if tc1:IsFaceup() and tc1:IsRelateToEffect(e) and tc2:IsFaceup() and tc2:IsRelateToEffect(e) then
+ 		local atk=tc1:GetAttack()
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+--- a/official/c34487429.lua
++++ b/official/c34487429.lua
+@@ -98,7 +98,7 @@
+ 	end
+ end
+ function s.disop(e,tp,eg,ep,ev,re,r,rp)
+-	if not Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsSetCard,SET_CRYSTAL_BEAST),tp,LOCATION_SZONE,0,3,nil) then return end
++	--JudgemanAI 2026-11-24: no re-check of the "Crystal Beast" count at resolution. Konami FAQ 6642: the 3+, 4+ and 5 effects resolve even if the count has dropped.
+ 	if Duel.NegateActivation(ev) and re:GetHandler():IsRelateToEffect(re) then
+ 		Duel.Destroy(eg,REASON_EFFECT)
+ 	end
+@@ -113,7 +113,7 @@
+ 	Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)
+ end
+ function s.drop(e,tp,eg,ep,ev,re,r,rp)
+-	if not Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsSetCard,SET_CRYSTAL_BEAST),tp,LOCATION_SZONE,0,4,nil) then return end
++	--JudgemanAI 2026-11-24: no re-check of the "Crystal Beast" count at resolution. Konami FAQ 6642: the 3+, 4+ and 5 effects resolve even if the count has dropped.
+ 	local p,d=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER,CHAININFO_TARGET_PARAM)
+ 	Duel.Draw(p,d,REASON_EFFECT)
+ end
+@@ -132,7 +132,7 @@
+ 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,1,0,0)
+ end
+ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+-	if not Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsSetCard,SET_CRYSTAL_BEAST),tp,LOCATION_SZONE,0,5,nil) then return end
++	--JudgemanAI 2026-11-24: no re-check of the "Crystal Beast" count at resolution. Konami FAQ 6642: the 3+, 4+ and 5 effects resolve even if the count has dropped.
+ 	local tc=Duel.GetFirstTarget()
+ 	if tc and tc:IsRelateToEffect(e) then
+ 		Duel.SpecialSummon(tc,0,tp,tp,true,false,POS_FACEUP)
+--- a/official/c85239662.lua
++++ b/official/c85239662.lua
+@@ -42,5 +42,6 @@
+ 	Duel.RegisterEffect(e2,tp)
+ end
+ function s.target(e,c)
+-	return c:GetLevel()~=e:GetLabel()
++	--JudgemanAI 2026-11-24: only monsters that have a Level. Xyz Monsters have no Level and can still be used. Konami FAQ 7960.
++	return c:HasLevel() and c:GetLevel()~=e:GetLabel()
+ end
+\ No newline at end of file

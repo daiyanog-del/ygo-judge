@@ -44,6 +44,13 @@
 >     (21250), "Rage with Eyes of Blue" (12596), "Prior of the Ice Barrier" (23144), "Tellus the Little Angel" (23167).
 >   - `scenario.py`: a board setup that puts both players' monsters in one shared Extra Monster Zone (P1's left is
 >     P2's right) is refused; it crashed the engine.
+>   - core patch 0004: a monster whose Flip Summon is negated stays a monster on the field and is destroyed there,
+>     so a Pendulum Monster goes face-up to the Extra Deck (FAQ 24012). Negated Normal and Special Summons are unchanged.
+>   - script patch 0008, found by testing a third 100 official Q&As: "Underclock Taker" (FAQ 21486), "Ancient City -
+>     Rainbow Ruins" (6642), "Mystical Fairy Elfuria" (7960), and `Card.IsCopyableNormalTrap` in `utility.lua`: Normal
+>     Traps that Special Summon themselves, become Equip Cards or shuffle themselves into the Deck cannot be copied
+>     by "Trap of Darkness", "Fake Feather", "Transaction Rollback", "Junk Collector", "Labrynth Barrage",
+>     "Dinomorphia Kentregina" or "Traptrix Rafflesia" (FAQ 23603, 23606, 23607).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

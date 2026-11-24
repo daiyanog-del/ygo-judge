@@ -1105,3 +1105,138 @@ def test_tellus_cannot_activate_without_a_tellus_wing_token():
               {"monsters": [{"card": "Tellus the Little Angel"}], "deck_filler": 10})
     assert "Activate Pot of Greed (P1 hand)" in d.describe_decision()
     assert "Tellus the Little Angel" not in d.describe_decision()
+
+
+# ---------------------------------------------------------------- third batch of 100 Q&As: Underclock Taker (FAQ 21486), Rainbow Ruins (FAQ 6642),
+# Normal Traps kept after activation (FAQ 23603, 23606, 23607), Mystical Fairy Elfuria (FAQ 7960), negated Flip Summon (FAQ 24012)
+def test_underclock_taker_that_left_the_field_does_not_lower_atk():
+    # FAQ 21486: if Underclock Taker is no longer on the field at resolution, nothing happens.
+    d = start({"monsters": [{"card": "Underclock Taker", "zone": "EMZ left"}, {"card": "Excode Talker", "zone": 2}], "deck_filler": 10},
+              {"monsters": [{"card": "Summoned Skull"}], "spells_traps": [{"card": "Compulsory Evacuation Device"}], "deck_filler": 10})
+    out = d.play([1, 1, 0, 0, "Underclock Taker (P1 Extra Monster Zone left)"])
+    assert "Underclock Taker: P1 Extra Monster Zone left → P1 Extra Deck" in out
+    assert "Summoned Skull, face-up Attack, ATK 2500" in d.board()
+
+
+def test_underclock_taker_on_the_field_lowers_atk():
+    d = start({"monsters": [{"card": "Underclock Taker", "zone": "EMZ left"}, {"card": "Excode Talker", "zone": 2}], "deck_filler": 10},
+              {"monsters": [{"card": "Summoned Skull"}], "deck_filler": 10})
+    d.play(["Activate Underclock Taker"])
+    assert "Summoned Skull, face-up Attack, ATK 200" in d.board()
+
+
+def test_rainbow_ruins_still_negates_when_crystal_beasts_dropped_to_2_at_resolution():
+    # FAQ 6642: the 3+ effect resolves even if only 2 "Crystal Beast" cards are left (also the 4+ and 5 effects).
+    d = start({"field_spell": {"card": "Ancient City - Rainbow Ruins"}, "monsters": [{"card": "Crystal Beast Sapphire Pegasus"}],
+               "spells_traps": [{"card": "Crystal Beast Ruby Carbuncle", "face_up": True}, {"card": "Crystal Beast Amethyst Cat", "face_up": True},
+                                {"card": "Crystal Beast Emerald Tortoise", "face_up": True}], "deck_filler": 10},
+              {"hand": ["Mystical Shine Ball"], "spells_traps": [{"card": "Raigeki Break", "face_up": False},
+                                                                 {"card": "Mystical Space Typhoon", "face_up": False}], "deck_filler": 10})
+    d.play(["Activate Mystical Space Typhoon", "Ancient City - Rainbow Ruins (P1 Field Zone)"])
+    d.play(["Activate Ancient City - Rainbow Ruins"])  # Crystal Beast Sapphire Pegasus is sent as the cost
+    out = d.play(["Activate Raigeki Break", "Crystal Beast Ruby Carbuncle (P1 Spell & Trap Zone 1)"])
+    assert "Crystal Beast Ruby Carbuncle: P1 Spell & Trap Zone 1 → P1 GY" in out
+    assert "Chain Link 1 (Mystical Space Typhoon): its activation is negated" in out
+
+
+_i_COPIERS = ["Activate Trap of Darkness", "Activate Fake Feather", "Activate Transaction Rollback (P1 Spell & Trap Zone 3)",
+              "Activate Transaction Rollback (P1 GY)", "Activate Junk Collector"]
+
+
+def _i_copy_targets(kept, copier):
+    d = start({"lp": 3000, "hand": ["Blackwing - Gale the Whirlwind"], "monsters": [{"card": "Junk Collector"}],
+               "spells_traps": [{"card": "Trap of Darkness"}, {"card": "Fake Feather"}, {"card": "Transaction Rollback"}],
+               "graveyard": [kept, "Jar of Greed", "Transaction Rollback"], "deck_filler": 10},
+              {"graveyard": [kept, "Jar of Greed"], "deck_filler": 10})
+    out = d.play(["Pass (don't respond)", "Pass (don't respond)", copier])
+    return out + d.describe_decision()  # Fake Feather picks its only legal target (in P2's GY) by itself
+
+
+def test_normal_traps_kept_after_activation_cannot_be_copied():
+    # FAQ 23606 (Special Summons itself), 23603 (shuffles itself into the Deck), 23607 (becomes an Equip Card): none of the copiers can use them.
+    for kept in ["Traptrix Holeutea", "Pharaoh's Treasure", "Altergeist Camouflage"]:
+        for copier in _i_COPIERS:
+            decision = _i_copy_targets(kept, copier)
+            assert "Jar of Greed (P" in decision, (kept, copier)  # an ordinary Normal Trap still can
+            assert kept not in decision, (kept, copier)
+
+
+def test_labrynth_barrage_cannot_chain_to_a_normal_trap_kept_after_activation():
+    # FAQ 23606 / 23603: no. An ordinary Set Normal Trap still can.
+    for trap, offered in [("Traptrix Holeutea", False), ("Pharaoh's Treasure", False), ("Jar of Greed", True)]:
+        d = start({"spells_traps": [{"card": trap}, {"card": "Labrynth Barrage"}], "deck_filler": 10}, {"deck_filler": 10})
+        d.play([f"Activate {trap} (P1 Spell & Trap Zone 1)"])
+        assert ("Activate Labrynth Barrage" in d.describe_decision()) == offered, trap
+
+
+def _i_kept_traps_in_scripts():
+    """Normal Traps whose activation Special Summons the card itself or equips it, read from the scripts (see utility.lua)."""
+    import sqlite3
+    from ygo_judge.cards import DATA
+    con = sqlite3.connect(DATA / "BabelCDB" / "cards.cdb")
+    found = set()
+    for code, in con.execute("select id from datas where type=4"):  # TYPE_TRAP only = Normal Trap
+        path = DATA / "CardScripts" / "official" / f"c{code}.lua"
+        if not path.exists():
+            continue
+        src = path.read_text(encoding="utf-8", errors="ignore")
+        funcs = {m.group(1): m.group(0) for m in re.finditer(r"^function s\.(\w+)\(.*?^end", src, re.S | re.M)}
+        init = funcs.get("initial_effect", "")
+        todo = [o for v in re.findall(r"(\w+):SetType\(EFFECT_TYPE_ACTIVATE\)", init)
+                for o in re.findall(v + r":SetOperation\(s\.(\w+)\)", init)]
+        body, seen = "", set()
+        while todo:
+            f = todo.pop()
+            if f in seen or f not in funcs:
+                continue
+            seen.add(f)
+            body += funcs[f]
+            todo += re.findall(r"s\.(\w+)\(", funcs[f])
+        if "AddMonsterAttribute" in body or re.search(r"Duel\.Equip\(\w+,\s*(c|e:GetHandler\(\))\s*,", body):
+            found.add(code)
+    return found
+
+
+def test_kept_normal_trap_list_covers_every_script():
+    from ygo_judge.cards import DATA
+    util = (DATA / "CardScripts" / "utility.lua").read_text(encoding="utf-8")
+    block = util.split("Auxiliary.NormalTrapsKeptAfterActivation={", 1)[1].split("}", 1)[0]
+    listed = {int(c) for c in re.findall(r"\[(\d+)\]=true", block)}
+    found = _i_kept_traps_in_scripts()
+    assert found - listed == set()  # a new card of this kind must be added to the list
+    assert listed - found == {63571750}  # Pharaoh's Treasure (shuffles itself into the Deck) is the only one added by hand
+
+
+def test_elfuria_does_not_stop_an_xyz_summon_on_top_of_an_xyz_monster():
+    # FAQ 7960: Xyz Monsters have no Level, so Utopia Ray can still be Xyz Summoned on top of Utopia.
+    d = start({"hand": ["Speedroid Terrortop"], "monsters": [{"card": "Mystical Fairy Elfuria"},
+               {"card": "Number 39: Utopia", "materials": ["Mystical Shine Ball"]}],
+               "extra_deck": ["Number C39: Utopia Ray"], "deck_filler": 10}, {"deck_filler": 10}, seed=2)
+    out = d.play(["Activate Mystical Fairy Elfuria"])
+    assert "Revealed to P2: Speedroid Terrortop" in out
+    assert "Special Summon Number C39: Utopia Ray" in d.describe_decision()
+
+
+def test_elfuria_still_stops_monsters_with_a_different_level():
+    # Control: after revealing a Level 4 monster, Elfuria (Level 3) and a Level 3 monster cannot make a Rank 3.
+    d = start({"hand": ["Harpie Lady"], "monsters": [{"card": "Mystical Fairy Elfuria"}, {"card": "Mystical Fairy Elfuria"}],
+               "extra_deck": ["Number 30: Acid Golem of Destruction"], "deck_filler": 10}, {"deck_filler": 10}, seed=2)
+    assert "Special Summon Number 30: Acid Golem of Destruction" in d.describe_decision()
+    d.play(["Activate Mystical Fairy Elfuria (P1 Monster Zone 1)"])
+    assert "Special Summon Number 30: Acid Golem of Destruction" not in d.describe_decision()
+
+
+def test_pendulum_monster_whose_flip_summon_is_negated_goes_to_the_extra_deck():
+    # FAQ 24012: a negated Flip Summon destroys the monster in the Monster Zone, so a Pendulum Monster goes face-up to the Extra Deck.
+    d = start({"monsters": [{"card": "Performapal Momoncarpet", "position": "set"}], "deck_filler": 10},
+              {"spells_traps": [{"card": "Solemn Judgment", "face_up": False}], "deck_filler": 10})
+    out = d.play(["Change the battle position of Performapal Momoncarpet", "Activate Solemn Judgment"])
+    assert "Performapal Momoncarpet: P1 Monster Zone 1 → P1 Extra Deck — destroyed by an effect" in out
+
+
+def test_pendulum_monster_whose_normal_summon_is_negated_still_goes_to_the_gy():
+    # Control: a negated Normal Summon never puts the monster on the field, so it goes to the GY.
+    d = start({"hand": ["Performapal Momoncarpet"], "deck_filler": 10},
+              {"spells_traps": [{"card": "Solemn Judgment", "face_up": False}], "deck_filler": 10})
+    out = d.play(["Normal Summon Performapal Momoncarpet", "P1 Monster Zone 1", "Activate Solemn Judgment"])
+    assert "Performapal Momoncarpet: P1 Monster Zone 1 → P1 GY" in out
