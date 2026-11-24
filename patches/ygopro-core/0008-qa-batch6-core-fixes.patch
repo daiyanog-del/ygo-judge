@@ -1,0 +1,179 @@
+diff --git a/card.cpp b/card.cpp
+index fbe2eac..6b76e4b 100644
+--- a/card.cpp
++++ b/card.cpp
+@@ -3170,7 +3170,7 @@ int32_t card::is_can_be_summoned(uint8_t playerid, uint8_t ignore_count, effect*
+ 		return FALSE;
+ 	{
+ 		auto reason_effect = pduel->game_field->core.reason_effect;
+-		if(reason_effect && reason_effect->get_handler() == this)
++		if(reason_effect && reason_effect->get_handler() == this && pduel->lua->matching_card != this)
+ 			reason_effect->status |= EFFECT_STATUS_SUMMON_SELF;
+ 	}
+ 	if(!ignore_count && (pduel->game_field->core.extra_summon[playerid] || !is_affected_by_effect(EFFECT_EXTRA_SUMMON_COUNT))
+@@ -3315,7 +3315,7 @@ int32_t card::is_special_summonable(uint8_t playerid, uint32_t summon_type) {
+ 	return static_cast<uint32_t>(eset.size());
+ }
+ int32_t card::is_can_be_special_summoned(effect* reason_effect, uint32_t sumtype, uint8_t sumpos, uint8_t sumplayer, uint8_t toplayer, uint8_t nocheck, uint8_t nolimit, uint32_t zone) {
+-	if(reason_effect->get_handler() == this)
++	if(reason_effect->get_handler() == this && pduel->lua->matching_card != this)
+ 		reason_effect->status |= EFFECT_STATUS_SUMMON_SELF;
+ 	if(current.location == LOCATION_MZONE)
+ 		return FALSE;
+@@ -3381,7 +3381,7 @@ int32_t card::is_setable_mzone(uint8_t playerid, uint8_t ignore_count, effect* p
+ 		return FALSE;
+ 	{
+ 		auto reason_effect = pduel->game_field->core.reason_effect;
+-		if(reason_effect && reason_effect->get_handler() == this)
++		if(reason_effect && reason_effect->get_handler() == this && pduel->lua->matching_card != this)
+ 			reason_effect->status |= EFFECT_STATUS_SUMMON_SELF;
+ 	}
+ 	if(current.location == LOCATION_MZONE)
+diff --git a/field.cpp b/field.cpp
+index 52b307b..ff5883d 100644
+--- a/field.cpp
++++ b/field.cpp
+@@ -3272,6 +3272,21 @@ int32_t field::check_trigger_effect(const chain& ch) const {
+ 		return TRUE;
+ 	return FALSE;
+ }
++// JudgemanAI: while a chain resolves, a field trigger effect is queued once however many times its condition is met
++// (Q&A 23436, 18253, 18435, 22741, 12800). An entry whose condition failed (hand triggers) gives way to one that passes.
++bool field::queue_solving_trigger(chain_list& list, effect* peffect, bool act) {
++	if(!core.chain_solving || !(peffect->type & EFFECT_TYPE_FIELD))
++		return true;
++	auto it = std::find_if(list.begin(), list.end(), [peffect](const chain& ch) {
++		return ch.triggering_effect == peffect && (ch.flag & CHAIN_SOLVING_TRIGGER);
++	});
++	if(it == list.end())
++		return true;
++	if((it->flag & CHAIN_SOLVING_ACT) || !act)
++		return false;
++	list.erase(it);
++	return true;
++}
+ int32_t field::check_spself_from_hand_trigger(const chain& ch) const {
+ 	effect* peffect = ch.triggering_effect;
+ 	uint8_t tp = ch.triggering_player;
+diff --git a/field.h b/field.h
+index 3cb755d..adb9367 100644
+--- a/field.h
++++ b/field.h
+@@ -555,6 +555,7 @@ public:
+ 	int32_t check_nonpublic_trigger(chain& ch);
+ 	int32_t check_trigger_effect(const chain& ch) const;
+ 	int32_t check_spself_from_hand_trigger(const chain& ch) const;
++	bool queue_solving_trigger(chain_list& list, effect* peffect, bool act);
+ 	int32_t is_able_to_enter_bp();
+ 
+ 	struct Step { uint16_t step; };
+@@ -716,6 +717,9 @@ public:
+ #define CHAIN_CONTINUOUS_CARD	0x08
+ #define CHAIN_ACTIVATING		0x10
+ #define CHAIN_HAND_TRIGGER		0x20
++// JudgemanAI: a field trigger queued while a chain resolves, and whether its condition was met then (Q&A 23436)
++#define CHAIN_SOLVING_TRIGGER	0x80
++#define CHAIN_SOLVING_ACT		0x100
+ //#define CHAIN_DECK_EFFECT		0x40
+ 
+ enum class CHAININFO {
+diff --git a/interpreter.cpp b/interpreter.cpp
+index a172686..bc7ee2d 100644
+--- a/interpreter.cpp
++++ b/interpreter.cpp
+@@ -454,10 +454,12 @@ bool interpreter::check_matching(card* pcard, int32_t findex, int32_t extraargs)
+ 	pushobject(current_state, pcard);
+ 	push_range_of_values(current_state, -(extraargs + 2), extraargs);
+ 	auto result = false;
++	auto prev_matching = std::exchange(matching_card, pcard);
+ 	if(call_lua(current_state, 1 + extraargs, 1) != LUA_OK) {
+ 		pduel->handle_message(lua_get_string_or_empty(current_state, -1), OCG_LOG_TYPE_ERROR);
+ 	} else
+ 		result = lua_toboolean(current_state, -1);
++	matching_card = prev_matching;
+ 	lua_pop(current_state, 1);
+ 	return result;
+ }
+@@ -469,10 +471,12 @@ bool interpreter::check_matching_table(card* pcard, int32_t findex, int32_t tabl
+ 	pushobject(current_state, pcard);
+ 	int extraargs = pushExpandedTable(current_state, table_index);
+ 	auto result = false;
++	auto prev_matching = std::exchange(matching_card, pcard);
+ 	if(call_lua(current_state, 1 + extraargs, 1) != LUA_OK) {
+ 		pduel->handle_message(lua_get_string_or_empty(current_state, -1), OCG_LOG_TYPE_ERROR);
+ 	} else
+ 		result = lua_toboolean(current_state, -1);
++	matching_card = prev_matching;
+ 	lua_pop(current_state, 1);
+ 	return result;
+ }
+diff --git a/interpreter.h b/interpreter.h
+index 495e5f2..6cbdd4f 100644
+--- a/interpreter.h
++++ b/interpreter.h
+@@ -49,6 +49,8 @@ public:
+ 	duel* pduel;
+ 	lua_State* lua_state;
+ 	lua_State* current_state;
++	// JudgemanAI: the card a Lua filter is testing right now (FAQ 16820, 24006)
++	card* matching_card = nullptr;
+ 	param_list params;
+ 	coroutine_map coroutines;
+ 	int32_t no_action;
+diff --git a/operations.cpp b/operations.cpp
+index 7e7a6ca..867a285 100644
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -2201,9 +2201,7 @@ bool field::process(Processors::SummonRule& arg) {
+ 		if(core.summon_depth)
+ 			return TRUE;
+ 		target->enable_field_effect(false);
+-		target->summon.location = LOCATION_MZONE;
+-		target->summon.pzone = false;
+-		target->summon.sequence = target->current.sequence;
++		// JudgemanAI: it is still treated as summoned from where it was summoned before (FAQ 23456)
+ 		target->summon.type |= SUMMON_TYPE_NORMAL;
+ 		target->current.reason_effect = nullptr;
+ 		target->current.reason_player = sumplayer;
+@@ -4406,6 +4404,9 @@ bool field::process(Processors::SendTo& arg) {
+ 		param->cv.assign(targets->container.begin(), targets->container.end());
+ 		if(param->cv.size() > 1)
+ 			std::sort(param->cv.begin(), param->cv.end(), card::card_operation_sort);
++		// JudgemanAI: cards that may be placed in the Spell & Trap Zone instead (EFFECT_TO_GRAVE_REDIRECT_CB) move last,
++		// so the zones of the cards leaving at the same time are free (FAQ 23404)
++		std::stable_partition(param->cv.begin(), param->cv.end(), [](card* pcard) { return (pcard->sendto_param.playerid >> 4) == 0; });
+ 		if(core.global_flag & GLOBALFLAG_DECK_REVERSE_CHECK) {
+ 			int32_t d0 = static_cast<int32_t>(player[0].list_main.size() - 1), s0 = d0;
+ 			int32_t d1 = static_cast<int32_t>(player[1].list_main.size() - 1), s1 = d1;
+diff --git a/processor.cpp b/processor.cpp
+index cfc91d8..685c733 100644
+--- a/processor.cpp
++++ b/processor.cpp
+@@ -1228,10 +1228,12 @@ int32_t field::process_instant_event() {
+ 			bool was_just_sent = false;
+ 			if((was_just_sent = check_simul(peffect, phandler)) == true && (peffect->range & LOCATION_HAND) == 0)
+ 				continue;
++			if(!queue_solving_trigger(core.new_fchain, peffect, true))
++				continue;
+ 			peffect->set_activate_location();
+ 			auto& newchain = core.new_fchain.emplace_back();
+ 			newchain.was_just_sent = was_just_sent;
+-			newchain.flag = 0;
++			newchain.flag = core.chain_solving ? (CHAIN_SOLVING_TRIGGER | CHAIN_SOLVING_ACT) : 0;
+ 			newchain.chain_id = infos.field_id++;
+ 			newchain.event_id = ev.global_id;
+ 			newchain.evt = ev;
+@@ -1254,10 +1256,12 @@ int32_t field::process_instant_event() {
+ 				continue;
+ 			if((peffect->range & LOCATION_HAND) == 0 && !act)
+ 				continue;
++			if(!queue_solving_trigger(core.new_ochain, peffect, act))
++				continue;
+ 			peffect->set_activate_location();
+ 			auto& newchain = core.new_ochain.emplace_back();
+ 			newchain.was_just_sent = was_just_sent;
+-			newchain.flag = 0;
++			newchain.flag = core.chain_solving ? (CHAIN_SOLVING_TRIGGER | (act ? CHAIN_SOLVING_ACT : 0)) : 0;
+ 			newchain.chain_id = infos.field_id++;
+ 			newchain.event_id = ev.global_id;
+ 			newchain.evt = ev;

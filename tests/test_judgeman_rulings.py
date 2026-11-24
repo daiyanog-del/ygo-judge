@@ -1576,3 +1576,234 @@ def test_shade_brigandine_turned_face_down_stays_in_the_monster_zone():
     d.play(["Activate The Phantom Knights of Shade Brigandine", "P1 Monster Zone 1"])
     d.play(["Activate Book of Moon", "P1 Spell & Trap Zone 2", "The Phantom Knights of Shade Brigandine"])
     assert "P1 Monster Zone 1: The Phantom Knights of Shade Brigandine, face-down Defense" in d.board()
+
+
+# ---------------------------------------------------------------- the sixth 100 official Q&As
+def _chain_options(d):
+    return [o.label for o in d.decision.options]
+
+
+def test_kagetokage_and_simorgh_can_be_activated_in_the_same_chain():
+    # FAQ 23413: Simorgh's (1) Normal Summons a "Simorgh" monster; it is not a hand trigger that summons itself.
+    for first, second in (("Kagetokage", "Simorgh, Bird of Perfection"), ("Simorgh, Bird of Perfection", "Kagetokage")):
+        d = start({"hand": ["Kagetokage", "Simorgh, Bird of Perfection", "Blackwing - Bora the Spear"], "deck_filler": 10}, {"deck_filler": 10})
+        d.play(["Normal Summon Blackwing - Bora the Spear", "P1 Monster Zone 1"])
+        d.play([f"Activate {first}"])
+        assert any(o.startswith(f"Activate {second}") for o in _chain_options(d)), d.describe_decision()
+
+
+def _bahalutiya(hand, monsters):
+    d = start({"hand": hand, "monsters": [{"card": "Effect Veiler", "zone": z} for z in range(1, monsters + 1)], "deck_filler": 10},
+              {"hand": ["Reinforcement of the Army"], "deck": ["Mystical Shine Ball", "Marauding Captain"], "deck_filler": 10})
+    _b4_turn(d, 2)
+    d.play(["Activate Reinforcement of the Army", "P2 Spell & Trap Zone 1"])
+    return d
+
+
+def test_bahalutiya_and_puppet_king_cannot_both_be_activated():
+    # FAQ 23414: only one of them, as both summon themselves from the hand.
+    d = _bahalutiya(["Bahalutiya, the Grand Radiance", "Puppet King"], 1)
+    opts = _chain_options(d)
+    assert any(o.startswith("Activate Puppet King") for o in opts) and any(o.startswith("Activate Bahalutiya") for o in opts), d.describe_decision()
+    out = d.play(["Activate Puppet King"])
+    assert "Chain Link 1: P1 activates Puppet King" in out
+    assert not any(o.startswith("Activate Bahalutiya") for o in _chain_options(d)), d.describe_decision()
+
+
+def test_two_bahalutiya_cannot_both_be_activated():
+    # FAQ 21041
+    d = _bahalutiya(["Bahalutiya, the Grand Radiance", "Bahalutiya, the Grand Radiance"], 4)
+    assert sum(o.startswith("Activate Bahalutiya") for o in _chain_options(d)) == 2, d.describe_decision()
+    out = d.play([0])
+    assert "Chain Link 1: P1 activates Bahalutiya" in out
+    assert not any(o.startswith("Activate Bahalutiya") for o in _chain_options(d)), d.describe_decision()
+
+
+def test_sword_fish_activates_once_after_two_special_summons_in_a_chain():
+    # FAQ 23436 (also 18253, 18435, 22741, 12800): once after the chain, however many summons.
+    d = start({"monsters": [{"card": "Performapal Sword Fish", "zone": 1}], "graveyard": ["Mystical Shine Ball", "Kuriboh"],
+               "spells_traps": [{"card": "Call of the Haunted"}, {"card": "Call of the Haunted"}], "deck_filler": 10},
+              {"monsters": [{"card": "Blue-Eyes White Dragon"}], "deck_filler": 10})
+    out = d.play([0, "Mystical Shine Ball", 0, "Kuriboh"])
+    for _ in range(10):
+        if d.decision.kind == "idle":
+            break
+        out += d.play([0])
+    assert out.count("activates Performapal Sword Fish") == 1, out
+    assert "Blue-Eyes White Dragon (P2 Monster Zone 1): ATK 2400" in d.board() or "2400" in d.board(), d.board()
+
+
+def test_sword_fish_activates_again_for_a_summon_in_a_later_chain():
+    # each chain is counted on its own
+    d = start({"monsters": [{"card": "Performapal Sword Fish", "zone": 1}], "graveyard": ["Mystical Shine Ball", "Kuriboh"],
+               "spells_traps": [{"card": "Call of the Haunted"}, {"card": "Call of the Haunted"}], "deck_filler": 10},
+              {"monsters": [{"card": "Blue-Eyes White Dragon"}], "deck_filler": 10})
+    out = ""
+    for target in ("Mystical Shine Ball", "Kuriboh"):
+        out += d.play([0, target, "Pass (don't respond)"])
+        for _ in range(10):
+            if d.decision.kind in ("idle",) or (d.decision.kind == "chain" and any("Call of the Haunted" in o for o in _chain_options(d))):
+                break
+            out += d.play([0])
+    assert out.count("activates Performapal Sword Fish") == 2, out
+
+
+def test_criosphinx_activates_when_a_trap_monster_returns_to_the_hand():
+    # FAQ 6789: "Embodiment of Apophis" treated as a monster returns to the hand -> Criosphinx activates
+    d = start({"hand": ["Effect Veiler"], "monsters": [{"card": "Criosphinx", "zone": 1}],
+               "spells_traps": [{"card": "Embodiment of Apophis"}, {"card": "Compulsory Evacuation Device"}], "deck_filler": 10}, {"deck_filler": 10})
+    d.play(["Pass (don't respond)", "Pass (don't respond)", "Activate Embodiment of Apophis", "Pass (don't respond)", "P1 Monster Zone 2", "Face-up attack"])
+    out = d.play(["Activate Compulsory Evacuation Device", "Embodiment of Apophis"])
+    assert "Embodiment of Apophis: P1 Monster Zone 2 → P1 hand" in out
+    assert "Select the card(s) to send to the GY" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_djinn_detached_as_xyz_material_for_a_ritual_summon_gives_no_protection():
+    # FAQ 21257: detached by "Drytron Mu Beta Fafnir" instead of being Tributed -> no immunity to Traps
+    d = start({"hand": ["Machine Angel Ritual", "Cyber Angel Benten"],
+               "monsters": [{"card": "Drytron Mu Beta Fafnir", "position": "attack", "zone": 1,
+                             "materials": ["Djinn Disserere of Rituals"] + ["Effect Veiler"] * 5}], "deck_filler": 10},
+              {"spells_traps": [{"card": "Torrential Tribute"}], "deck_filler": 10})
+    d.play([0, 0, [0, 1, 2, 3, 4, 5], 0, 0])
+    out = d.play(["Activate Torrential Tribute", "No"])
+    assert "Cyber Angel Benten: P1 Monster Zone 2 → P1 GY — destroyed by an effect" in out, out
+
+
+def test_barrel_behind_the_door_can_respond_to_blast_held_by_destiny():
+    # FAQ 23671: it inflicts damage equal to the original ATK of the destroyed monster
+    d = start({"monsters": [{"card": "Kuriboh", "zone": 1}], "spells_traps": [{"card": "Blast Held by Destiny"}], "deck_filler": 10},
+              {"monsters": [{"card": "Battle Ox", "zone": 1}], "spells_traps": [{"card": "Barrel Behind the Door"}], "deck_filler": 10})
+    d.play(["End the turn", "Enter the Battle Phase", "Attack with Battle Ox", "Kuriboh", "Activate Blast Held by Destiny"])
+    assert any(o.startswith("Activate Barrel Behind the Door") for o in _chain_options(d)), d.describe_decision()
+
+
+def test_exosister_irene_activates_when_the_opponent_banishes_their_own_gy_by_smile_action():
+    # FAQ 23405: each player banishes from their own GY; the opponent's cards left the GY by the opponent
+    d = start({"hand": ["Smile Action"], "monsters": [{"card": "Exosister Irene", "zone": 1}], "graveyard": ["Raigeki"],
+               "extra_deck": ["Exosister Mikailis"], "deck_filler": 10}, {"graveyard": ["Dark Hole"], "deck_filler": 10})
+    out = d.play(["Activate Smile Action", "Yes", "Raigeki", "Yes", "Dark Hole"])
+    assert "Dark Hole: P2 GY → P2 banished (face-down)" in out
+    assert "effect of Exosister Irene" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_exosister_irene_does_not_activate_when_you_banish_your_own_gy_by_smile_action():
+    d = start({"hand": ["Smile Action"], "monsters": [{"card": "Exosister Irene", "zone": 1}], "graveyard": ["Raigeki"],
+               "extra_deck": ["Exosister Mikailis"], "deck_filler": 10}, {"graveyard": ["Dark Hole"], "deck_filler": 10})
+    out = d.play(["Activate Smile Action", "Yes", "Raigeki", "No"])
+    assert "Raigeki: P1 GY → P1 banished (face-down)" in out
+    assert "effect of Exosister Irene" not in d.describe_decision(), d.describe_decision()
+
+
+def test_silent_wolf_calupo_sends_a_card_declared_by_prohibition_to_the_gy():
+    # FAQ 23805
+    d = start({"hand": ["Prohibition", "Silent Wolf Calupo"], "deck": ["Kuriboh"], "deck_filler": 10}, {"deck_filler": 10})
+    d.play(["Activate Prohibition", "P1 Spell & Trap Zone 1", "Kuriboh", "Pass (don't respond)"])
+    out = d.play(["Normal Summon Silent Wolf Calupo", "P1 Monster Zone 1"])
+    assert "Kuriboh: P1 Deck → P1 GY" in out, out
+    assert "equipped" not in d.board()
+
+
+def test_zombie_world_still_makes_monsters_on_the_field_zombies_with_necrovalley():
+    # FAQ 23829: Necrovalley only stops the change in the GY
+    d = start({"monsters": [{"card": "Ryu Kokki", "zone": 1}], "field_spell": {"card": "Zombie World"}, "deck_filler": 10},
+              {"monsters": [{"card": "Black Luster Soldier", "zone": 1, "position": "defense", "summoned": "ritual", "properly_summoned": True}],
+               "field_spell": {"card": "Necrovalley"}, "deck_filler": 10})
+    out = d.play(["End the turn", "End the turn", "Enter the Battle Phase", "Attack with Ryu Kokki", "Black Luster Soldier"])
+    assert "Damage calculation" in out and "activates Ryu Kokki" not in out, out
+
+
+def test_zombie_world_does_not_change_monsters_in_the_gy_with_necrovalley():
+    # FAQ 23829: the monsters in the GY keep their Types ("Book of Life" needs a Zombie in the GY)
+    d = start({"hand": ["Book of Life"], "graveyard": ["Celtic Guardian"], "field_spell": {"card": "Zombie World"}, "deck_filler": 10},
+              {"field_spell": {"card": "Necrovalley"}, "deck_filler": 10})
+    assert not any(o.startswith("Activate Book of Life") for o in _chain_options(d)), d.describe_decision()
+
+
+def test_brave_eyes_negates_an_effect_activated_at_0_atk_even_if_the_monster_is_turned_face_down():
+    # FAQ 23622
+    d = start({"hand": ["Polymerization", "Odd-Eyes Pendulum Dragon", "Gearfried the Iron Knight"], "extra_deck": ["Brave-Eyes Pendulum Dragon"],
+               "spells_traps": [{"card": "Book of Moon"}], "deck_filler": 10},
+              {"monsters": [{"card": "Tri-Brigade Fraktall", "zone": 1}], "graveyard": ["Tri-Brigade Kerass", "Tri-Brigade Kitt"],
+               "extra_deck": ["Tri-Brigade Ferrijit the Barren Blossom"], "deck_filler": 10})
+    d.play(["Pass (don't respond)", "Pass (don't respond)", "Activate Polymerization", 0, "Pass (don't respond)", [0, 0], 0, 0, "Yes"])
+    _b4_turn(d, 2)
+    out = d.play(["Activate Tri-Brigade Fraktall"])
+    for _ in range(10):
+        if "Activate Book of Moon" in d.describe_decision():
+            break
+        out += d.play([0])
+    out += d.play(["Activate Book of Moon", "Tri-Brigade Fraktall"])
+    for _ in range(10):
+        if d.decision.kind == "idle":
+            break
+        out += d.play(["Pass (don't respond)"] if d.decision.kind == "chain" else [0])
+    assert "Tri-Brigade Fraktall" in out and "Special Summoned" not in out.split("Resolving Chain Link 1")[-1], out
+
+
+def test_vaylantz_grand_duke_can_target_a_monster_card_with_0_atk():
+    # FAQ 23631
+    d = start({"hand": ["Polymerization"], "monsters": [{"card": "Saion the Vaylantz Archer", "zone": 1, "summoned": "special", "properly_summoned": True},
+                                                       {"card": "Shinonome the Vaylantz Priestess", "zone": 2, "summoned": "special", "properly_summoned": True}],
+               "extra_deck": ["Vaylantz Genesis Grand Duke"], "deck_filler": 10},
+              {"pendulum_zones": ["Supreme King Gate Zero"], "deck_filler": 10})
+    out = ""
+    for _ in range(14):
+        text = d.describe_decision()
+        if "Vaylantz Genesis Grand Duke (P1 Monster Zone" in text and ("Yes" in text or "Activate" in text):
+            return
+        out += d.play(["Activate Polymerization"] if "Activate Polymerization" in text else [0])
+    raise AssertionError(out + d.describe_decision())
+
+
+def test_en_wave_activates_for_materials_banished_face_down_by_necro_fusion():
+    # FAQ 23640
+    d = start({"graveyard": ["Elemental HERO Avian", "Elemental HERO Burstinatrix"], "extra_deck": ["Elemental HERO Flame Wingman"],
+               "deck": ["Elemental HERO Neos"], "spells_traps": [{"card": "Necro Fusion"}, {"card": "EN Wave", "face_up": True}], "deck_filler": 10},
+              {"deck_filler": 10})
+    d.play(["Pass (don't respond)", "Pass (don't respond)", "Activate Necro Fusion", [0, 0], 0, 0])
+    assert "effect of EN Wave" in d.describe_decision(), d.describe_decision()
+
+
+def test_evocator_chevalier_summoned_again_is_still_special_summoned_from_the_gy():
+    # FAQ 23456: "The Zombie Vampire" can be targeted
+    d = start({"hand": ["Axe of Despair", "Monster Reborn"], "graveyard": [{"card": "Evocator Chevalier", "properly_summoned": True}], "deck_filler": 10},
+              {"monsters": [{"card": "The Zombie Vampire", "zone": 1, "summoned": "xyz"}], "deck_filler": 10})
+    out = d.play(["Activate Monster Reborn"])
+    for _ in range(8):
+        if d.decision.kind == "idle":
+            break
+        out += d.play([0])
+    out += d.play(["Normal Summon Evocator Chevalier"])
+    out += d.play(["Activate Axe of Despair"])
+    for _ in range(8):
+        if d.decision.kind == "idle":
+            break
+        out += d.play([0])
+    assert any(o.startswith("Activate Evocator Chevalier") for o in _chain_options(d)), out + d.describe_decision()
+
+
+def test_sapphire_pegasus_can_use_a_spell_trap_zone_freed_by_the_same_destruction():
+    # FAQ 23404: the Spell & Trap Zone emptied by "Judgment Dragon" at the same time can take it
+    d = start({"monsters": [{"card": "Crystal Beast Sapphire Pegasus", "zone": 1},
+                            {"card": "Judgment Dragon", "zone": 2, "summoned": "special", "properly_summoned": True}],
+               "spells_traps": [{"card": "Mirror Force"}] * 5, "deck_filler": 10}, {"deck_filler": 10})
+    d.play(["Activate Judgment Dragon"])
+    assert "Place \"Crystal Beast Sapphire Pegasus\" in the Spell & Trap Zone?" in d.describe_decision(), d.describe_decision()
+    out = d.play(["Yes"])
+    for _ in range(6):
+        if d.decision.kind == "idle":
+            break
+        out += d.play([0])
+    assert "Crystal Beast Sapphire Pegasus: P1 Monster Zone 1 → P1 Spell & Trap Zone" in out, out + d.describe_decision()
+    assert re.search(r"Spell & Trap Zone \d: Crystal Beast Sapphire Pegasus", d.board()), d.board()
+
+
+def test_musical_sumo_moves_into_the_zone_in_front_of_tiamaton():
+    # FAQ 23773: the zone holding the opponent's monster is not an unused zone, so Sumo moves there and attaches it
+    d = start({"monsters": [{"card": "Iron Dragon Tiamaton", "zone": 1, "summoned": "special", "properly_summoned": True},
+                            {"card": "Musical Sumo Dice Games", "zone": 3, "materials": ["Gemini Elf", "Gemini Elf"]}], "deck_filler": 10},
+              {"monsters": [{"card": "Battle Ox", "zone": 5}], "deck_filler": 10}, seed=3)
+    out = d.play(["End the turn", "Enter the Battle Phase"])
+    assert "Die roll for P1: 3" in out, out
+    assert "Musical Sumo Dice Games: P1 Monster Zone 3 → P1 GY" not in out, out
+    assert "P2 Monster Zone 5: Musical Sumo Dice Games" in d.board(), d.board()

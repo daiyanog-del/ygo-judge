@@ -1,0 +1,209 @@
+diff --git a/official/c15947754.lua b/official/c15947754.lua
+index 2c3e3f9c..e1ec5581 100644
+--- a/official/c15947754.lua
++++ b/official/c15947754.lua
+@@ -38,6 +38,8 @@ function s.eqop(e,tp,eg,ep,ev,re,r,rp)
+ 	local ec=Duel.GetDecktopGroup(tp,1):GetFirst()
+ 	if not ec then return end
+ 	Duel.DisableShuffleCheck()
++	--FAQ 23805: a card declared by "Prohibition" cannot be placed on the field, so it goes to the GY
++	if ec:IsForbidden() then Duel.SendtoGrave(ec,REASON_RULE) return end
+ 	if not c:EquipByEffectAndLimitRegister(e,tp,ec,id,false) then return end
+ 	--The equipped monster gains 500 ATK
+ 	local e1=Effect.CreateEffect(ec)
+diff --git a/official/c18654201.lua b/official/c18654201.lua
+index 691c89d5..1c37560a 100644
+--- a/official/c18654201.lua
++++ b/official/c18654201.lua
+@@ -19,7 +19,8 @@ function s.initial_effect(c)
+ 	c:RegisterEffect(e2)
+ end
+ function s.filter(c,tp)
+-	return c:IsControler(tp) and c:IsPreviousLocation(LOCATION_MZONE) and c:IsMonster()
++	--FAQ 6789: a Trap Card that was a monster (e.g. "Embodiment of Apophis") counts too
++	return c:IsControler(tp) and c:IsPreviousLocation(LOCATION_MZONE) and c:GetPreviousTypeOnField()&TYPE_MONSTER~=0
+ end
+ function s.regop(e,tp,eg,ep,ev,re,r,rp)
+ 	local p1=false local p2=false
+diff --git a/official/c30492798.lua b/official/c30492798.lua
+index 9631fb5d..a7733511 100644
+--- a/official/c30492798.lua
++++ b/official/c30492798.lua
+@@ -24,7 +24,8 @@ function s.con(e)
+ 	return not Duel.IsPlayerAffectedByEffect(e:GetHandlerPlayer(),CARD_SPIRIT_ELIMINATION)
+ end
+ function s.condition(e,tp,eg,ep,ev,re,r,rp)
+-	return r==REASON_RITUAL
++	--FAQ 21257: not when it was detached as Xyz Material instead ("Drytron Mu Beta Fafnir")
++	return r==REASON_RITUAL and not e:GetHandler():IsPreviousLocation(LOCATION_OVERLAY)
+ end
+ function s.operation(e,tp,eg,ep,ev,re,r,rp)
+ 	for rc in eg:Iter() do
+diff --git a/official/c4064256.lua b/official/c4064256.lua
+index 192e9abc..a695d87b 100644
+--- a/official/c4064256.lua
++++ b/official/c4064256.lua
+@@ -42,8 +42,9 @@ function s.tg(e,c)
+ 	if c:GetFlagEffect(1)==0 then
+ 		c:RegisterFlagEffect(1,0,0,0)
+ 		local eff
++		--FAQ 23829: "Necrovalley" stops the Type change only in the GY; monsters on the field still change
+ 		if c:IsLocation(LOCATION_MZONE) then
+-			eff={Duel.GetPlayerEffect(c:GetControler(),EFFECT_NECRO_VALLEY)}
++			eff={}
+ 		else
+ 			eff={c:GetCardEffect(EFFECT_NECRO_VALLEY)}
+ 		end
+diff --git a/official/c45064756.lua b/official/c45064756.lua
+index 3b0c62c0..0939602f 100644
+--- a/official/c45064756.lua
++++ b/official/c45064756.lua
+@@ -52,8 +52,9 @@ function s.rctg(e,c)
+ 	if c:GetFlagEffect(1)==0 then
+ 		c:RegisterFlagEffect(1,0,0,0)
+ 		local eff
++		--FAQ 23829: "Necrovalley" stops the Type change only in the GY; monsters on the field still change
+ 		if c:IsLocation(LOCATION_MZONE) then
+-			eff={Duel.GetPlayerEffect(c:GetControler(),EFFECT_NECRO_VALLEY)}
++			eff={}
+ 		else
+ 			eff={c:GetCardEffect(EFFECT_NECRO_VALLEY)}
+ 		end
+diff --git a/official/c46247282.lua b/official/c46247282.lua
+index 80907605..1b909421 100644
+--- a/official/c46247282.lua
++++ b/official/c46247282.lua
+@@ -89,5 +89,12 @@ function s.disop(e,tp)
+ 		end
+ 		zone=zone&~dz
+ 	end
++	--FAQ 23773: a zone "Musical Sumo Dice Games" is moving into is in use
++	if Duel.GetFlagEffect(0,96637156)>0 then
++		for _,lab in ipairs({Duel.GetFlagEffectLabel(0,96637156)}) do
++			local p,seq=lab>>4,lab&0xf
++			zone=zone&~(p==tp and (1<<seq) or (1<<(16+seq)))
++		end
++	end
+ 	return zone
+ end
+\ No newline at end of file
+diff --git a/official/c47870325.lua b/official/c47870325.lua
+index 24cd8d94..955d2e75 100644
+--- a/official/c47870325.lua
++++ b/official/c47870325.lua
+@@ -41,10 +41,13 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ 	if #rg==0 then return end
+ 	Duel.HintSelection(rg,true)
+-	if Duel.Remove(rg,POS_FACEDOWN,REASON_EFFECT)>0 then
+-		local og=Duel.GetOperatedGroup()
+-		for tc in og:Iter() do
+-			tc:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD,0,1)
++	--FAQ 23405: each player banishes the cards from their own GY (e.g. for "Exosister Irene")
++	for p=0,1 do
++		local pg=rg:Filter(Card.IsControler,nil,p)
++		if #pg>0 and Duel.Remove(pg,POS_FACEDOWN,REASON_EFFECT,PLAYER_NONE,p)>0 then
++			for tc in Duel.GetOperatedGroup():Iter() do
++				tc:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD,0,1)
++			end
+ 		end
+ 	end
+ end
+diff --git a/official/c51208877.lua b/official/c51208877.lua
+index 11662785..3587b8a5 100644
+--- a/official/c51208877.lua
++++ b/official/c51208877.lua
+@@ -32,6 +32,8 @@ function s.destg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return true end
+ 	local g=Duel.GetMatchingGroup(Card.IsFaceup,tp,0,LOCATION_MZONE,nil):GetMaxGroup(Card.GetAttack)
+ 	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,1,0,0)
++	--FAQ 23671: it inflicts damage equal to the original ATK, so "Barrel Behind the Door" can respond
++	if g and #g>0 then Duel.SetOperationInfo(0,CATEGORY_DAMAGE,nil,0,1-tp,g:GetFirst():GetTextAttack()) end
+ end
+ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	local g=Duel.GetMatchingGroup(Card.IsFaceup,tp,0,LOCATION_MZONE,nil)
+diff --git a/official/c65107325.lua b/official/c65107325.lua
+index 24a68049..3310633c 100644
+--- a/official/c65107325.lua
++++ b/official/c65107325.lua
+@@ -48,5 +48,12 @@ function s.znop(e,tp,eg,ep,ev,re,r,rp)
+ 			zones=zones&~(ctrl and (1<<(27-seq)) or (1<<(11-seq)))
+ 		end
+ 	end
++	--FAQ 23773: a zone "Musical Sumo Dice Games" is moving into is in use
++	if Duel.GetFlagEffect(0,96637156)>0 then
++		for _,lab in ipairs({Duel.GetFlagEffectLabel(0,96637156)}) do
++			local p,seq=lab>>4,lab&0xf
++			zones=zones&~(p==tp and (1<<seq) or (1<<(16+seq)))
++		end
++	end
+ 	return zones
+ end
+\ No newline at end of file
+diff --git a/official/c76075139.lua b/official/c76075139.lua
+index d886c2d0..88e7f268 100644
+--- a/official/c76075139.lua
++++ b/official/c76075139.lua
+@@ -118,7 +118,8 @@ function s.mvop(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ end
+ function s.thfilter(c)
+-	return c:IsOriginalType(TYPE_MONSTER) and c:GetSequence()<5 and c:GetBaseAttack()>0 and c:IsAbleToHand()
++	--FAQ 23631: a monster card with 0 or ? ATK can be targeted too
++	return c:IsOriginalType(TYPE_MONSTER) and c:GetSequence()<5 and c:IsAbleToHand()
+ end
+ function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chkc then return chkc:IsLocation(LOCATION_SZONE) and chkc:IsController(1-tp) and s.thfilter(chkc) end
+diff --git a/official/c88305705.lua b/official/c88305705.lua
+index ba3ceedb..91fce656 100644
+--- a/official/c88305705.lua
++++ b/official/c88305705.lua
+@@ -71,7 +71,8 @@ function s.ftarget(e,c)
+ end
+ function s.discon(e,tp,eg,ep,ev,re,r,rp)
+ 	if e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED) then return false end
+-	return re:IsMonsterEffect() and re:GetHandler():GetAttack()==0
++	--FAQ 23622: an effect activated by a monster with 0 ATK is negated even if its ATK changed afterwards
++	return re:IsMonsterEffect() and Duel.GetChainInfo(ev,CHAININFO_TRIGGERING_ATTACK)==0
+ end
+ function s.disop(e,tp,eg,ep,ev,re,r,rp)
+ 	Duel.NegateEffect(ev)
+diff --git a/official/c89058026.lua b/official/c89058026.lua
+index a1c6595f..c6dd399b 100644
+--- a/official/c89058026.lua
++++ b/official/c89058026.lua
+@@ -39,9 +39,10 @@ s.listed_names={CARD_NEOS}
+ s.listed_series={SET_ELEMENTAL_HERO,SET_NEO_SPACIAN}
+ function s.dspconfilter(c,tp)
+ 	--JudgemanAI 2026-11-23: Check the archetype the material had on the field (IsPreviousSetCard) instead of in the GY/banishment. Konami FAQ 23634: a monster whose name became an "Elemental HERO" monster in the Monster Zone and is sent to the GY as Fusion Material satisfies this condition.
+-	return (c:IsPreviousLocation(LOCATION_ONFIELD) and c:IsPreviousSetCard(SET_ELEMENTAL_HERO) or not c:IsPreviousLocation(LOCATION_ONFIELD) and c:IsSetCard(SET_ELEMENTAL_HERO))
++	--FAQ 23640: a material banished face-down still counts (what it was where it became material decides)
++	return (c:IsPreviousLocation(LOCATION_ONFIELD) and c:IsPreviousSetCard(SET_ELEMENTAL_HERO) or not c:IsPreviousLocation(LOCATION_ONFIELD) and c:IsOriginalSetCard(SET_ELEMENTAL_HERO))
+ 		and c:IsPreviousControler(tp) and c:IsLocation(LOCATION_GRAVE|LOCATION_REMOVED)
+-		and c:IsFaceup() and (c:IsMonster() or c:IsPreviousLocation(LOCATION_MZONE))
++		and (c:IsPreviousLocation(LOCATION_MZONE) or c:GetOriginalType()&TYPE_MONSTER~=0)
+ end
+ function s.dspcon(e,tp,eg,ep,ev,re,r,rp)
+ 	return (r&REASON_FUSION)==REASON_FUSION and eg:IsExists(s.dspconfilter,1,nil,tp)
+diff --git a/official/c96637156.lua b/official/c96637156.lua
+index f2c87ef0..2fbf6583 100644
+--- a/official/c96637156.lua
++++ b/official/c96637156.lua
+@@ -49,11 +49,15 @@ function s.mvop(e,tp,eg,ep,ev,re,r,rp)
+ 	local win=false
+ 	if tc then
+ 		if c==tc or tc:IsImmuneToEffect(e) or tc:IsType(TYPE_TOKEN) or not c:IsType(TYPE_XYZ) then return s.cannot_move(c) end
++		--FAQ 23773: the zone stays in use while this card moves into it ("Iron Dragon Tiamaton" does not lock it)
++		Duel.RegisterFlagEffect(0,id,RESET_CHAIN,0,1,fp*16+nseq)
+ 		local prev=c:GetOverlayCount()
+ 		Duel.Overlay(c,tc)
+ 		win=(prev<7 and c:GetOverlayCount()>6)
+ 	end
+-	if switch and Duel.GetControl(c,1-tp,0,0,1<<nseq) or Duel.MoveSequence(c,seq) then
++	local moved=switch and Duel.GetControl(c,1-tp,0,0,1<<nseq) or Duel.MoveSequence(c,seq)
++	Duel.ResetFlagEffect(0,id)
++	if moved then
+ 		if win then Duel.Win(tp,WIN_REASON_MUSICAL_SUMO) end
+ 	else return s.cannot_move(c) end
+ end
+\ No newline at end of file

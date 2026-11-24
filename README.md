@@ -66,6 +66,16 @@
 >     "Different Dimension Ground" (23545) and "Dimensional Fissure" (7959).
 >   - `cards.py`: a counter only one card uses (`Counter ("Card")`) is also found by that card's name, and an
 >     unknown counter's error lists similar ones.
+>   - core patch 0008, found by testing a sixth 100 official Q&As: a hand trigger that summons "a ... monster" is not
+>     limited like one that summons itself, even if it could pick itself (FAQ 23413); a field trigger whose condition
+>     is met several times while a chain resolves is activated once after it (23436, 18253, 18435, 22741, 12800); a
+>     Gemini monster summoned again keeps where it was summoned from (23456); cards that may be placed in the Spell &
+>     Trap Zone instead of the GY are moved last, so the zones of cards leaving with them are free (23404).
+>   - script patch 0011, from the same Q&As: "Criosphinx" (FAQ 6789), "Djinn Disserere of Rituals" (21257), "Blast
+>     Held by Destiny" (23671), "Smile Action" (23405), "Silent Wolf Calupo" (23805), "Zombie World" and "Rebirth
+>     Judgment" with "Necrovalley" (23829), "Brave-Eyes Pendulum Dragon" (23622), "Vaylantz Genesis Grand Duke"
+>     (23631), "EN Wave" (23640), and "Musical Sumo Dice Games" with "Iron Dragon Tiamaton" and "Sour Scheduling - Red
+>     Vinegar Vamoose", which lock unused zones (23773).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
