@@ -1807,3 +1807,92 @@ def test_musical_sumo_moves_into_the_zone_in_front_of_tiamaton():
     assert "Die roll for P1: 3" in out, out
     assert "Musical Sumo Dice Games: P1 Monster Zone 3 → P1 GY" not in out, out
     assert "P2 Monster Zone 5: Musical Sumo Dice Games" in d.board(), d.board()
+
+
+# ---------------------------------------------------------------- the seventh 100 official Q&As
+def test_sanguine_swamp_is_destroyed_on_the_second_standby_phase_under_imperial_custom():
+    # FAQ 10345: destroying itself on the 2nd Standby Phase is not destruction by a card effect
+    d = start({"spells_traps": [{"card": "Imperial Custom", "face_up": True}, {"card": "Sanguine Swamp"}], "deck_filler": 10},
+              {"deck_filler": 10})
+    d.play(["Activate Sanguine Swamp"])
+    assert "Sanguine Swamp" in d.board(), d.board()
+    _b4_turn(d, 3)
+    assert "Spell & Trap Zone 2: Sanguine Swamp" not in d.board() and re.search(r"GY: .*Sanguine Swamp", d.board()), d.board()
+
+
+def test_overdoom_line_is_destroyed_on_the_second_end_phase_under_imperial_custom():
+    # FAQ 8588
+    d = start({"spells_traps": [{"card": "Imperial Custom", "face_up": True}, {"card": "Overdoom Line"}], "deck_filler": 10},
+              {"deck_filler": 10})
+    d.play(["Activate Overdoom Line"])
+    assert "Spell & Trap Zone 2: Overdoom Line" in d.board(), d.board()
+    _b4_turn(d, 3)
+    assert "Spell & Trap Zone 2: Overdoom Line" in d.board(), d.board()
+    _b4_turn(d, 4)
+    assert re.search(r"GY: .*Overdoom Line", d.board()), d.board()
+
+
+def _javelin(armor):
+    p1 = {"hand": ["Fissure"], "monsters": [{"card": "Blue-Eyes White Dragon", "zone": 1}], "deck_filler": 10}
+    if armor:
+        p1["spells_traps"] = [{"card": "Metalsilver Armor", "face_up": True, "equipped_to": "p1:Blue-Eyes White Dragon"}]
+    d = start(p1, {"monsters": [{"card": "Dragunity Javelin", "zone": 1}, {"card": "Dragunity Dux", "zone": 2}], "deck_filler": 10})
+    return d, d.play(["Activate Fissure"])
+
+
+def test_dragunity_javelin_cannot_equip_to_a_monster_metalsilver_armor_protects():
+    # FAQ 10056: once equipped it keeps targeting the monster, so the opponent's Armor stops it
+    d, out = _javelin(True)
+    for _ in range(4):
+        if d.decision.kind == "idle":
+            break
+        assert "Dragunity Javelin" not in d.describe_decision().split("Decision for")[-1].split("\n")[0], d.describe_decision()
+        out += d.play([0])
+    assert "Dragunity Javelin: P2 Monster Zone 1 → P2 GY" in out, out
+
+
+def test_dragunity_javelin_equips_without_metalsilver_armor():
+    d, out = _javelin(False)
+    for _ in range(4):
+        if d.decision.kind == "idle":
+            break
+        out += d.play([0])
+    assert "Dragunity Javelin: P2 Monster Zone 1 → P2 GY" not in out, out
+    assert re.search(r"Spell & Trap Zone \d: Dragunity Javelin", d.board()), d.board()
+
+
+def test_vanitys_emptiness_activates_once_for_foolish_burial_and_its_own_card():
+    # FAQ 12929: the monster from the Deck and the resolved "Foolish Burial" itself trigger it once
+    d = start({"hand": ["Foolish Burial"], "deck": ["Kuriboh"], "spells_traps": [{"card": "Vanity's Emptiness", "face_up": True}], "deck_filler": 10},
+              {"deck_filler": 10})
+    out = d.play(["Activate Foolish Burial", "Kuriboh"])
+    for _ in range(8):
+        if d.decision.kind == "idle":
+            break
+        out += d.play([0])
+    assert out.count("activates Vanity's Emptiness") == 1, out
+    assert re.search(r"GY: .*Vanity's Emptiness", d.board()), d.board()
+
+
+_EXODIA = ["Exodia the Forbidden One", "Right Leg of the Forbidden One", "Left Leg of the Forbidden One", "Right Arm of the Forbidden One"]
+
+
+def test_exodia_wins_before_skull_invitation_damage_from_graceful_charity():
+    # FAQ 6184: complete when Graceful Charity finishes, so the win comes first and Skull Invitation deals no damage
+    d = start({"lp": 300, "hand": ["Graceful Charity"] + _EXODIA, "deck": ["Left Arm of the Forbidden One", "Kuriboh", "Kuriboh"],
+               "spells_traps": [{"card": "Skull Invitation", "face_up": True}], "deck_filler": 10}, {"deck_filler": 10})
+    out = d.play(["Activate Graceful Charity", 0])
+    hand = [o.label for o in d.decision.options]
+    out += d.play([[i for i, h in enumerate(hand) if "Kuriboh" in h]])
+    assert "P1 wins" in out, out
+    assert "P2 wins" not in out and "takes 600 damage" not in out, out
+
+
+def test_exodia_does_not_win_when_graceful_charity_discards_a_piece():
+    # FAQ 11354: drawing the last piece is not enough if the discard sends a piece away
+    d = start({"hand": ["Graceful Charity"] + _EXODIA, "deck": ["Left Arm of the Forbidden One", "Kuriboh", "Kuriboh"], "deck_filler": 10},
+              {"deck_filler": 10})
+    out = d.play(["Activate Graceful Charity", 0])
+    hand = [o.label for o in d.decision.options]
+    out += d.play([[hand.index(next(h for h in hand if "Exodia the Forbidden One" in h)), hand.index(next(h for h in hand if "Kuriboh" in h))]])
+    assert "P1 wins" not in out, out

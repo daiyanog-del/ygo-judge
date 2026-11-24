@@ -76,6 +76,12 @@
 >     Judgment" with "Necrovalley" (23829), "Brave-Eyes Pendulum Dragon" (23622), "Vaylantz Genesis Grand Duke"
 >     (23631), "EN Wave" (23640), and "Musical Sumo Dice Games" with "Iron Dragon Tiamaton" and "Sour Scheduling - Red
 >     Vinegar Vamoose", which lock unused zones (23773).
+>   - core patch 0009, found by testing a seventh 100 official Q&As: the resolved cards sent to the GY after a chain
+>     still belong to it, so a field trigger met by them and during the chain is activated once (FAQ 12929).
+>   - script patch 0012, from the same Q&As: a card destroying itself in its Nth phase after activation is not destroyed
+>     by a card effect ("Sanguine Swamp" 10345, "Overdoom Line" 8588, as "Swords of Revealing Light" already did, 19310),
+>     in all 9 cards worded that way; "Dragunity Javelin" cannot be equipped to a monster it cannot target (10056);
+>     "Skull Invitation" applies after the resolving card, so "Exodia the Forbidden One" wins first (6184).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

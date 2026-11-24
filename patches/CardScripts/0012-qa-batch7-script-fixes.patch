@@ -1,0 +1,161 @@
+diff --git a/official/c27642961.lua b/official/c27642961.lua
+index 751926d2..c301a0b2 100644
+--- a/official/c27642961.lua
++++ b/official/c27642961.lua
+@@ -58,7 +58,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==3 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+ function s.cfilter(c,tp)
+diff --git a/official/c31476755.lua b/official/c31476755.lua
+index 8cff75d6..ebdb4e01 100644
+--- a/official/c31476755.lua
++++ b/official/c31476755.lua
+@@ -43,7 +43,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==2 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+ function s.efilter(e,re)
+diff --git a/official/c39373426.lua b/official/c39373426.lua
+index 5877f5b3..58ff41fe 100644
+--- a/official/c39373426.lua
++++ b/official/c39373426.lua
+@@ -64,7 +64,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==3 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+ function s.cncfilter(c,tp)
+diff --git a/official/c60627999.lua b/official/c60627999.lua
+index 756c886c..c585f788 100644
+--- a/official/c60627999.lua
++++ b/official/c60627999.lua
+@@ -52,7 +52,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==2 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+ function s.sdescon(e)
+diff --git a/official/c63851864.lua b/official/c63851864.lua
+index dfc08d04..5f15d8f6 100644
+--- a/official/c63851864.lua
++++ b/official/c63851864.lua
+@@ -40,7 +40,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==3 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+ function s.drcon(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c79569173.lua b/official/c79569173.lua
+index 01552464..cf54966d 100644
+--- a/official/c79569173.lua
++++ b/official/c79569173.lua
+@@ -66,7 +66,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	local ct=c:GetTurnCounter()
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+-	if ct==3 and Duel.Destroy(c,REASON_EFFECT)>0 then
++	if ct==3 and Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect>0 then
+ 		Duel.RaiseSingleEvent(e:GetHandler(),EVENT_CUSTOM+id,e,0,tp,tp,0)
+ 	end
+ end
+diff --git a/official/c80549379.lua b/official/c80549379.lua
+index bac3f7cf..c9c63c95 100644
+--- a/official/c80549379.lua
++++ b/official/c80549379.lua
+@@ -12,21 +12,22 @@ function s.initial_effect(c)
+ 	c:RegisterEffect(e1)
+ end
+ s.listed_series={SET_DRAGUNITY}
+-function s.filter(c)
+-	return c:IsFaceup() and c:IsSetCard(SET_DRAGUNITY) and c:IsRace(RACE_WINGEDBEAST)
++--FAQ 10056: it keeps targeting the monster once equipped, so it cannot be equipped to a monster this card cannot target
++function s.filter(c,e)
++	return c:IsFaceup() and c:IsSetCard(SET_DRAGUNITY) and c:IsRace(RACE_WINGEDBEAST) and c:IsCanBeEffectTarget(e)
+ end
+ function s.reptg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local c=e:GetHandler()
+ 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_SZONE)>0
+ 		and not c:IsReason(REASON_REPLACE) and c:IsLocation(LOCATION_MZONE) and c:IsFaceup()
+-		and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_MZONE,0,1,c) end
++		and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_MZONE,0,1,c,e) end
+ 	if Duel.SelectEffectYesNo(tp,c,96) then return true
+ 	else return false end
+ end
+ function s.repop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_EQUIP)
+-	local g=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_MZONE,0,1,1,e:GetHandler())
++	local g=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_MZONE,0,1,1,e:GetHandler(),e)
+ 	local tc=g:GetFirst()
+ 	if Duel.Equip(tp,c,tc,false) then
+ 		local e1=Effect.CreateEffect(c)
+diff --git a/official/c8279188.lua b/official/c8279188.lua
+index f23c82a5..8c67d2ff 100644
+--- a/official/c8279188.lua
++++ b/official/c8279188.lua
+@@ -70,6 +70,6 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==3 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+\ No newline at end of file
+diff --git a/official/c87046457.lua b/official/c87046457.lua
+index 16458b2b..2a5bc249 100644
+--- a/official/c87046457.lua
++++ b/official/c87046457.lua
+@@ -56,7 +56,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==2 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+ function s.filter(c,e,tp)
+diff --git a/official/c9212051.lua b/official/c9212051.lua
+index 3f0fcee2..c3980143 100644
+--- a/official/c9212051.lua
++++ b/official/c9212051.lua
+@@ -68,7 +68,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	ct=ct+1
+ 	c:SetTurnCounter(ct)
+ 	if ct==3 then
+-		Duel.Destroy(c,REASON_EFFECT)
++		Duel.Destroy(c,REASON_RULE) --FAQ 10345: not destruction by a card effect
+ 	end
+ end
+ function s.thcost(e,tp,eg,ep,ev,re,r,rp,chk)
+diff --git a/official/c98139712.lua b/official/c98139712.lua
+index f1855420..4efa41d1 100644
+--- a/official/c98139712.lua
++++ b/official/c98139712.lua
+@@ -11,6 +11,8 @@ function s.initial_effect(c)
+ 	local e2=Effect.CreateEffect(c)
+ 	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+ 	e2:SetCode(EVENT_TO_GRAVE)
++	--FAQ 6184: applied after the resolving card finishes, so "Exodia the Forbidden One" wins first
++	e2:SetProperty(EFFECT_FLAG_DELAY)
+ 	e2:SetRange(LOCATION_SZONE)
+ 	e2:SetOperation(s.operation)
+ 	c:RegisterEffect(e2)

@@ -1,0 +1,64 @@
+diff --git a/field.cpp b/field.cpp
+index ff5883d..3594202 100644
+--- a/field.cpp
++++ b/field.cpp
+@@ -3275,7 +3275,7 @@ int32_t field::check_trigger_effect(const chain& ch) const {
+ // JudgemanAI: while a chain resolves, a field trigger effect is queued once however many times its condition is met
+ // (Q&A 23436, 18253, 18435, 22741, 12800). An entry whose condition failed (hand triggers) gives way to one that passes.
+ bool field::queue_solving_trigger(chain_list& list, effect* peffect, bool act) {
+-	if(!core.chain_solving || !(peffect->type & EFFECT_TYPE_FIELD))
++	if(!(core.chain_solving || core.chain_leave_sending) || !(peffect->type & EFFECT_TYPE_FIELD))
+ 		return true;
+ 	auto it = std::find_if(list.begin(), list.end(), [peffect](const chain& ch) {
+ 		return ch.triggering_effect == peffect && (ch.flag & CHAIN_SOLVING_TRIGGER);
+diff --git a/field.h b/field.h
+index adb9367..913f8b6 100644
+--- a/field.h
++++ b/field.h
+@@ -297,6 +297,7 @@ struct processor {
+ 	chain_limit_list chain_limit;
+ 	chain_limit_list chain_limit_p;
+ 	bool chain_solving;
++	bool chain_leave_sending{};
+ 	bool conti_solving;
+ 	uint8_t win_player{ 5 };
+ 	uint8_t win_reason;
+diff --git a/processor.cpp b/processor.cpp
+index 685c733..39467a6 100644
+--- a/processor.cpp
++++ b/processor.cpp
+@@ -1233,7 +1233,7 @@ int32_t field::process_instant_event() {
+ 			peffect->set_activate_location();
+ 			auto& newchain = core.new_fchain.emplace_back();
+ 			newchain.was_just_sent = was_just_sent;
+-			newchain.flag = core.chain_solving ? (CHAIN_SOLVING_TRIGGER | CHAIN_SOLVING_ACT) : 0;
++			newchain.flag = (core.chain_solving || core.chain_leave_sending) ? (CHAIN_SOLVING_TRIGGER | CHAIN_SOLVING_ACT) : 0;
+ 			newchain.chain_id = infos.field_id++;
+ 			newchain.event_id = ev.global_id;
+ 			newchain.evt = ev;
+@@ -1261,7 +1261,7 @@ int32_t field::process_instant_event() {
+ 			peffect->set_activate_location();
+ 			auto& newchain = core.new_ochain.emplace_back();
+ 			newchain.was_just_sent = was_just_sent;
+-			newchain.flag = core.chain_solving ? (CHAIN_SOLVING_TRIGGER | (act ? CHAIN_SOLVING_ACT : 0)) : 0;
++			newchain.flag = (core.chain_solving || core.chain_leave_sending) ? (CHAIN_SOLVING_TRIGGER | (act ? CHAIN_SOLVING_ACT : 0)) : 0;
+ 			newchain.chain_id = infos.field_id++;
+ 			newchain.event_id = ev.global_id;
+ 			newchain.evt = ev;
+@@ -4316,11 +4316,15 @@ bool field::process(Processors::SolveChain& arg) {
+ 			if(!(*rm)->is_status(STATUS_LEAVE_CONFIRMED))
+ 				core.leave_confirmed.erase(rm);
+ 		}
+-		if(core.leave_confirmed.size())
++		if(core.leave_confirmed.size()) {
++			//FAQ 12929: the resolved cards leaving the field still belong to the chain for triggers that activate once after it
++			core.chain_leave_sending = true;
+ 			send_to(core.leave_confirmed, nullptr, REASON_RULE, PLAYER_NONE, PLAYER_NONE, LOCATION_GRAVE, 0, POS_FACEUP);
++		}
+ 		return FALSE;
+ 	}
+ 	case 12: {
++		core.chain_leave_sending = false;
+ 		core.used_event.splice(core.used_event.end(), core.point_event);
+ 		pduel->new_message(MSG_CHAIN_END);
+ 		reset_chain();
