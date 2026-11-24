@@ -1,0 +1,144 @@
+diff --git a/official/c10691144.lua b/official/c10691144.lua
+index 72003b70..02550603 100644
+--- a/official/c10691144.lua
++++ b/official/c10691144.lua
+@@ -17,7 +17,11 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	Duel.SetPossibleOperationInfo(0,CATEGORY_REMOVE,nil,1,1-tp,LOCATION_HAND|LOCATION_ONFIELD|LOCATION_GRAVE)
+ end
+ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+-	if Duel.GetFlagEffect(tp,id)~=0 then return end
++	--FAQ 10199: each copy activated this turn adds its banishes
++	if Duel.GetFlagEffect(tp,id)~=0 then
++		Duel.SetFlagEffectLabel(tp,id,Duel.GetFlagEffectLabel(tp,id)+1)
++		return
++	end
+ 	local e1=Effect.CreateEffect(e:GetHandler())
+ 	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+ 	e1:SetProperty(EFFECT_FLAG_DELAY)
+@@ -26,7 +30,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	e1:SetOperation(s.rmop)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
+-	Duel.RegisterFlagEffect(tp,id,RESET_PHASE|PHASE_END,0,1)
++	Duel.RegisterFlagEffect(tp,id,RESET_PHASE|PHASE_END,0,1,1)
+ end
+ function s.rmcon(e,tp,eg,ep,ev,re,r,rp)
+ 	local flag=0
+@@ -47,26 +51,28 @@ end
+ function s.rmop(e,tp,eg,ep,ev,re,r,rp)
+ 	local g=Group.CreateGroup()
+ 	local flag=e:GetLabel()
+-	if (flag&LOCATION_HAND)~=0 then
+-		local rg=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,0,LOCATION_HAND,nil)
+-		if #rg>0 then
+-			local ct=1
+-			if #rg>1 then ct=Duel.SelectOption(tp,aux.Stringid(id,3),aux.Stringid(id,4))+1 end
+-			g:Merge(rg:RandomSelect(tp,ct))
++	for _=1,Duel.GetFlagEffectLabel(tp,id) or 1 do --once for each copy activated (FAQ 10199)
++		if (flag&LOCATION_HAND)~=0 then
++			local rg=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,0,LOCATION_HAND,g)
++			if #rg>0 then
++				local ct=1
++				if #rg>1 then ct=Duel.SelectOption(tp,aux.Stringid(id,3),aux.Stringid(id,4))+1 end
++				g:Merge(rg:RandomSelect(tp,ct))
++			end
+ 		end
+-	end
+-	if (flag&LOCATION_ONFIELD)~=0 then
+-		local rg=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,0,LOCATION_ONFIELD,nil)
+-		if #rg>0 then
+-			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
+-			g:Merge(rg:Select(tp,1,2,nil))
++		if (flag&LOCATION_ONFIELD)~=0 then
++			local rg=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,0,LOCATION_ONFIELD,g)
++			if #rg>0 then
++				Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
++				g:Merge(rg:Select(tp,1,2,nil))
++			end
+ 		end
+-	end
+-	if (flag&LOCATION_GRAVE)~=0 then
+-		local rg=Duel.GetMatchingGroup(s.rmfilter,tp,0,LOCATION_MZONE|LOCATION_GRAVE,nil)
+-		if #rg>0 then
+-			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
+-			g:Merge(rg:Select(tp,1,2,nil))
++		if (flag&LOCATION_GRAVE)~=0 then
++			local rg=Duel.GetMatchingGroup(s.rmfilter,tp,0,LOCATION_MZONE|LOCATION_GRAVE,g)
++			if #rg>0 then
++				Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
++				g:Merge(rg:Select(tp,1,2,nil))
++			end
+ 		end
+ 	end
+ 	Duel.Remove(g,POS_FACEUP,REASON_EFFECT)
+diff --git a/official/c16313112.lua b/official/c16313112.lua
+index a50b207e..f5af2bba 100644
+--- a/official/c16313112.lua
++++ b/official/c16313112.lua
+@@ -56,8 +56,9 @@ function s.descon2(e,tp,eg,ep,ev,re,r,rp)
+ end
+ function s.desop2(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=e:GetHandler():GetBattleTarget()
++	local atk=tc:GetBaseAttack() --FAQ 22051
+ 	if Duel.Destroy(tc,REASON_EFFECT)==0 then return end
+-	Duel.Damage(1-tp,tc:GetBaseAttack(),REASON_EFFECT)
++	Duel.Damage(1-tp,atk,REASON_EFFECT)
+ end
+ function s.descon(e,tp,eg,ep,ev,re,r,rp)
+ 	return e:GetHandler():IsReincarnationSummoned()
+diff --git a/official/c23672629.lua b/official/c23672629.lua
+index b2102230..1362b8fb 100644
+--- a/official/c23672629.lua
++++ b/official/c23672629.lua
+@@ -59,7 +59,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ end
+ function s.tdcfilter(c,tp)
+ 	return c:IsReason(REASON_BATTLE|REASON_EFFECT) and c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousControler(tp)
+-		and c:IsType(TYPE_XYZ) and c:IsAttribute(ATTRIBUTE_WATER)
++		and c:IsPreviousTypeOnField(TYPE_XYZ) and c:IsPreviousAttributeOnField(ATTRIBUTE_WATER) --FAQ 22945
+ end
+ function s.tdcon(e,tp,eg,ep,ev,re,r,rp)
+ 	return eg:IsExists(s.tdcfilter,1,nil,tp)
+diff --git a/official/c24010609.lua b/official/c24010609.lua
+index badc0f0b..6ceefaff 100644
+--- a/official/c24010609.lua
++++ b/official/c24010609.lua
+@@ -41,6 +41,9 @@ function s.initial_effect(c)
+ 	e5:SetCode(EVENT_CHAIN_NEGATED)
+ 	e5:SetOperation(s.regop2)
+ 	c:RegisterEffect(e5)
++	local e6=e4:Clone() --FAQ 22468
++	e6:SetCode(4179255)
++	c:RegisterEffect(e6)
+ end
+ s.listed_series={SET_SKY_STRIKER}
+ function s.tgcon(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c88093706.lua b/official/c88093706.lua
+index af42aa39..bf613ef7 100644
+--- a/official/c88093706.lua
++++ b/official/c88093706.lua
+@@ -132,8 +132,8 @@ function s.disop(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ end
+ function s.damcon(e,tp,eg,ep,ev,re,r,rp)
+-	local tc=eg:GetFirst()
+-	return tc:IsLocation(LOCATION_GRAVE) and tc:IsMonster() and not tc:IsPreviousControler(tp)
++	--FAQ 22202: also when your monster is destroyed by the same battle
++	return eg:IsExists(function(tc) return tc:IsLocation(LOCATION_GRAVE) and tc:IsMonster() and not tc:IsPreviousControler(tp) end,1,nil)
+ end
+ function s.damtg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return true end
+diff --git a/official/c98506199.lua b/official/c98506199.lua
+index 2beabe35..3ae5fb08 100644
+--- a/official/c98506199.lua
++++ b/official/c98506199.lua
+@@ -51,7 +51,8 @@ function s.cfilter(c,tp)
+ 	return c:IsReason(REASON_BATTLE|REASON_EFFECT) and c:GetPreviousControler()==tp and c:IsPreviousLocation(LOCATION_ONFIELD) and c:GetReasonPlayer()==1-tp
+ end
+ function s.tdcon(e,tp,eg,ep,ev,re,r,rp)
+-	return eg:IsExists(s.cfilter,1,e:GetHandler(),tp)
++	--FAQ 22856: not when this card is destroyed at the same time
++	return not eg:IsContains(e:GetHandler()) and eg:IsExists(s.cfilter,1,e:GetHandler(),tp)
+ end
+ function s.tdtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chkc then return chkc:IsControler(1-tp) and chkc:IsAbleToDeck() end

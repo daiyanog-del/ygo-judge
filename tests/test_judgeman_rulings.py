@@ -1316,3 +1316,134 @@ def test_undo_after_the_start_activation_rebuilds_the_same_board():
     d.play(["Activate Book of Moon", "P1 Spell & Trap Zone 2", "Cyber Dragon"])
     d.undo(d.decisions - made)
     assert d.board() == before and d.decision.kind == "idle"
+
+
+# ---------------------------------------------------------------- fourth batch of 100 Q&As
+def _b4_turn(d, turn):
+    """Pass every window and end turns until the Main Phase 1 of `turn`."""
+    for _ in range(40):
+        if d.turn == turn and d.decision.kind == "idle":
+            return
+        d.play(["Pass (don't respond)"] if d.decision.kind == "chain" else ["End the turn"])
+    raise AssertionError(f"turn {turn} never came:\n{d.describe_decision()}")
+
+
+def _b4_until(d, wanted):
+    """Pass every window until an option starting with `wanted` is offered."""
+    for _ in range(20):
+        if any(o.label.startswith(wanted) for o in d.decision.options):
+            return
+        d.play(["Pass (don't respond)"] if d.decision.kind == "chain" else ["End the turn"])
+    raise AssertionError(f"{wanted!r} was never offered:\n{d.describe_decision()}")
+
+
+def test_update_jammer_inflicts_damage_when_both_monsters_are_destroyed():
+    # FAQ 22202: yes, even if your Cyberse monster is destroyed by the same battle.
+    d = start({"monsters": [{"card": "Update Jammer", "zone": "EMZ left"}, {"card": "Backup Secretary", "zone": 2}], "deck_filler": 10},
+              {"monsters": [{"card": "Backup Secretary", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 3)
+    out = d.play(["Enter the Battle Phase", "Attack with Backup Secretary", "Backup Secretary (P2 Monster Zone 1)", "Yes"])
+    assert "Backup Secretary: P1 Monster Zone 2 → P1 GY — destroyed by battle" in out
+    assert "P2 takes 1000 damage" in out
+
+
+def test_wind_pegasus_destroyed_with_the_other_monsters_cannot_activate():
+    # FAQ 22856: no, when it is destroyed together with them.
+    d = start({"monsters": [{"card": "Dark Templar @Ignister", "zone": "EMZ left"}, {"card": "Wind Pegasus @Ignister", "zone": 2}], "deck_filler": 10},
+              {"hand": ["Raigeki"], "monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    out = d.play(["Activate Raigeki", "P2 Spell & Trap Zone 1"])
+    assert "Wind Pegasus @Ignister: P1 Monster Zone 2 → P1 GY" in out
+    assert "Wind Pegasus" not in d.describe_decision()
+
+
+def test_wind_pegasus_on_the_field_still_activates_when_another_card_is_destroyed():
+    d = start({"monsters": [{"card": "Wind Pegasus @Ignister"}], "spells_traps": [{"card": "Pot of Greed"}], "deck_filler": 10},
+              {"spells_traps": [{"card": "Dust Tornado"}], "monsters": [{"card": "Mystical Shine Ball"}], "deck_filler": 10})
+    _b4_until(d, "Activate Dust Tornado")
+    out = d.play(["Activate Dust Tornado", "P1 Spell & Trap Zone 1"])
+    assert "Pot of Greed: P1 Spell & Trap Zone 1 → P1 GY — destroyed by an effect" in out
+    assert "activate/use the effect of Wind Pegasus @Ignister (P1 Monster Zone 1)" in d.describe_decision()
+
+
+def test_valiant_shark_lancer_sees_the_water_attribute_the_destroyed_monster_had():
+    # FAQ 22945: Black Ray Lancer revived by Xyz Revive Splash is WATER, so Valiant Shark Lancer can activate.
+    d = start({"monsters": [{"card": "Valiant Shark Lancer", "zone": "EMZ left", "materials": ["Mystical Shine Ball", "Mystical Shine Ball"]}],
+               "graveyard": [{"card": "Black Ray Lancer", "properly_summoned": True}], "spells_traps": [{"card": "Xyz Revive Splash"}],
+               "deck": ["Mystical Shine Ball", "Raigeki"], "deck_filler": 10},
+              {"spells_traps": [{"card": "Raigeki Break"}], "hand": ["Mystical Shine Ball"], "deck_filler": 10})
+    d.play(["Activate Xyz Revive Splash", "Black Ray Lancer", "Pass (don't respond)", "P1 Monster Zone 1", "Face-up attack"])
+    _b4_until(d, "Activate Raigeki Break")
+    out = d.play(["Activate Raigeki Break", "Mystical Shine Ball", "Black Ray Lancer"])
+    assert "Black Ray Lancer: P1 Monster Zone 1 → P1 GY — destroyed by an effect" in out
+    assert "activate/use the effect of Valiant Shark Lancer" in d.describe_decision()
+
+
+def test_two_mirrors_of_the_ice_barrier_banish_up_to_4_cards():
+    # FAQ 10199: the number of banished cards adds up.
+    d = start({"hand": ["Sangan"], "spells_traps": [{"card": "Mirror of the Ice Barrier"}, {"card": "Mirror of the Ice Barrier"}], "deck_filler": 10},
+              {"hand": ["Mystical Shine Ball"] * 5, "monsters": [{"card": "Junk Synchron"}, {"card": "Gemini Elf"}, {"card": "Mystical Shine Ball"}],
+               "extra_deck": ["Trishula, Dragon of the Ice Barrier"], "deck_filler": 10})
+    for zone in (1, 2):  # on P2's turn: they last until its End Phase
+        for _ in range(20):
+            mirror = f"Activate Mirror of the Ice Barrier (P1 Spell & Trap Zone {zone})"
+            if d.turn == 2 and any(o.label.startswith(mirror) for o in d.decision.options):
+                break
+            d.play(["Pass (don't respond)"] if d.decision.kind == "chain" else ["End the turn"])
+        d.play([mirror])
+    _b4_turn(d, 2)
+    out = d.play(["Special Summon Trishula", ["Junk Synchron", "Gemini Elf", "Mystical Shine Ball"], "P2 Monster Zone 1", "Face-up attack", "Yes", "No"])
+    out += d.play(["Banish 2 cards", "Banish 2 cards"])  # once for each Mirror
+    assert out.count("Mystical Shine Ball: P2 hand → P2 banished") == 4
+
+
+def test_emerald_eagle_inflicts_the_original_atk_of_a_trap_monster():
+    # FAQ 22051: Embodiment of Apophis is destroyed and its controller takes 1600 damage.
+    d = start({"monsters": [{"card": "Salamangreat Emerald Eagle", "summoned": "ritual", "properly_summoned": True, "zone": 1},
+                            {"card": "Salamangreat Almiraj", "zone": 2}], "deck_filler": 10},
+              {"spells_traps": [{"card": "Embodiment of Apophis"}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    d.play(["Activate Embodiment of Apophis", "Pass (don't respond)", "P2 Monster Zone 1", "Face-up attack"])
+    _b4_turn(d, 3)
+    d.play(["Activate Salamangreat Emerald Eagle", "Salamangreat Almiraj"])
+    out = d.play(["Enter the Battle Phase", "Attack with Salamangreat Emerald Eagle", "Embodiment of Apophis"])
+    out += d.play(["Pass (don't respond)"] * 3)
+    assert "Embodiment of Apophis: P2 Monster Zone 1 → P2 GY — destroyed by an effect" in out
+    assert "P2 takes 1600 damage" in out
+
+
+def test_folgo_counts_formud_skipper_as_the_type_it_was_used_as():
+    # FAQ 22009: with Formud Skipper used as a Spellcaster, Folgo can't Special Summon a Spellcaster "Fur Hire" monster.
+    # (The engine already did this; the test run that reported otherwise had not answered Formud Skipper's prompt.)
+    d = start({"monsters": [{"card": "Formud Skipper"}, {"card": "Backup Secretary"}, {"card": "Recon, Scout Fur Hire"}],
+               "extra_deck": ["Summon Sorceress", "Folgo, Justice Fur Hire"],
+               "deck": ["Dyna, Hero Fur Hire", "Rafale, Champion Fur Hire", "Sagitta, Maverick Fur Hire", "Wiz, Sage Fur Hire"], "deck_filler": 10},
+              {"deck_filler": 10})
+    _b4_turn(d, 1)
+    d.play(["Activate Formud Skipper", "Summon Sorceress"])
+    d.play(["Special Summon Folgo", ["Formud Skipper", "Backup Secretary", "Recon, Scout Fur Hire"], "Yes", "P1 Extra Monster Zone left", "Yes"])
+    decision = d.describe_decision()
+    assert "Dyna, Hero Fur Hire" in decision  # Winged Beast: none of the 3 materials
+    assert "Wiz, Sage Fur Hire" not in decision  # Spellcaster, as Formud Skipper was used
+
+
+def test_multirole_counts_a_sky_striker_field_spell_activated_by_metaverse():
+    # FAQ 22468: yes, Area Zero activated by Metaverse while Multirole is face-up counts.
+    d = start({"spells_traps": [{"card": "Sky Striker Mecha Modules - Multirole", "face_up": True}, {"card": "Metaverse"}],
+               "graveyard": ["Sky Striker Mobilize - Engage!"], "deck": ["Sky Striker Airspace - Area Zero"], "deck_filler": 10},
+              {"deck_filler": 10})
+    d.play(["Activate Metaverse", "Activate it"])
+    _b4_turn(d, 1)
+    d.play(["End the turn"])
+    assert "activate/use the effect of Sky Striker Mecha Modules - Multirole" in d.describe_decision()
+
+
+def test_battleguard_rage_returns_a_trap_monster_it_destroys_to_the_hand():
+    # FAQ 6858 (and 7628, Dracocension): a Trap Monster destroyed by battle goes to the hand instead of the GY.
+    d = start({"monsters": [{"card": "Axe Raider"}], "spells_traps": [{"card": "Battleguard Rage", "face_up": True, "targets": ["Axe Raider"]}],
+               "deck_filler": 10}, {"spells_traps": [{"card": "Embodiment of Apophis"}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    d.play(["Activate Embodiment of Apophis", "P2 Monster Zone 1", "Face-up attack"])
+    _b4_turn(d, 3)
+    out = d.play(["Enter the Battle Phase", "Attack with Axe Raider", "Embodiment of Apophis"])
+    assert "Embodiment of Apophis: P2 Monster Zone 1 → P2 hand" in out

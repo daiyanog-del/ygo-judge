@@ -1,0 +1,20 @@
+--- a/processor.cpp
++++ b/processor.cpp
+@@ -2524,7 +2524,7 @@
+ 			core.attacker->current.reason_player = core.attack_target->current.controler;
+ 			uint32_t dest = LOCATION_GRAVE;
+ 			uint32_t seq = 0;
+-			if((peffect = core.attack_target->is_affected_by_effect(EFFECT_BATTLE_DESTROY_REDIRECT)) != nullptr && (core.attacker->data.type & TYPE_MONSTER)) {
++			if((peffect = core.attack_target->is_affected_by_effect(EFFECT_BATTLE_DESTROY_REDIRECT)) != nullptr && (core.attacker->get_type() & TYPE_MONSTER)) { // JudgemanAI: Trap Monsters too (FAQ 6858, 7628)
+ 				dest = peffect->get_value(core.attacker);
+ 				seq = dest >> 16;
+ 				dest &= 0xffff;
+@@ -2545,7 +2545,7 @@
+ 			core.attack_target->current.reason_player = core.attacker->current.controler;
+ 			uint32_t dest = LOCATION_GRAVE;
+ 			uint32_t seq = 0;
+-			if((peffect = core.attacker->is_affected_by_effect(EFFECT_BATTLE_DESTROY_REDIRECT)) != nullptr && (core.attack_target->data.type & TYPE_MONSTER)) {
++			if((peffect = core.attacker->is_affected_by_effect(EFFECT_BATTLE_DESTROY_REDIRECT)) != nullptr && (core.attack_target->get_type() & TYPE_MONSTER)) { // JudgemanAI: Trap Monsters too (FAQ 6858, 7628)
+ 				dest = peffect->get_value(core.attack_target);
+ 				seq = dest >> 16;
+ 				dest &= 0xffff;

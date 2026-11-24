@@ -55,6 +55,11 @@
 >     activation only targets or equips to monsters, is Set and activated on them when the duel starts, so the
 >     effects its activation applies exist ("Rare Metalmorph" negating a Spell, Equip Traps staying equipped).
 >     `Debug.ResetTurnRecords` then forgets that activation in this turn's records. The exported puzzle is unchanged.
+>   - core patch 0006: a battle destruction redirect ("Battleguard Rage", "Dracocension") also applies to a Trap
+>     Monster (FAQ 6858, 7628).
+>   - script patch 0009, found by testing a fourth 100 official Q&As: "Update Jammer" (FAQ 22202), "Wind Pegasus
+>     @Ignister" (22856), "Valiant Shark Lancer" (22945), "Mirror of the Ice Barrier" (10199), "Salamangreat Emerald
+>     Eagle" (22051) and "Sky Striker Mecha Modules - Multirole" (22468).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
