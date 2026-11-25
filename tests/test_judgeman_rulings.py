@@ -2057,3 +2057,73 @@ def test_synchro_material_uses_the_opponents_phantom_king_hydride_only_as_a_tune
     d.play(["Activate Synchro Material"])
     _until(d, lambda d: d.decision.kind == "idle")
     assert not any("Ally of Justice Catastor" in o.label for o in d.decision.options), d.describe_decision()
+
+
+# ---------------------------------------------------------------- the ninth 100 official Q&As
+def _go(d, label):
+    """advance (pass / end the turn) until an option starting with label appears, then choose it"""
+    out = _until(d, lambda d: any(o.label.startswith(label) for o in d.decision.options), limit=40)
+    return out + d.play([next(o.label for o in d.decision.options if o.label.startswith(label))])
+
+
+def test_phantom_of_chaos_loses_exodius_banishing_as_it_leaves():
+    # FAQ 7038: the effects it gained are gone as it leaves the field, so it goes to the GY
+    d = start({"hand": ["Dark Hole"], "monsters": [{"card": "Phantom of Chaos", "zone": 1},
+                                                   {"card": "Exodius the Ultimate Forbidden Lord", "zone": 2, "summoned": "special",
+                                                    "properly_summoned": True}],
+               "graveyard": [{"card": "Exodius the Ultimate Forbidden Lord", "properly_summoned": True}], "deck_filler": 10}, {"deck_filler": 10})
+    out = _go(d, "Activate Phantom of Chaos")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    out += _go(d, "Activate Dark Hole")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Phantom of Chaos: P1 Monster Zone 1 → P1 GY" in out, out
+    assert "Exodius the Ultimate Forbidden Lord: P1 Monster Zone 2 → P1 banished" in out, out
+
+
+def test_infernal_prodigy_draws_even_when_banished_as_tribute():
+    # FAQ 7042: banished by "Banisher of the Light" instead of the GY, it still draws in the End Phase
+    d = start({"hand": ["Destiny HERO - Dasher"], "monsters": [{"card": "Evil HERO Infernal Prodigy", "zone": 1}], "deck_filler": 10},
+              {"monsters": [{"card": "Banisher of the Light", "zone": 1}], "deck_filler": 10})
+    out = _go(d, "Normal Summon Destiny HERO - Dasher")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Evil HERO Infernal Prodigy: P1 Monster Zone 1 → P1 banished" in out, out
+    out += d.play(["End the turn"])
+    out += _until(d, lambda d: "activates Evil HERO Infernal Prodigy" in out or d.turn >= 2)
+    assert "activates Evil HERO Infernal Prodigy (P1 banished)" in out, out
+
+
+def test_extra_gate_cannot_be_activated_as_the_only_card_in_hand():
+    # FAQ 6251
+    d = start({"hand": ["Extra Gate"], "deck_filler": 10}, {"extra_deck": ["Ally of Justice Catastor"], "deck_filler": 10})
+    _b4_turn(d, 1)
+    assert not any(o.label.startswith("Activate Extra Gate") for o in d.decision.options), d.describe_decision()
+    d = start({"hand": ["Extra Gate", "Kuriboh"], "deck_filler": 10}, {"extra_deck": ["Ally of Justice Catastor"], "deck_filler": 10})
+    _b4_turn(d, 1)
+    assert any(o.label.startswith("Activate Extra Gate") for o in d.decision.options), d.describe_decision()
+
+
+def test_cocoon_of_evolution_stays_equipped_under_armored_glass():
+    # FAQ 6222: with equip effects negated, Petit Moth with Cocoon can still be Tributed for "Larvae Moth"
+    d = start({"hand": ["Cocoon of Evolution", "Larvae Moth", "Axe of Despair"],
+               "monsters": [{"card": "Petit Moth", "zone": 1}, {"card": "Cyber Jar", "zone": 2}],
+               "spells_traps": [{"card": "Armored Glass"}], "deck_filler": 20}, {"deck_filler": 20})
+    out = _go(d, "Activate Cocoon of Evolution")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Cocoon of Evolution (P1 Spell & Trap Zone 2) is equipped to Petit Moth" in out, out
+    _b4_turn(d, 5)
+    out = _go(d, "Activate Axe of Despair")
+    out += d.play(["Cyber Jar"])
+    out += _go(d, "Activate Armored Glass")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Cocoon of Evolution: P1 Spell & Trap Zone 2 → P1 GY" not in out, out
+    assert any(o.label.startswith("Special Summon Larvae Moth") for o in d.decision.options), d.describe_decision()
+
+
+def test_cunning_of_the_six_samurai_can_target_the_monster_sent_as_its_cost():
+    # FAQ 6817: with no "Six Samurai" in the GY, the one sent as the cost is the target
+    d = start({"monsters": [{"card": "The Six Samurai - Yaichi", "zone": 1}], "spells_traps": [{"card": "Cunning of the Six Samurai"}],
+               "deck_filler": 10}, {"deck_filler": 10})
+    out = _go(d, "Activate Cunning of the Six Samurai")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "The Six Samurai - Yaichi: P1 Monster Zone 1 → P1 GY — as a cost" in out, out
+    assert "The Six Samurai - Yaichi is Special Summoned" in out, out

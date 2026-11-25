@@ -88,6 +88,11 @@
 >   - script patch 0013, from the same Q&As: "Black Wing Revenge" (6163), "Synchro Boost" (20779), "Evigishki
 >     Merrowgeist" with "Supply Squad" (85), "Zoodiac Combo" (7967), "Major Riot" (207), "Phantom King Hydride" with
 >     "Synchro Material" (253), and "Last Counter" with "Scrubbed Raid" (242).
+>   - core patch 0011, found by testing a ninth 100 official Q&As: effects a card copied are gone as it leaves the
+>     field, so "Phantom of Chaos" is not banished by the copied "Exodius the Ultimate Forbidden Lord" (FAQ 7038); what a
+>     card can be equipped to is not negated with its effects, so "Cocoon of Evolution" stays under "Armored Glass" (6222).
+>   - script patch 0014, from the same Q&As: "Evil HERO Infernal Prodigy" also draws when banished (7042) and "Extra
+>     Gate" needs another card in the hand (6251); "Cunning of the Six Samurai" can target the monster sent as its cost (6817).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

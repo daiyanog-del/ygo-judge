@@ -1,0 +1,28 @@
+diff --git a/card.cpp b/card.cpp
+index 968ce0a..0118a8c 100644
+--- a/card.cpp
++++ b/card.cpp
+@@ -2163,6 +2163,9 @@ int32_t card::leave_field_redirect(uint32_t reason) {
+ 		return 0;
+ 	filter_effect(EFFECT_LEAVE_FIELD_REDIRECT, &es);
+ 	for(const auto& peff : es) {
++		//FAQ 7038: effects this card copied are gone as it leaves the field
++		if(peff->copy_id && peff->get_handler() == this && peff->owner == this && (peff->type & EFFECT_TYPE_SINGLE))
++			continue;
+ 		pduel->lua->add_param<LuaParam::INT>(reason);
+ 		redirect = peff->get_value(this, 1);
+ 		if((redirect & LOCATION_HAND) && is_capable_send_to_hand(peff->get_handler_player(), REASON_EFFECT, peff))
+diff --git a/effect.cpp b/effect.cpp
+index 7b316c3..fc4768f 100644
+--- a/effect.cpp
++++ b/effect.cpp
+@@ -63,7 +63,8 @@ int32_t effect::is_available() {
+ 			return FALSE;
+ 		if(is_flag(EFFECT_FLAG_OWNER_RELATE) && !is_flag(EFFECT_FLAG_CANNOT_DISABLE) && powner->is_status(STATUS_DISABLED))
+ 			return FALSE;
+-		if(powner == phandler && !is_flag(EFFECT_FLAG_CANNOT_DISABLE) && phandler->get_status(STATUS_DISABLED))
++		//FAQ 6222: what a card can be equipped to is not negated with its effects
++		if(powner == phandler && !is_flag(EFFECT_FLAG_CANNOT_DISABLE) && code != EFFECT_EQUIP_LIMIT && phandler->get_status(STATUS_DISABLED))
+ 			return FALSE;
+ 	}
+ 	if (type & EFFECT_TYPE_EQUIP) {
