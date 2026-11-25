@@ -2141,3 +2141,95 @@ def test_felgrand_unaffected_by_other_effects_still_cannot_attack_under_heliosph
     d.play(["Enter the Battle Phase"])
     _until(d, lambda d: d.decision.kind == "idle" or "Battle Phase: choose an action" in d.describe_decision())
     assert not any(o.label.startswith("Attack with") for o in d.decision.options), d.describe_decision()
+
+
+# ---------------------------------------------------------------- the eleventh 100 official Q&As
+def _atk(d, name):
+    m = re.search(re.escape(name) + r", face-up \w+, ATK (\d+)", d.board())
+    assert m, d.board()
+    return int(m.group(1))
+
+
+def test_temple_of_the_sun_stops_once_the_monster_was_turned_face_down():
+    # FAQ 9488 (also 23467): turned face-down, it is no longer "Special Summoned from the GY"
+    d = start({"hand": ["Book of Moon"], "monsters": [{"card": "Sabersaurus", "zone": 1, "summoned": "special", "summoned_from": "graveyard"}],
+               "spells_traps": [{"card": "Temple of the Sun", "face_up": True}], "deck_filler": 10}, {"deck_filler": 10})
+    _b4_turn(d, 1)
+    assert _atk(d, "Sabersaurus") == 2200, d.board()
+    _go(d, "Activate Book of Moon")
+    _until(d, lambda d: d.decision.kind == "idle")
+    _go(d, "Change the battle position of Sabersaurus")
+    _until(d, lambda d: d.decision.kind == "idle")
+    assert _atk(d, "Sabersaurus") == 1900, d.board()
+
+
+def test_hundred_eyes_dragon_loses_the_atk_gained_with_a_copied_effect():
+    # FAQ 9109: the ATK raised by the copied "Dark Crusader" effect ends with the copy
+    d = start({"hand": ["Summoned Skull"], "monsters": [{"card": "Hundred Eyes Dragon", "zone": 1}], "graveyard": ["Dark Crusader"],
+               "deck_filler": 10}, {"deck_filler": 10})
+    _b4_turn(d, 1)
+    _go(d, "Activate Hundred Eyes Dragon")
+    _until(d, lambda d: d.decision.kind == "idle")
+    _go(d, "Activate Hundred Eyes Dragon")
+    _until(d, lambda d: d.decision.kind == "idle")
+    assert _atk(d, "Hundred Eyes Dragon") == 3400, d.board()
+    _b4_turn(d, 3)
+    assert _atk(d, "Hundred Eyes Dragon") == 3000, d.board()
+
+
+def test_ogre_of_the_scarlet_sorrow_does_not_count_a_negated_direct_attack():
+    # FAQ 9450
+    d = start({"hand": ["Ogre of the Scarlet Sorrow"], "spells_traps": [{"card": "Magic Cylinder"}], "deck_filler": 10},
+              {"monsters": [{"card": "Giant Rat", "zone": 1}, {"card": "Giant Rat", "zone": 2}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    d.play(["Enter the Battle Phase"])
+    _go(d, "Attack with Giant Rat")
+    out = _go(d, "Activate Magic Cylinder")
+    out += _until(d, lambda d: any(o.label.startswith("Attack with Giant Rat") for o in d.decision.options))
+    out += d.play([next(o.label for o in d.decision.options if o.label.startswith("Attack with Giant Rat"))])
+    assert "attacks directly" in out, out
+    assert "Ogre of the Scarlet Sorrow" not in d.describe_decision(), d.describe_decision()
+
+
+def test_merrowgeist_returns_the_monster_to_the_deck_under_macro_cosmos():
+    # FAQ 9305
+    d = start({"monsters": [{"card": "Evigishki Merrowgeist", "zone": 1, "materials": ["Giant Rat", "Giant Rat"]}],
+               "spells_traps": [{"card": "Macro Cosmos", "face_up": True}], "deck_filler": 10},
+              {"monsters": [{"card": "Giant Rat", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 3)
+    d.play(["Enter the Battle Phase"])
+    out = _go(d, "Attack with Evigishki Merrowgeist")
+    out += d.play(["Giant Rat", "Yes", 0])
+    out += _until(d, lambda d: d.decision.kind == "idle" or "Battle Phase: choose" in d.describe_decision())
+    assert "Giant Rat: P2 Monster Zone 1 → P2 Deck — destroyed by battle" in out, out
+
+
+def test_dark_valkyria_loses_its_counter_as_a_normal_monster_and_can_place_one_again():
+    # FAQ 8749
+    d = start({"hand": ["Mystical Space Typhoon"], "monsters": [{"card": "Dark Valkyria", "zone": 1, "summoned": "normal"}],
+               "spells_traps": [{"card": "Supervise", "face_up": True, "equipped_to": "Dark Valkyria"}], "deck_filler": 10}, {"deck_filler": 10})
+    out = _go(d, "Activate Dark Valkyria")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "1 Spell Counter(s) placed on Dark Valkyria" in out, out
+    out = _go(d, "Activate Mystical Space Typhoon")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Supervise: P1 Spell & Trap Zone 1 → P1 GY" in out and "Spell Counter(s) removed from Dark Valkyria" in out, out
+    _go(d, "Normal Summon Dark Valkyria")
+    _until(d, lambda d: d.decision.kind == "idle")
+    assert any("Place 1 Spell Counter" in o.label for o in d.decision.options), d.describe_decision()
+
+
+def test_gemini_trap_hole_counts_a_gemini_monster_with_effects_at_damage_calculation():
+    # FAQ 8757: "Superalloy Beast Raptinus" destroyed in the same battle stops giving effects, but the Trap can still be activated
+    d = start({"hand": ["Rush Recklessly"], "monsters": [{"card": "Evocator Eveque", "zone": 1}], "spells_traps": [{"card": "Gemini Trap Hole"}],
+               "deck_filler": 10}, {"monsters": [{"card": "Superalloy Beast Raptinus", "zone": 1}, {"card": "Mystical Shine Ball", "zone": 2}],
+                                    "deck_filler": 10})
+    _b4_turn(d, 3)
+    d.play(["Enter the Battle Phase"])
+    _go(d, "Attack with Evocator Eveque")
+    d.play(["Superalloy Beast Raptinus"])
+    out = _go(d, "Activate Rush Recklessly")
+    out += _until(d, lambda d: any(o.label.startswith("Activate Gemini Trap Hole") for o in d.decision.options)
+                  or "Battle Phase: choose" in d.describe_decision())
+    assert "Superalloy Beast Raptinus: P2 Monster Zone 1 → P2 GY — destroyed by battle" in out, out
+    assert any(o.label.startswith("Activate Gemini Trap Hole") for o in d.decision.options), d.describe_decision()

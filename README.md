@@ -95,6 +95,11 @@
 >     Gate" needs another card in the hand (6251); "Cunning of the Six Samurai" can target the monster sent as its cost (6817).
 >   - script patch 0015, found by testing a tenth 100 official Q&As: "Heliosphere Dragon" stops attacks even by a monster
 >     unaffected by other effects, as it is not an effect the monster receives (FAQ 8360).
+>   - core patch 0012, found by testing an eleventh 100 official Q&As: a monster turned face-down is no longer "Special
+>     Summoned from" anywhere, not only the Extra Deck (FAQ 9488, 23467); what a copied effect gives its own card ends
+>     with the copy (9109); a redirect on the card itself comes before one for the whole field such as "Macro Cosmos" (9305).
+>   - script patch 0016, from the same Q&As: "Ogre of the Scarlet Sorrow" (9450), "Evigishki Merrowgeist" (9305), "Gemini
+>     Trap Hole" (8757) and "Dark Valkyria" (8749).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

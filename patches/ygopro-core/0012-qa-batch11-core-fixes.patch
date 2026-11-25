@@ -1,0 +1,41 @@
+diff --git a/card.cpp b/card.cpp
+index 0118a8c..c98aeff 100644
+--- a/card.cpp
++++ b/card.cpp
+@@ -1765,7 +1765,9 @@ int32_t card::add_effect(effect* peffect) {
+ 		peffect->reset_count = pduel->game_field->core.copy_reset_count;
+ 	}
+ 	effect* reason_effect = pduel->game_field->core.reason_effect;
+-	if(peffect->is_flag(EFFECT_FLAG_COPY_INHERIT) && reason_effect && reason_effect->copy_id) {
++	//FAQ 9109: what a copied effect gives its own card ends with the copy
++	if(reason_effect && reason_effect->copy_id && (peffect->is_flag(EFFECT_FLAG_COPY_INHERIT)
++		|| ((peffect->type & EFFECT_TYPE_SINGLE) && peffect->owner == this && reason_effect->get_handler() == this))) {
+ 		peffect->copy_id = reason_effect->copy_id;
+ 		peffect->reset_flag |= reason_effect->reset_flag;
+ 		if(peffect->reset_count > reason_effect->reset_count)
+@@ -2204,6 +2206,8 @@ int32_t card::destination_redirect(uint8_t destination, uint32_t reason) {
+ 		filter_effect(EFFECT_REMOVE_REDIRECT, &es);
+ 	else
+ 		return 0;
++	//FAQ 9305: a redirect on this card itself comes before one applied to the whole field ("Macro Cosmos")
++	std::stable_partition(es.begin(), es.end(), [](effect* peff) { return !(peff->type & EFFECT_TYPE_FIELD); });
+ 	for(const auto& peff : es) {
+ 		pduel->lua->add_param<LuaParam::INT>(reason);
+ 		redirect = peff->get_value(this, 1);
+diff --git a/operations.cpp b/operations.cpp
+index 48217b9..2bf27f1 100644
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -5367,9 +5367,9 @@ bool field::process(Processors::ChangePos& arg) {
+ 				pcard->summon.type &= 0xdf00ffff;
+ 				if((pcard->summon.type & SUMMON_TYPE_PENDULUM) == SUMMON_TYPE_PENDULUM)
+ 					pcard->summon.type &= 0xf000ffff;
+-				// JudgemanAI 2026-11-23: a monster turned face-down is no longer "Special Summoned from the Extra Deck" (Konami FAQ 23476).
+-				if(pcard->summon.location == LOCATION_EXTRA)
+-					pcard->summon.location = 0;
++				// JudgemanAI: a monster turned face-down is no longer "Special Summoned from" anywhere (Konami FAQ 23476, 23467, 9488);
++				// it is still a Special Summoned monster.
++				pcard->summon.location = 0;
+ 				pcard->spsummon_counter[0] = pcard->spsummon_counter[1] = 0;
+ 				pcard->spsummon_counter_rst[0] = pcard->spsummon_counter_rst[1] = 0;
+ 			}
