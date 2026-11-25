@@ -105,6 +105,8 @@
 >   - script patch 0017, from the same Q&As: "Forbidden Arts of the Gishki" (10671), "Barbaroid, the Ultimate Battle
 >     Machine" (10435), "Blackwing - Jetstream the Blue Sky" (10486), "Caius the Mega Monarch" (9927), "Scrap Twin Dragon"
 >     (10228) and "Gimmick Puppet Shadow Feeler" (10042).
+>   - script patch 0018, found by testing a thirteenth 100 official Q&As: "Shining Elf" (11508), "Triple Star Trion" (11514)
+>     and "Fiend's Hand Mirror" (11296).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

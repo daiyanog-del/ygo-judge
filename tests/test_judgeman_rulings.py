@@ -2345,3 +2345,45 @@ def test_shadow_feeler_goes_to_the_gy_when_the_xyz_summon_is_negated():
 def test_shadow_feeler_is_banished_when_its_xyz_monster_leaves_the_field():
     out = _shadow_feeler(False)
     assert "Gimmick Puppet Shadow Feeler: P1 Xyz Material → P1 banished" in out, out
+
+
+# ---------------------------------------------------------------- the thirteenth 100 official Q&As
+def test_shining_elf_activates_for_lava_golem_the_opponent_summons_to_your_field():
+    # FAQ 11508
+    d = start({"monsters": [{"card": "Shining Elf", "zone": 1, "materials": ["Flelf", "Flelf"]},
+                            {"card": "Mystical Shine Ball", "zone": 2}, {"card": "Mystical Shine Ball", "zone": 3}], "deck_filler": 10},
+              {"hand": ["Lava Golem"], "deck_filler": 10})
+    _b4_turn(d, 2)
+    out = _go(d, "Special Summon Lava Golem")
+    out += d.play([[1, 1], 0])
+    out += _until(d, lambda d: d.decision.kind == "idle" or "Shining Elf" in d.describe_decision())
+    assert "Lava Golem is Special Summoned to P1 Monster Zone" in out, out
+    assert "Shining Elf" in d.describe_decision(), d.describe_decision()
+
+
+def test_triple_star_trion_does_not_activate_after_its_tribute_summon_is_negated():
+    # FAQ 11514
+    d = start({"hand": ["Dark Ruler Ha Des"], "monsters": [{"card": "Triple Star Trion", "zone": 1}], "deck_filler": 10},
+              {"spells_traps": [{"card": "Solemn Judgment"}], "deck_filler": 10})
+    _b4_turn(d, 1)
+    out = _go(d, "Normal Summon Dark Ruler Ha Des")
+    out += d.play([0, 0])
+    out += _go(d, "Activate Solemn Judgment")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Dark Ruler Ha Des" in out and "Resolving Chain Link 1 (Solemn Judgment)" in out, out
+    out = d.play(["End the turn"])
+    out += _until(d, lambda d: d.turn >= 2 or "Triple Star Trion" in d.describe_decision())
+    assert "Triple Star Trion" not in d.describe_decision() and "activates Triple Star Trion" not in out, out + d.describe_decision()
+
+
+def test_fiends_hand_mirror_can_move_the_target_to_a_monster():
+    # FAQ 11296
+    d = start({"monsters": [{"card": "Sangan", "zone": 1, "summoned": "normal"}],
+               "spells_traps": [{"card": "Fiend's Hand Mirror"}, {"card": "Mystical Space Typhoon"}, {"card": "Dark Hole"}], "deck_filler": 10},
+              {"hand": ["Gemini Spark"], "monsters": [{"card": "Elemental HERO Neos Alius", "zone": 1, "summoned": "normal"}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    _go(d, "Activate Gemini Spark")
+    _until(d, lambda d: any("Mystical Space Typhoon" in o.label for o in d.decision.options) and "destroy" in d.describe_decision())
+    d.play([next(o.label for o in d.decision.options if "Mystical Space Typhoon" in o.label)])
+    _go(d, "Activate Fiend's Hand Mirror")
+    assert any(o.label.startswith("Sangan") for o in d.decision.options), d.describe_decision()

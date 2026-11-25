@@ -1,0 +1,57 @@
+diff --git a/official/c34796454.lua b/official/c34796454.lua
+index 3eb4233c..eb549cf2 100644
+--- a/official/c34796454.lua
++++ b/official/c34796454.lua
+@@ -12,8 +12,18 @@ function s.initial_effect(c)
+ end
+ function s.regop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+-	if c:IsReason(REASON_SUMMON) and c:IsReason(REASON_MATERIAL) then
++	local rc=c:GetReasonCard()
++	if c:IsReason(REASON_SUMMON) and c:IsReason(REASON_MATERIAL) and rc then
++		--FAQ 11514: only when the Tribute Summon is not negated
++		local e0=Effect.CreateEffect(c)
++		e0:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
++		e0:SetCode(EVENT_SUMMON_SUCCESS)
++		e0:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
++		e0:SetOperation(function() c:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD|RESET_PHASE|PHASE_END,0,1) end)
++		e0:SetReset(RESET_EVENT|RESETS_STANDARD|RESET_PHASE|PHASE_END)
++		rc:RegisterEffect(e0,true)
+ 		local e1=Effect.CreateEffect(c)
++		e1:SetCondition(function(e) return e:GetHandler():GetFlagEffect(id)>0 end)
+ 		e1:SetDescription(aux.Stringid(id,0))
+ 		e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
+ 		e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+diff --git a/official/c58607704.lua b/official/c58607704.lua
+index 93757d0a..d823691c 100644
+--- a/official/c58607704.lua
++++ b/official/c58607704.lua
+@@ -21,11 +21,12 @@ function s.tgcon(e,tp,eg,ep,ev,re,r,rp)
+ 	e:SetLabelObject(tc)
+ 	return tc:IsOnField() and tc:IsSpellTrap()
+ end
++--FAQ 11296: any other proper target, monsters included
+ function s.filter(c,ct)
+-	return c:IsSpellTrap() and Duel.CheckChainTarget(ct,c)
++	return Duel.CheckChainTarget(ct,c)
+ end
+ function s.tgtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+-	if chkc then return chkc~=e:GetLabelObject() and chkc:IsOnField() and chkc:IsSpellTrap() and s.filter(chkc,ev) end
++	if chkc then return chkc~=e:GetLabelObject() and chkc:IsOnField() and s.filter(chkc,ev) end
+ 	if chk==0 then return Duel.IsExistingTarget(s.filter,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,e:GetLabelObject(),ev) end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TARGET)
+ 	Duel.SelectTarget(tp,s.filter,tp,LOCATION_ONFIELD,LOCATION_ONFIELD,1,1,e:GetLabelObject(),ev)
+diff --git a/official/c97170107.lua b/official/c97170107.lua
+index 9c4a10a8..cf7979b8 100644
+--- a/official/c97170107.lua
++++ b/official/c97170107.lua
+@@ -21,7 +21,8 @@ function s.initial_effect(c)
+ 	c:RegisterEffect(e2)
+ end
+ function s.filter(c,e,tp)
+-	return c:IsFaceup() and c:IsControler(1-tp) and c:GetAttack()>0 and (not e or c:IsRelateToEffect(e))
++	--FAQ 11508: a monster the opponent Special Summoned, even to your field
++	return c:IsFaceup() and c:IsSummonPlayer(1-tp) and c:GetAttack()>0 and (not e or c:IsRelateToEffect(e))
+ end
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return eg:IsExists(s.filter,1,nil,nil,tp) end
