@@ -1,0 +1,33 @@
+diff --git a/card.cpp b/card.cpp
+index 6b76e4b..968ce0a 100644
+--- a/card.cpp
++++ b/card.cpp
+@@ -2300,7 +2300,9 @@ int32_t card::is_can_add_counter(uint8_t playerid, uint16_t countertype, uint16_
+ 					pduel->lua->add_param<LuaParam::CARD>(this);
+ 					filter = pduel->lua->check_condition(peffect->target, 2);
+ 				}
+-				check = current.is_location(prange) && is_position(POS_FACEUP) && filter;
++				//FAQ 14131: a Spell/Trap being activated cannot have counters placed on it until it resolves
++				check = current.is_location(prange) && is_position(POS_FACEUP) && filter
++					&& (!(data.type & (TYPE_SPELL | TYPE_TRAP)) || is_status(STATUS_EFFECT_ENABLED));
+ 			} else
+ 				check = TRUE;
+ 			if(check)
+diff --git a/operations.cpp b/operations.cpp
+index 867a285..48217b9 100644
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -119,6 +119,13 @@ void field::remove_overlay_card(uint32_t reason, group* pgroup, uint32_t rplayer
+ 	emplace_process<Processors::RemoveOverlay>(reason, pgroup, rplayer, self, oppo, min, max);
+ }
+ void field::xyz_overlay(card* target, card_set materials, bool send_materials_to_grave) {
++	//FAQ 7967: a card "Prohibition" declared cannot become Xyz Material from outside the field
++	for(auto it = materials.begin(); it != materials.end();) {
++		if(!((*it)->current.location & LOCATION_ONFIELD) && (*it)->is_affected_by_effect(EFFECT_FORBIDDEN))
++			it = materials.erase(it);
++		else
++			++it;
++	}
+ 	auto ng = pduel->new_group(std::move(materials));
+ 	ng->is_readonly = true;
+ 	emplace_process<Processors::XyzOverlay>(target, ng, send_materials_to_grave);

@@ -82,6 +82,12 @@
 >     by a card effect ("Sanguine Swamp" 10345, "Overdoom Line" 8588, as "Swords of Revealing Light" already did, 19310),
 >     in all 9 cards worded that way; "Dragunity Javelin" cannot be equipped to a monster it cannot target (10056);
 >     "Skull Invitation" applies after the resolving card, so "Exodia the Forbidden One" wins first (6184).
+>   - core patch 0010, found by testing an eighth 100 official Q&As: a Spell/Trap being activated cannot have counters
+>     placed on it until it resolves (FAQ 14131, 14130); a card "Prohibition" declared cannot become Xyz Material from
+>     outside the field (7967).
+>   - script patch 0013, from the same Q&As: "Black Wing Revenge" (6163), "Synchro Boost" (20779), "Evigishki
+>     Merrowgeist" with "Supply Squad" (85), "Zoodiac Combo" (7967), "Major Riot" (207), "Phantom King Hydride" with
+>     "Synchro Material" (253), and "Last Counter" with "Scrubbed Raid" (242).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

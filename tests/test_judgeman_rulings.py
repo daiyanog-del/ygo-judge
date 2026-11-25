@@ -1909,3 +1909,151 @@ def test_grandsoil_skips_the_next_battle_phase_even_under_skill_drain():
         _b4_turn(d, 3)
         out = d.play(["Enter the Battle Phase"])
         assert "P1 enters the End Phase" in out and d.turn == 4, out
+
+
+# ---------------------------------------------------------------- the eighth 100 official Q&As
+def _black_wing_revenge(declare, monster):
+    d = start({"monsters": [{"card": monster, "zone": 1}],
+               "spells_traps": [{"card": "DNA Surgery"}, {"card": "Black Wing Revenge"}], "deck_filler": 10},
+              {"monsters": [{"card": "Dark Magician", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 1)
+    if declare:
+        d.play(["Activate DNA Surgery", declare])
+    _b4_turn(d, 2)
+    out = d.play(["Enter the Battle Phase", "Attack with Dark Magician", monster])
+    for _ in range(12):
+        if "Activate Black Wing Revenge" in d.describe_decision() or d.decision.kind == "idle":
+            break
+        out += d.play([P if P in [o.label for o in d.decision.options] else 0])
+    return d, out
+
+
+P = "Pass (don't respond)"
+
+
+def test_black_wing_revenge_needs_a_winged_beast_on_the_field_and_in_the_gy():
+    # FAQ 6163: neither a Warrior made Winged Beast nor a Winged Beast made Warrior by "DNA Surgery" counts
+    for declare, monster in (("Winged Beast", "Celtic Guardian"), ("Warrior", "Harpie Lady 1")):
+        d, out = _black_wing_revenge(declare, monster)
+        assert f"{monster}: P1 Monster Zone 1 → P1 GY" in out, out
+        assert "Activate Black Wing Revenge" not in d.describe_decision(), d.describe_decision()
+
+
+def test_black_wing_revenge_activates_for_a_winged_beast():
+    d, out = _black_wing_revenge(None, "Harpie Lady 1")
+    assert "Activate Black Wing Revenge" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_pitch_black_power_stone_cannot_target_gateway_to_chaos_being_activated():
+    # FAQ 14131 (also 14130): it becomes a card Spell Counters can be placed on only once its activation resolves
+    d = start({"hand": ["Gateway to Chaos"], "monsters": [{"card": "Breaker the Magical Warrior", "zone": 2}],
+               "spells_traps": [{"card": "Pitch-Black Power Stone", "face_up": True, "counters": {"Spell Counter": 3}}],
+               "deck": ["Gaia The Fierce Knight"], "deck_filler": 10}, {"deck_filler": 10})
+    _b4_turn(d, 1)
+    d.play(["Activate Gateway to Chaos"])
+    for _ in range(3):
+        if any(o.label.startswith("Activate Pitch-Black Power Stone") for o in d.decision.options):
+            break
+        d.play([0])
+    d.play(["Activate Pitch-Black Power Stone"])
+    labels = [o.label for o in d.decision.options]
+    assert not any("Gateway to Chaos" in o for o in labels), d.describe_decision()
+    assert any("Breaker the Magical Warrior" in o for o in labels), d.describe_decision()
+
+
+def test_synchro_boost_can_equip_a_link_monster_and_only_raises_its_atk():
+    # FAQ 20779
+    d = start({"hand": ["Synchro Boost"], "monsters": [{"card": "Link Spider", "position": "attack", "zone": "EMZ left"}], "deck_filler": 10},
+              {"deck_filler": 10})
+    d.play(["Activate Synchro Boost"])
+    for _ in range(3):
+        if d.decision.kind == "idle":
+            break
+        d.play([0])
+    assert re.search(r"Link Spider[^\n]*ATK 1500", d.board()), d.board()
+
+
+def _until(d, want, limit=15):
+    out = ""
+    for _ in range(limit):
+        if want(d):
+            return out
+        labels = [o.label for o in d.decision.options]
+        out += d.play([P if P in labels else "End the turn" if "End the turn" in labels else 0])
+    raise AssertionError(out + d.describe_decision())
+
+
+def test_zoodiac_combo_cannot_attach_a_card_prohibition_declared():
+    # FAQ 7967: a declared card cannot become Xyz Material from outside the field
+    d = start({"monsters": [{"card": "Zoodiac Broadbull", "zone": 1, "materials": ["Zoodiac Ratpier", "Zoodiac Ratpier"]}],
+               "spells_traps": [{"card": "Zoodiac Combo"}], "deck": ["Zoodiac Thoroughblade", "Zoodiac Ratpier"], "deck_filler": 10},
+              {"spells_traps": [{"card": "Prohibition"}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    out = d.play(["Activate Prohibition", "Zoodiac Thoroughblade", P])
+    assert "Resolving Chain Link 1 (Prohibition)" in out, out
+    _until(d, lambda d: any(o.label.startswith("Activate Zoodiac Combo") for o in d.decision.options))
+    out = d.play(["Activate Zoodiac Combo"])
+    out += _until(d, lambda d: "Resolving Chain Link 1 (Zoodiac Combo)" in out or d.decision.kind == "idle")
+    if "Select the card(s) to use as Xyz Material" in d.describe_decision():
+        assert not any("Zoodiac Thoroughblade" in o.label for o in d.decision.options), d.describe_decision()
+        out += d.play([0])
+    assert "Zoodiac Thoroughblade (P1 Deck) becomes Xyz Material" not in out, out
+    assert "Zoodiac Ratpier (P1 Deck) becomes Xyz Material" in out, out
+
+
+def test_supply_squad_draws_when_merrowgeist_returns_the_monster_to_the_deck():
+    # FAQ 85: the monster is still destroyed by battle, it only goes to the Deck instead
+    d = start({"monsters": [{"card": "Gene-Warped Warwolf", "zone": 1}], "spells_traps": [{"card": "Supply Squad", "face_up": True}], "deck_filler": 10},
+              {"monsters": [{"card": "Evigishki Merrowgeist", "zone": 1, "materials": ["Battle Ox", "Battle Ox"]}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    out = d.play(["Enter the Battle Phase", "Attack with Evigishki Merrowgeist", "Gene-Warped Warwolf"])
+    out += d.play(["Yes", 0])
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Gene-Warped Warwolf: P1 Monster Zone 1 → P1 Deck" in out, out
+    assert "activates Supply Squad" in out and "P1 draws" in out, out
+
+
+def test_major_riot_needs_the_monster_to_leave_your_own_field():
+    # FAQ 207: your "Goblin Attack Force" taken by "Creature Swap" and bounced from the opponent's field does not count
+    d = start({"hand": ["Creature Swap"], "monsters": [{"card": "Goblin Attack Force", "zone": 1}],
+               "spells_traps": [{"card": "Major Riot"}], "deck_filler": 10},
+              {"monsters": [{"card": "Kuriboh", "zone": 1}], "spells_traps": [{"card": "Compulsory Evacuation Device"}], "deck_filler": 10})
+    _b4_turn(d, 1)
+    d.play(["Activate Creature Swap"])
+    _until(d, lambda d: d.decision.kind == "idle")
+    assert "P2 Monster Zone" in d.board() and "Goblin Attack Force" in d.board().split("P2:")[1], d.board()
+    d.play(["End the turn"])
+    _until(d, lambda d: any(o.label.startswith("Activate Compulsory Evacuation Device") for o in d.decision.options))
+    out = d.play(["Activate Compulsory Evacuation Device", "Goblin Attack Force"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or "Major Riot" in d.describe_decision())
+    assert "Goblin Attack Force" in out and "Major Riot" not in d.describe_decision(), out + d.describe_decision()
+
+
+def test_last_counter_in_response_to_scrubbed_raid_keeps_the_battle_phase():
+    # FAQ 242: Last Counter enters the damage step, so Scrubbed Raid's "end the Battle Phase" is not applied
+    d = start({"monsters": [{"card": "Battlin' Boxer Glassjaw", "zone": 1}, {"card": "Battlin' Boxer Lead Yoke", "zone": 2}],
+               "spells_traps": [{"card": "Last Counter"}], "deck_filler": 10},
+              {"monsters": [{"card": "Dark Magician", "zone": 1}],
+               "spells_traps": [{"card": "Scrubbed Raid", "face_up": True}, {"card": "Mystical Space Typhoon"}], "deck_filler": 10})
+    _b4_turn(d, 3)
+    d.play(["Enter the Battle Phase"])
+    _until(d, lambda d: any(o.label.startswith("Attack with Battlin' Boxer Glassjaw") for o in d.decision.options))
+    d.play(["Attack with Battlin' Boxer Glassjaw", "Dark Magician"])
+    _until(d, lambda d: any(o.label.startswith("Activate Scrubbed Raid") for o in d.decision.options))
+    d.play(["Activate Scrubbed Raid", "Mystical Space Typhoon"])
+    _until(d, lambda d: any(o.label.startswith("Activate Last Counter") for o in d.decision.options))
+    out = d.play(["Activate Last Counter"])
+    assert "Damage calculation: Battlin' Boxer Lead Yoke" in out, out
+    assert "P1, Battle Phase" in d.describe_decision() or "attacks directly" in out, out + d.describe_decision()
+    assert "enters the Main Phase 2" not in out, out
+
+
+def test_synchro_material_uses_the_opponents_phantom_king_hydride_only_as_a_tuner():
+    # FAQ 253
+    d = start({"monsters": [{"card": "Nitro Synchron", "zone": 1}], "spells_traps": [{"card": "Synchro Material"}],
+               "extra_deck": ["Ally of Justice Catastor"], "deck_filler": 10},
+              {"monsters": [{"card": "Phantom King Hydride", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 1)
+    d.play(["Activate Synchro Material"])
+    _until(d, lambda d: d.decision.kind == "idle")
+    assert not any("Ally of Justice Catastor" in o.label for o in d.decision.options), d.describe_decision()
