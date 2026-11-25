@@ -1,0 +1,13 @@
+diff --git a/official/c51043053.lua b/official/c51043053.lua
+index 6e42ed6d..9fa933e0 100644
+--- a/official/c51043053.lua
++++ b/official/c51043053.lua
+@@ -6,6 +6,8 @@ function s.initial_effect(c)
+ 	local e1=Effect.CreateEffect(c)
+ 	e1:SetType(EFFECT_TYPE_FIELD)
+ 	e1:SetCode(EFFECT_CANNOT_ATTACK_ANNOUNCE)
++	--FAQ 8360: it is not an effect the monsters receive
++	e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,LOCATION_MZONE)
+ 	e1:SetCondition(s.atcon)

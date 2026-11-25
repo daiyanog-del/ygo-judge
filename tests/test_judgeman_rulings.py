@@ -2127,3 +2127,17 @@ def test_cunning_of_the_six_samurai_can_target_the_monster_sent_as_its_cost():
     out += _until(d, lambda d: d.decision.kind == "idle")
     assert "The Six Samurai - Yaichi: P1 Monster Zone 1 → P1 GY — as a cost" in out, out
     assert "The Six Samurai - Yaichi is Special Summoned" in out, out
+
+
+# ---------------------------------------------------------------- the tenth 100 official Q&As
+def test_felgrand_unaffected_by_other_effects_still_cannot_attack_under_heliosphere():
+    # FAQ 8360: "Heliosphere Dragon" stops the player declaring attacks; it is not an effect the monster receives
+    d = start({"monsters": [{"card": "Divine Dragon Knight Felgrand", "zone": 1, "materials": ["Mystical Shine Ball", "Mystical Shine Ball"]}],
+               "deck_filler": 10}, {"monsters": [{"card": "Heliosphere Dragon", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 3)
+    out = _go(d, "Activate Divine Dragon Knight Felgrand")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Resolving Chain Link 1 (Divine Dragon Knight Felgrand)" in out, out
+    d.play(["Enter the Battle Phase"])
+    _until(d, lambda d: d.decision.kind == "idle" or "Battle Phase: choose an action" in d.describe_decision())
+    assert not any(o.label.startswith("Attack with") for o in d.decision.options), d.describe_decision()

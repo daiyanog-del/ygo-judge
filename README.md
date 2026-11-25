@@ -93,6 +93,8 @@
 >     card can be equipped to is not negated with its effects, so "Cocoon of Evolution" stays under "Armored Glass" (6222).
 >   - script patch 0014, from the same Q&As: "Evil HERO Infernal Prodigy" also draws when banished (7042) and "Extra
 >     Gate" needs another card in the hand (6251); "Cunning of the Six Samurai" can target the monster sent as its cost (6817).
+>   - script patch 0015, found by testing a tenth 100 official Q&As: "Heliosphere Dragon" stops attacks even by a monster
+>     unaffected by other effects, as it is not an effect the monster receives (FAQ 8360).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
