@@ -107,6 +107,9 @@
 >     (10228) and "Gimmick Puppet Shadow Feeler" (10042).
 >   - script patch 0018, found by testing a thirteenth 100 official Q&As: "Shining Elf" (11508), "Triple Star Trion" (11514)
 >     and "Fiend's Hand Mirror" (11296).
+>   - core patch 0014, found by testing a fourteenth 100 official Q&As: an unaffected-by effect from another card that the
+>     card is unaffected by does not apply, so "Forbidden Lance" takes away "Magnet Force"'s protection (FAQ 11947).
+>   - script patch 0019, from the same Q&As: "Fencing Fire Ferret" does nothing to a target turned face-down (12668).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

@@ -2387,3 +2387,46 @@ def test_fiends_hand_mirror_can_move_the_target_to_a_monster():
     d.play([next(o.label for o in d.decision.options if "Mystical Space Typhoon" in o.label)])
     _go(d, "Activate Fiend's Hand Mirror")
     assert any(o.label.startswith("Sangan") for o in d.decision.options), d.describe_decision()
+
+
+# ---------------------------------------------------------------- the fourteenth 100 official Q&As
+def test_forbidden_lance_lets_the_opponent_negate_a_machine_under_magnet_force():
+    # FAQ 11947: unaffected by Spells, the monster no longer gets "Magnet Force"'s protection
+    d = start({"hand": ["Forbidden Lance", "Mystical Shine Ball"], "monsters": [{"card": "Machine King", "zone": 1}],
+               "spells_traps": [{"card": "Magnet Force"}], "deck_filler": 10}, {"hand": ["Effect Veiler"], "deck_filler": 10})
+    _b4_turn(d, 1)
+    _go(d, "Activate Magnet Force")
+    _until(d, lambda d: d.decision.kind == "idle")
+    _go(d, "Activate Forbidden Lance")
+    _until(d, lambda d: d.decision.kind == "idle")
+    _go(d, "Normal Summon Mystical Shine Ball")
+    out = _until(d, lambda d: any(o.label.startswith("Activate Effect Veiler") for o in d.decision.options))
+    d.play(["Activate Effect Veiler"])
+    _until(d, lambda d: d.decision.kind == "idle")
+    assert re.search(r"Machine King, face-up \w+, ATK \d+/DEF \d+ \([^)]*\), effects negated", d.board()), d.board()
+
+
+def test_magnet_force_alone_keeps_a_machine_from_being_negated():
+    d = start({"hand": ["Mystical Shine Ball"], "monsters": [{"card": "Machine King", "zone": 1}],
+               "spells_traps": [{"card": "Magnet Force"}], "deck_filler": 10}, {"hand": ["Effect Veiler"], "deck_filler": 10})
+    _b4_turn(d, 1)
+    _go(d, "Activate Magnet Force")
+    _until(d, lambda d: d.decision.kind == "idle")
+    _go(d, "Normal Summon Mystical Shine Ball")
+    _until(d, lambda d: d.decision.kind == "idle" or any(o.label.startswith("Activate Effect Veiler") for o in d.decision.options))
+    assert "effects negated" not in d.board(), d.board()
+
+
+def test_fencing_fire_ferret_does_nothing_if_its_target_was_turned_face_down():
+    # FAQ 12668
+    d = start({"monsters": [{"card": "Fencing Fire Ferret", "zone": 1, "summoned": "normal"}], "deck_filler": 10},
+              {"hand": ["Lightning Vortex", "Mystical Shine Ball"], "monsters": [{"card": "Fire King Avatar Barong", "zone": 1, "summoned": "normal"}],
+               "spells_traps": [{"card": "Book of Eclipse"}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    out = _go(d, "Activate Lightning Vortex")
+    out += _until(d, lambda d: any(o.label.startswith("Activate Book of Eclipse") for o in d.decision.options)
+                  and "Fencing Fire Ferret" in d.describe_decision(), limit=20)
+    out += d.play(["Activate Book of Eclipse"])
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "activates Fencing Fire Ferret" in out, out
+    assert "Fire King Avatar Barong: P2 Monster Zone 1 → P2 GY" not in out and "P2 takes 500 damage" not in out, out

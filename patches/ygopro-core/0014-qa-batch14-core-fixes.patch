@@ -1,0 +1,33 @@
+diff --git a/card.cpp b/card.cpp
+index c98aeff..b787701 100644
+--- a/card.cpp
++++ b/card.cpp
+@@ -2525,6 +2525,28 @@ void card::filter_immune_effect() {
+ 		if (peffect->is_target(this))
+ 			immune_effect.push_back(peffect);
+ 	}
++	//FAQ 11947: an unaffected-by effect from another card that this card is unaffected by ("Forbidden Lance" vs "Magnet Force") does not apply
++	if(immune_effect.size() > 1) {
++		effect_set_v kept;
++		for(auto& p : immune_effect) {
++			bool blocked = false;
++			if(p->get_handler() != this || !(p->type & EFFECT_TYPE_SINGLE)) {
++				for(auto& q : immune_effect) {
++					if(q == p || !q->value || !q->is_available())
++						continue;
++					pduel->lua->add_param<LuaParam::EFFECT>(p);
++					pduel->lua->add_param<LuaParam::CARD>(this);
++					if(q->check_value_condition(2)) {
++						blocked = true;
++						break;
++					}
++				}
++			}
++			if(!blocked)
++				kept.push_back(p);
++		}
++		immune_effect.swap(kept);
++	}
+ 	std::sort(immune_effect.begin(), immune_effect.end(), effect_sort_id);
+ }
+ // for all disable-related peffect of this,
