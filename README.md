@@ -100,6 +100,11 @@
 >     with the copy (9109); a redirect on the card itself comes before one for the whole field such as "Macro Cosmos" (9305).
 >   - script patch 0016, from the same Q&As: "Ogre of the Scarlet Sorrow" (9450), "Evigishki Merrowgeist" (9305), "Gemini
 >     Trap Hole" (8757) and "Dark Valkyria" (8749).
+>   - core patch 0013, found by testing a twelfth 100 official Q&As: "Majestic Star Dragon" gains only the effects that are
+>     activated, not a continuous one such as a Six Samurai's destruction replacement (FAQ 10002).
+>   - script patch 0017, from the same Q&As: "Forbidden Arts of the Gishki" (10671), "Barbaroid, the Ultimate Battle
+>     Machine" (10435), "Blackwing - Jetstream the Blue Sky" (10486), "Caius the Mega Monarch" (9927), "Scrap Twin Dragon"
+>     (10228) and "Gimmick Puppet Shadow Feeler" (10042).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

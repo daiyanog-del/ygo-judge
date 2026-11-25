@@ -1,0 +1,13 @@
+diff --git a/libduel.cpp b/libduel.cpp
+index 3419561..a9a2e90 100644
+--- a/libduel.cpp
++++ b/libduel.cpp
+@@ -4174,6 +4174,8 @@ LUA_STATIC_FUNCTION(MajesticCopy) {
+ 		}
+ 		effect* peffect = eit->second;
+ 		if (!(peffect->type & 0x7c) && !peffect->is_flag(EFFECT_FLAG2_MAJESTIC_MUST_COPY)) continue;
++		//FAQ 10002: only the effects that are activated, not continuous ones such as a Six Samurai's destruction replacement
++		if ((peffect->type & EFFECT_TYPE_CONTINUOUS) && !peffect->is_flag(EFFECT_FLAG2_MAJESTIC_MUST_COPY)) continue;
+ 		if(!peffect->is_flag(EFFECT_FLAG_INITIAL)) continue;
+ 		effect* ceffect = peffect->clone(true);
+ 		ceffect->owner = pcard;

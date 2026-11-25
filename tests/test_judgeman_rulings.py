@@ -2233,3 +2233,115 @@ def test_gemini_trap_hole_counts_a_gemini_monster_with_effects_at_damage_calcula
                   or "Battle Phase: choose" in d.describe_decision())
     assert "Superalloy Beast Raptinus: P2 Monster Zone 1 → P2 GY — destroyed by battle" in out, out
     assert any(o.label.startswith("Activate Gemini Trap Hole") for o in d.decision.options), d.describe_decision()
+
+
+# ---------------------------------------------------------------- the twelfth 100 official Q&As
+def test_forbidden_arts_of_the_gishki_can_use_djinn_releaser_in_your_gy():
+    # FAQ 10671
+    d = start({"hand": ["Forbidden Arts of the Gishki", "Evigishki Gustkraken"], "monsters": [{"card": "Legendary Six Samurai - Shinai", "zone": 1}],
+               "graveyard": ["Djinn Releaser of Rituals"], "deck_filler": 10}, {"deck_filler": 10})
+    _b4_turn(d, 1)
+    assert any(o.label.startswith("Activate Forbidden Arts of the Gishki") for o in d.decision.options), d.describe_decision()
+
+
+def test_barbaroid_deals_damage_for_a_trap_monster_destroyed_by_battle():
+    # FAQ 10435: "Embodiment of Apophis" treated as a monster counts
+    d = start({"monsters": [{"card": "Barbaroid, the Ultimate Battle Machine", "zone": 1, "summoned": "fusion", "properly_summoned": True}],
+               "deck_filler": 10}, {"spells_traps": [{"card": "Embodiment of Apophis"}], "deck_filler": 10})
+    _b4_turn(d, 2)
+    _go(d, "Activate Embodiment of Apophis")
+    _until(d, lambda d: d.decision.kind == "idle")
+    _b4_turn(d, 3)
+    d.play(["Enter the Battle Phase"])
+    out = _go(d, "Attack with Barbaroid")
+    out += d.play(["Embodiment of Apophis"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or "Battle Phase: choose" in d.describe_decision())
+    assert "Embodiment of Apophis: P2 Monster Zone 1 → P2 GY — destroyed by battle" in out, out
+    assert "P2 takes 1000 damage" in out, out
+
+
+def test_jetstream_cannot_be_activated_for_a_blackwing_waboku_protects():
+    # FAQ 10486
+    d = start({"hand": ["Blackwing - Jetstream the Blue Sky"], "monsters": [{"card": "Blackwing - Gale the Whirlwind", "zone": 1}],
+               "spells_traps": [{"card": "Waboku"}], "deck_filler": 10}, {"monsters": [{"card": "Dark Magician", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 3)
+    d.play(["Enter the Battle Phase"])
+    _go(d, "Activate Waboku")
+    _until(d, lambda d: any(o.label.startswith("Attack with") for o in d.decision.options))
+    d.play(["Attack with Blackwing - Gale the Whirlwind", "Dark Magician"])
+    out = _until(d, lambda d: d.decision.kind == "idle" or "Battle Phase: choose" in d.describe_decision()
+                 or any("Jetstream" in o.label for o in d.decision.options))
+    assert not any("Jetstream" in o.label for o in d.decision.options), out + d.describe_decision()
+
+
+def test_caius_banishes_the_target_and_its_namesakes_together():
+    # FAQ 9927: field and GY "Evilswarm Kerykeion" are banished by the same effect, so "Jewels of the Valiant" cannot be activated
+    d = start({"monsters": [{"card": "Evilswarm Kerykeion", "zone": 1}], "graveyard": ["Evilswarm Kerykeion"],
+               "spells_traps": [{"card": "Jewels of the Valiant", "face_up": True}], "deck_filler": 12},
+              {"hand": ["Caius the Mega Monarch"], "monsters": [{"card": "Gagagigo", "zone": 1, "summoned": "normal"},
+                                                                {"card": "Gagagigo", "zone": 2, "summoned": "normal"}], "deck_filler": 12})
+    _b4_turn(d, 2)
+    out = _go(d, "Normal Summon Caius the Mega Monarch")
+    out += d.play([[0, 1], 0])
+    out += d.play(["Evilswarm Kerykeion"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or any("Jewels of the Valiant" in o.label for o in d.decision.options))
+    assert "Evilswarm Kerykeion: P1 GY → P1 banished" in out and "P1 takes 1000 damage" in out, out
+    assert not any("Jewels of the Valiant" in o.label for o in d.decision.options) and "activates Jewels of the Valiant" not in out, out
+
+
+def test_scrap_twin_dragon_does_not_destroy_its_own_target_taken_by_the_opponent():
+    # FAQ 10228
+    d = start({"monsters": [{"card": "Scrap Twin Dragon", "zone": 1}, {"card": "Skull Servant", "zone": 2}], "deck_filler": 10},
+              {"monsters": [{"card": "Dragon Zombie", "zone": 1}, {"card": "Zombie Warrior", "zone": 2}, {"card": "Gemini Elf", "zone": 3}],
+               "spells_traps": [{"card": "Enemy Controller"}], "deck_filler": 10})
+    _b4_turn(d, 1)
+    out = _go(d, "Activate Scrap Twin Dragon")
+    out += d.play([1, [0, 1]])
+    out += _go(d, "Activate Enemy Controller")
+    out += d.play(["Take control of an opponent's monster", 2, "Skull Servant", 0])
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    after = out.split("Resolving Chain Link 1 (Scrap Twin Dragon)")[-1]
+    assert "Resolving Chain Link 1 (Scrap Twin Dragon)" in out, out
+    assert "Skull Servant:" not in after and "→ P2 hand" not in after, out
+
+
+def test_majestic_star_dragon_does_not_gain_a_six_samurai_destruction_replacement():
+    # FAQ 10002: it gains only the effects that are activated
+    d = start({"hand": ["Offerings to the Doomed"], "monsters": [{"card": "Majestic Star Dragon", "zone": 1, "properly_summoned": True},
+                                                                {"card": "The Six Samurai - Kamon", "zone": 2}], "deck_filler": 10},
+              {"monsters": [{"card": "The Six Samurai - Yaichi", "zone": 1}], "deck_filler": 10})
+    _b4_turn(d, 1)
+    out = _go(d, "Activate Majestic Star Dragon")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    out += _go(d, "Activate Offerings to the Doomed")
+    out += d.play([0, "Majestic Star Dragon"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or "avoid destruction" in d.describe_decision())
+    assert "avoid destruction" not in d.describe_decision(), d.describe_decision()
+    assert "Majestic Star Dragon: P1 Monster Zone 1 → P1 GY — destroyed by an effect" in out, out
+
+
+def _shadow_feeler(negate):
+    d = start({"hand": ["Dark Hole"], "monsters": [{"card": "Gimmick Puppet Shadow Feeler", "zone": 1}, {"card": "Gimmick Puppet Magnet Doll", "zone": 2}],
+               "extra_deck": ["Number 15: Gimmick Puppet Giant Grinder"], "deck_filler": 10},
+              {"spells_traps": [{"card": "Solemn Judgment"}], "deck_filler": 10})
+    _b4_turn(d, 1)
+    out = _go(d, "Special Summon Number 15")
+    out += d.play([[0, 1]])
+    if negate:
+        out += _go(d, "Activate Solemn Judgment")
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    if not negate:
+        out += _go(d, "Activate Dark Hole")
+        out += _until(d, lambda d: d.decision.kind == "idle")
+    return out
+
+
+def test_shadow_feeler_goes_to_the_gy_when_the_xyz_summon_is_negated():
+    # FAQ 10042
+    out = _shadow_feeler(True)
+    assert "Gimmick Puppet Shadow Feeler: P1 Xyz Material → P1 GY" in out, out
+
+
+def test_shadow_feeler_is_banished_when_its_xyz_monster_leaves_the_field():
+    out = _shadow_feeler(False)
+    assert "Gimmick Puppet Shadow Feeler: P1 Xyz Material → P1 banished" in out, out
