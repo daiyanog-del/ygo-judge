@@ -2895,3 +2895,41 @@ def test_red_eyes_retro_dragon_activates_with_one_free_zone():
                   ['@2', 'Activate Shield Crush', '#0'], seed=1)
     seen, more = _w_seen(d, 'Red-Eyes Retro Dragon')
     assert seen or "activates Red-Eyes Retro Dragon" in out, out + more + d.describe_decision()
+
+
+# ---------------------------------------------------------------- Q&As of cards with a trigger effect in the GY (wideX)
+
+
+def test_destiny_hero_dreamer_is_asked_before_the_opponent_responds():
+    # FAQ 13064
+    d, out = _w_run({'monsters': [{'card': 'Destiny HERO - Dasher', 'position': 'attack', 'zone': 1}], 'graveyard': ['Destiny HERO - Dreamer'], 'deck_filler': 10},
+                    {'monsters': [{'card': 'Beast King Barbaros', 'position': 'attack', 'zone': 1}], 'hand': ['Forbidden Scripture'], 'deck_filler': 10},
+                    ['@2', 'Enter the Battle', 'Attack with', '#0'], seed=1)
+    assert "effect of Destiny HERO - Dreamer" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_destiny_hero_dreamer_cannot_be_chained_to_forbidden_scripture():
+    # FAQ 13064
+    d, out = _w_run({'monsters': [{'card': 'Destiny HERO - Dasher', 'position': 'attack', 'zone': 1}], 'graveyard': ['Destiny HERO - Dreamer'], 'deck_filler': 10},
+                    {'monsters': [{'card': 'Beast King Barbaros', 'position': 'attack', 'zone': 1}], 'hand': ['Forbidden Scripture'], 'deck_filler': 10},
+                    ['@2', 'Enter the Battle', 'Attack with', '#0', 'No', 'Activate Forbidden Scripture', '#0'], seed=1)
+    assert "activates Forbidden Scripture" in out, out
+    seen, more = _w_seen(d, 'Destiny HERO - Dreamer')
+    assert not seen and "activates Destiny HERO - Dreamer" not in out + more, out + more + d.describe_decision()
+
+
+def test_cross_debug_cannot_target_a_link_monster_with_0_atk():
+    # FAQ 22608
+    d, out = _w_run({'monsters': [{'card': 'Link Spider', 'zone': 'EMZ left', 'position': 'attack', 'summoned': 'link', 'properly_summoned': True}], 'graveyard': ['Cross Debug', {'card': 'Salamangreat Almiraj', 'properly_summoned': True}, {'card': 'Link Spider', 'properly_summoned': True}], 'deck_filler': 10},
+                    {'monsters': [{'card': 'Link Spider', 'zone': 'EMZ left', 'position': 'attack', 'summoned': 'link', 'properly_summoned': True}], 'deck_filler': 10},
+                    ['@3', 'Enter the Battle', 'Attack with Link Spider', '#0', '#0'], seed=1)
+    assert "Targets: Link Spider (P1 GY)" in out and not _offered(d, "Salamangreat Almiraj"), out + d.describe_decision()
+
+
+def test_cyber_emergency_negated_by_the_opponent_returns_for_either_player():
+    # FAQ 21900
+    d, out = _w_run({'hand': ['Mystical Shine Ball'], 'spells_traps': [{'card': 'Cyber Emergency', 'face_up': False}], 'deck': ['Cyber Dragon'], 'deck_filler': 10},
+                    {'monsters': [{'card': 'Light and Darkness Dragon', 'zone': 1, 'summoned': 'normal'}], 'deck_filler': 10},
+                    ['@1', 'Activate Cyber Emergency'], seed=1)
+    out += _until(d, lambda d: d.decision.kind == "idle" or "effect of Cyber Emergency (P1 GY)" in d.describe_decision())
+    assert "effect of Cyber Emergency (P1 GY)" in d.describe_decision(), out + d.describe_decision()

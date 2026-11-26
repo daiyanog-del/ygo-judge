@@ -1,0 +1,50 @@
+diff --git a/official/c60600126.lua b/official/c60600126.lua
+index b6a0b486..d33a915f 100644
+--- a/official/c60600126.lua
++++ b/official/c60600126.lua
+@@ -81,7 +81,8 @@ function s.thop(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ end
+ function s.checkop(e,tp,eg,ep,ev,re,r,rp)
+-	if re and re:GetHandler():IsCode(id) and rp==1-tp then
++	local dp=Duel.GetChainInfo(ev,CHAININFO_DISABLE_PLAYER)
++	if re and re:GetHandler():IsCode(id) and dp and dp~=rp then --FAQ 21900: negated by the opponent, whoever owns it
+ 		re:GetHandler():RegisterFlagEffect(id,RESET_EVENT|(RESETS_STANDARD&~RESET_TOGRAVE),0,1,0)
+ 	end
+ end
+\ No newline at end of file
+diff --git a/official/c66262416.lua b/official/c66262416.lua
+index 4a01d594..567edf2b 100644
+--- a/official/c66262416.lua
++++ b/official/c66262416.lua
+@@ -6,7 +6,7 @@ function s.initial_effect(c)
+ 	local e1=Effect.CreateEffect(c)
+ 	e1:SetDescription(aux.Stringid(id,0))
+ 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
+-	e1:SetType(EFFECT_TYPE_QUICK_O)
++	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O) --FAQ 13064: a Trigger Effect, so it cannot be chained to a later card
+ 	e1:SetCode(EVENT_PRE_DAMAGE_CALCULATE)
+ 	e1:SetRange(LOCATION_GRAVE)
+ 	e1:SetCountLimit(1,id)
+diff --git a/official/c9097866.lua b/official/c9097866.lua
+index 5b409763..4ce71a73 100644
+--- a/official/c9097866.lua
++++ b/official/c9097866.lua
+@@ -55,11 +55,14 @@ function s.atkcon(e,tp,eg,ep,ev,re,r,rp)
+ 	if a:IsControler(tp) then e:SetLabelObject(a) else e:SetLabelObject(d) end
+ 	return true
+ end
++function s.atkfilter(c) --FAQ 22608: a Link Monster with 0 ATK cannot be targeted
++	return c:IsLinkMonster() and c:GetAttack()>0
++end
+ function s.atktg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+-	if chkc then return chkc:IsControler(tp) and chkc:IsLocation(LOCATION_GRAVE) and chkc:IsLinkMonster() end
+-	if chk==0 then return Duel.IsExistingTarget(Card.IsType,tp,LOCATION_GRAVE,0,1,nil,TYPE_LINK) end
++	if chkc then return chkc:IsControler(tp) and chkc:IsLocation(LOCATION_GRAVE) and s.atkfilter(chkc) end
++	if chk==0 then return Duel.IsExistingTarget(s.atkfilter,tp,LOCATION_GRAVE,0,1,nil) end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TARGET)
+-	local tg=Duel.SelectTarget(tp,Card.IsType,tp,LOCATION_GRAVE,0,1,1,nil,TYPE_LINK)
++	local tg=Duel.SelectTarget(tp,s.atkfilter,tp,LOCATION_GRAVE,0,1,1,nil)
+ end
+ function s.atkop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()

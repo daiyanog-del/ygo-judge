@@ -125,6 +125,8 @@
 >     (17966), "Inferno Reckless Summon" (19956), "World Gears of Theurlogical Demiurgy" (22383), "Gagaga Samurai" (23911),
 >     "Grandpa Demetto" (23163), "Mind Control" (24100), "Double Summon" and "Floowandereeze & Snowl" (61), "Mayakashi
 >     Metamorphosis" (22062), "Tsukahagi, the Poisonous Mayakashi" (22064, 22065) and "Red-Eyes Retro Dragon" (16083, 16089).
+>   - script patch 0023, from the Q&As of cards with a trigger effect in the GY: "Destiny HERO - Dreamer" is a Trigger
+>     Effect (13064), "Cross Debug" (22608) and "Cyber Emergency" (21900).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
