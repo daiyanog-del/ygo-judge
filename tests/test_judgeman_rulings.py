@@ -2430,3 +2430,164 @@ def test_fencing_fire_ferret_does_nothing_if_its_target_was_turned_face_down():
     out += _until(d, lambda d: d.decision.kind == "idle")
     assert "activates Fencing Fire Ferret" in out, out
     assert "Fire King Avatar Barong: P2 Monster Zone 1 → P2 GY" not in out and "P2 takes 500 damage" not in out, out
+
+
+# ---------------------------------------------------------------- the 15th-18th 100 official Q&As
+def _run(p1, p2, goals, seed=1):
+    """play like scratchpad go.py: "@N" = until Main Phase 1 of turn N, "#i" = option i, [..] = list, other = option label prefix
+    (passing / ending the turn until it appears). Returns (duel, log)."""
+    d = start(p1, p2, seed=seed)
+    out = ""
+    for g in goals:
+        if isinstance(g, list):
+            out += d.play([g])
+        elif g.startswith("@"):
+            _b4_turn(d, int(g[1:]))
+        elif g.startswith("#"):
+            out += d.play([int(g[1:])])
+        else:
+            out += _until(d, lambda d: any(o.label.startswith(g) for o in d.decision.options), limit=40)
+            out += d.play([next(o.label for o in d.decision.options if o.label.startswith(g))])
+    return d, out
+
+
+def _offered(d, label):
+    return any(o.label.startswith(label) for o in d.decision.options)
+
+
+def test_megingjord_cannot_target_a_monster_that_declared_a_direct_attack():
+    # FAQ 13807
+    d, out = _run({"monsters": [{"card": "Dverg of the Nordic Alfar", "zone": 1}], "spells_traps": [{"card": "Nordic Relic Megingjord"}],
+                   "deck_filler": 10}, {"deck_filler": 10}, ["@3", "Enter the Battle Phase", "Attack with Dverg"])
+    out += _until(d, lambda d: "Battle Phase: choose" in d.describe_decision() or _offered(d, "Activate Nordic Relic Megingjord"))
+    assert "attacks directly" in out and not _offered(d, "Activate Nordic Relic Megingjord"), out + d.describe_decision()
+
+
+def test_naturia_pineapple_resolves_even_if_a_non_plant_reaches_the_gy():
+    # FAQ 13822
+    d, out = _run({"monsters": [{"card": "Dark Magician", "zone": 1}], "graveyard": ["Naturia Pineapple"], "deck_filler": 10},
+                  {"spells_traps": [{"card": "Ring of Destruction"}], "deck_filler": 10}, ["Yes", "Activate Ring of Destruction", "#0"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or "battle position of Naturia Pineapple" in d.describe_decision())
+    assert "Dark Magician: P1 Monster Zone 1 → P1 GY" in out, out
+    assert "battle position of Naturia Pineapple" in d.describe_decision() or "Naturia Pineapple is Special Summoned" in out, out
+
+
+def test_greed_grado_counts_a_face_down_synchro_flipped_by_the_attack():
+    # FAQ 13826
+    d, out = _run({"monsters": [{"card": "Dark Magician", "zone": 1}], "spells_traps": [{"card": "Greed Grado"}], "deck_filler": 10},
+                  {"monsters": [{"card": "Junk Warrior", "zone": 1, "position": "set", "summoned": "synchro"}],
+                   "deck_filler": 10}, ["@3", "Enter the Battle Phase", "Attack with Dark Magician", "#0"])
+    out += _until(d, lambda d: _offered(d, "Activate Greed Grado") or d.decision.kind == "idle")
+    assert "Junk Warrior: P2 Monster Zone 1 → P2 GY — destroyed by battle" in out and _offered(d, "Activate Greed Grado"), out
+
+
+def test_smashing_horn_cannot_answer_horn_of_heaven_on_a_flip_summon():
+    # FAQ 13882
+    d, out = _run({"monsters": [{"card": "Mystical Shine Ball", "zone": 1, "position": "set"}], "spells_traps": [{"card": "Smashing Horn"}],
+                   "deck_filler": 10}, {"monsters": [{"card": "Dark Magician", "zone": 1}], "spells_traps": [{"card": "Horn of Heaven"}], "deck_filler": 10},
+                  ["@3", "Change the battle position of Mystical Shine Ball", "Activate Horn of Heaven", "#0"])
+    assert not _offered(d, "Activate Smashing Horn"), out + d.describe_decision()
+
+
+def test_barrel_behind_the_door_can_answer_d_boyz():
+    # FAQ 14022
+    d, out = _run({"monsters": [{"card": "D-Boyz", "zone": 1, "position": "set", "summoned": "normal"}], "spells_traps": [{"card": "Barrel Behind the Door"}],
+                   "deck": ["D-Boyz", "D-Boyz"], "deck_filler": 10}, {"deck_filler": 10}, ["#0", "#0"])
+    assert _offered(d, "Activate Barrel Behind the Door"), out + d.describe_decision()
+
+
+def test_bujingi_pavo_needs_a_beast_warrior_on_the_field():
+    # FAQ 13684: a "Bujin" made Winged Beast by "DNA Surgery" does not count; a normal one does
+    for dna in (True, False):
+        p1 = {"hand": ["Bujingi Pavo"], "monsters": [{"card": "Bujin Yamato", "zone": 1}], "deck": ["Mystical Shine Ball", "Bujin Mikazuchi"],
+              "spells_traps": [{"card": "DNA Surgery"}] if dna else [], "deck_filler": 10}
+        goals = (["Activate DNA Surgery", "Winged Beast"] if dna else []) + ["End the turn", "No", "Enter the Battle Phase", "Attack with Dark Magician", "#0"]
+        d, out = _run(p1, {"monsters": [{"card": "Dark Magician", "zone": 1}], "deck_filler": 10}, goals)
+        out += _until(d, lambda d: _offered(d, "Activate Bujingi Pavo") or "Battle Phase: choose" in d.describe_decision())
+        assert "Bujin Yamato: P1 Monster Zone 1 → P1 GY — destroyed by battle" in out, out
+        assert _offered(d, "Activate Bujingi Pavo") == (not dna), (dna, out + d.describe_decision())
+
+
+def test_synchron_carrier_needs_a_synchron_on_the_field_and_in_the_gy():
+    # FAQ 14519
+    d, out = _run({"hand": ["Hero Mask"], "monsters": [{"card": "Synchron Carrier", "zone": 1}, {"card": "Junk Synchron", "zone": 2}, {"card": "Kuriboh", "zone": 3}],
+                   "extra_deck": ["Armory Arm"], "deck": ["Elemental HERO Avian"], "deck_filler": 5}, {"deck_filler": 10},
+                  ["Activate Hero Mask", "#0", "#1", "Special Summon Armory Arm", "#0", "#0", "#0", "#0"])
+    assert "Synchron Carrier" not in d.describe_decision().split("Decision for")[-1].split("\n")[0], out + d.describe_decision()
+    d, out = _run({"monsters": [{"card": "Synchron Carrier", "zone": 1}, {"card": "Junk Synchron", "zone": 2}, {"card": "Synchron Explorer", "zone": 3}],
+                   "extra_deck": ["Junk Warrior"], "deck_filler": 10}, {"deck_filler": 10},
+                  ["Special Summon Junk Warrior", "Select Junk Synchron", "Select Synchron Explorer", "#0", "#0"])
+    assert _offered(d, "Activate Synchron Carrier"), out + d.describe_decision()
+
+
+def test_bedwyr_cannot_move_gwenhwyfar_equipped_as_a_monster():
+    # FAQ 14611
+    d, out = _run({"hand": ["Gwenhwyfar, Queen of Noble Arms"], "monsters": [{"card": "Noble Knight Bedwyr", "zone": 1},
+                   {"card": "Noble Knight Artorigus", "zone": 2}, {"card": "Noble Knight Gawayn", "zone": 3}], "deck_filler": 10}, {"deck_filler": 10},
+                  ["Activate Gwenhwyfar", "Noble Knight Artorigus"])
+    _until(d, lambda d: d.decision.kind == "idle")
+    assert not _offered(d, "Activate Noble Knight Bedwyr"), d.describe_decision()
+
+
+def test_diceversity_rolls_a_die():
+    # FAQ 14942: the flag it checked was never set, so it did nothing
+    d, out = _run({"monsters": [{"card": "Cyber Dragon", "zone": 2}], "spells_traps": [{"card": "Level Retuner"}, {"card": "Diceversity"}],
+                   "deck_filler": 10}, {"deck_filler": 10},
+                  ["@1", "Activate Level Retuner", "Pass", "Reduce Level by 1", "Activate Diceversity", "#0"])
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Resolving Chain Link 1 (Diceversity)" in out and out.split("Resolving Chain Link 1 (Diceversity)")[-1].count("Die roll for P1") == 1, out
+
+
+def test_gigagloves_cannot_be_activated_against_a_0_atk_attacker():
+    # FAQ 14884
+    d, out = _run({"graveyard": ["Superheavy Samurai Gigagloves"], "deck": ["Superheavy Samurai Soulpiercer"], "deck_filler": 10},
+                  {"monsters": [{"card": "Yosenju Kodam", "zone": 1}], "deck_filler": 10}, ["End the turn", "Enter the Battle Phase", "Attack with"])
+    assert "Gigagloves" not in d.describe_decision(), out + d.describe_decision()
+
+
+def test_aroma_garden_activates_twice_for_destructions_in_two_chain_links():
+    # FAQ 15544 (15545: once for a simultaneous destruction)
+    d, out = _run({"monsters": [{"card": "Aromage Rosemary", "zone": 1, "summoned": "normal"}, {"card": "Aromage Cananga", "zone": 2, "summoned": "normal"}],
+                   "field_spell": {"card": "Aroma Garden"}, "deck_filler": 10},
+                  {"hand": ["Dark Hole", "Dark Hole"], "spells_traps": [{"card": "Raigeki Break"}, {"card": "Raigeki Break"}], "deck_filler": 10},
+                  ["#0", "#0", "#0", "#0", "#1"])
+    assert sum(o.label.startswith("Activate Aroma Garden") for o in d.decision.options) == 2, out + d.describe_decision()
+
+
+def test_fluffal_crane_needs_a_fluffal_on_the_field():
+    # FAQ 15270: "Fluffal Bear" renamed by "Hero Mask"
+    d, out = _run({"hand": ["Hero Mask"], "monsters": [{"card": "Fluffal Bear", "zone": 1}], "spells_traps": [{"card": "Fluffal Crane"}],
+                   "deck": ["Elemental HERO Neos"], "deck_filler": 10},
+                  {"hand": ["Mystical Elf"], "spells_traps": [{"card": "Raigeki Break"}], "deck_filler": 10},
+                  ["Activate Hero Mask", "#0", "#1", "Activate Raigeki Break", "#0"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or _offered(d, "Activate Fluffal Crane"))
+    assert "Fluffal Bear: P1 Monster Zone 1 → P1 GY" in out and not _offered(d, "Activate Fluffal Crane"), out + d.describe_decision()
+
+
+def test_damage_juggler_cannot_be_activated_in_the_end_step():
+    # FAQ 15396
+    d, out = _run({"hand": ["Performage Damage Juggler"], "monsters": [{"card": "Odd-Eyes Saber Dragon", "zone": 1}], "deck_filler": 10},
+                  {"monsters": [{"card": "Odd-Eyes Pendulum Dragon", "zone": 1}], "deck_filler": 10},
+                  ["End the turn", "End the turn", "Enter the Battle Phase", "Pass", "Go to Main Phase 2"])
+    assert not _offered(d, "Activate Performage Damage Juggler"), out + d.describe_decision()
+
+
+def test_chaofeng_does_not_activate_for_a_face_down_monster_returned_to_the_deck():
+    # FAQ 15142
+    d, out = _run({"monsters": [{"card": "Chaofeng, Phantom of the Yang Zing", "zone": 1, "summoned": "synchro", "properly_summoned": True},
+                   {"card": "Mystic Swordsman LV6", "zone": 2, "summoned": "special", "properly_summoned": True}],
+                   "deck": ["Mystical Shine Ball", "Bixi, Water of the Yang Zing"], "deck_filler": 8},
+                  {"monsters": [{"card": "Performapal Skeeter Skimmer", "zone": 1, "position": "set"}], "deck_filler": 8},
+                  ["@3", "Enter the Battle Phase", "Attack with Mystic", "#0", "#0"])
+    assert "Performapal Skeeter Skimmer: P2 Monster Zone 1 → P2 Deck" in out, out
+    assert "Chaofeng" not in d.describe_decision().split("\n")[0] and "activate/use the effect of Chaofeng" not in d.describe_decision(), out
+
+
+def test_yosen_whirlwind_needs_a_yosenju_on_the_field():
+    # FAQ 15214
+    d, out = _run({"hand": ["Hero Mask"], "monsters": [{"card": "Yosenju Kama 1", "zone": 1}],
+                   "spells_traps": [{"card": "Yosen Whirlwind", "face_up": True}, {"card": "Compulsory Evacuation Device"}],
+                   "deck": ["Elemental HERO Stratos"], "deck_filler": 10},
+                  {"hand": ["Mystical Shine Ball"], "monsters": [{"card": "Performapal Stamp Turtle", "zone": 1}], "deck_filler": 10},
+                  ["Activate Hero Mask", "#0", "Pass", "#0", "#0"])
+    assert "Yosenju Kama 1: P1 Monster Zone 1 → P1 hand" in out and "Yosen Whirlwind" not in d.describe_decision(), out + d.describe_decision()

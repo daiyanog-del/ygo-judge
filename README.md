@@ -110,6 +110,12 @@
 >   - core patch 0014, found by testing a fourteenth 100 official Q&As: an unaffected-by effect from another card that the
 >     card is unaffected by does not apply, so "Forbidden Lance" takes away "Magnet Force"'s protection (FAQ 11947).
 >   - script patch 0019, from the same Q&As: "Fencing Fire Ferret" does nothing to a target turned face-down (12668).
+>   - core patch 0015, found by testing the fifteenth to eighteenth 100 official Q&As: a trigger effect that meets its
+>     condition again in a later chain link is activated again, instead of being merged (FAQ 15544, "Aroma Garden").
+>   - script patch 0020, from the same Q&As: "Nordic Relic Megingjord" (13807), "Naturia Pineapple" (13822), "Greed Grado"
+>     (13826), "Smashing Horn" (13882), "D-Boyz" (14022), "Bujingi Pavo" (13684), "Synchron Carrier"
+>     (14519), "Noble Knight Bedwyr" (14611), "Diceversity" (14942), "Superheavy Samurai Gigagloves" (14884), "Performage Damage Juggler" (15396),
+>     "Fluffal Crane" (15270), "Chaofeng, Phantom of the Yang Zing" (15142) and "Yosen Whirlwind" (15214).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
