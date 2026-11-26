@@ -2641,3 +2641,257 @@ def test_dice_roll_battle_still_banishes_under_vanitys_emptiness():
 def test_dice_roll_battle_synchro_summons_without_vanitys_emptiness():
     d, out = _dice_roll_battle(False)
     assert "Speedroid Terrortop: P1 GY → P1 banished — by an effect" in out and "Hi-Speedroid Kendama is Special Summoned" in out, out
+
+
+# ---------------------------------------------------------------- Q&As of cards written in the same unconfirmed way (wideW)
+def _w_seen(d, name, limit=15):
+    """Pass until `name` asks to activate (an "Activate <name>" option or a yes/no prompt for its effect),
+    or until the Main Phase / the duel ends. Returns (seen, log)."""
+    out = ""
+    for _ in range(limit):
+        desc = d.describe_decision()
+        if "effect of " + name in desc or _offered(d, "Activate " + name):
+            return True, out
+        if d.decision.kind == "idle" or "The duel is over" in desc:
+            return False, out
+        labels = [o.label for o in d.decision.options]
+        out += d.play([P if P in labels else "End the turn" if "End the turn" in labels else 0])
+    return False, out
+
+def _w_turn(d, turn):
+    """Pass every window (choosing the first zone or option when asked) until the Main Phase 1 of `turn`."""
+    out = ""
+    for _ in range(80):
+        if d.turn == turn and d.decision.kind == "idle":
+            return out
+        labels = [o.label for o in d.decision.options]
+        out += d.play([P if P in labels else "End the turn" if "End the turn" in labels else 0])
+    raise AssertionError(f"turn {turn} never came: {d.describe_decision()}")
+
+
+def _w_run(p1, p2, goals, seed=1):
+    """_run, but "@N" also gets through zone and position choices."""
+    d = start(p1, p2, seed=seed)
+    out = ""
+    for g in goals:
+        if isinstance(g, list):
+            out += d.play([g])
+        elif g.startswith("@"):
+            out += _w_turn(d, int(g[1:]))
+        elif g.startswith("#"):
+            out += d.play([int(g[1:])])
+        else:
+            out += _until(d, lambda d: any(o.label.startswith(g) for o in d.decision.options), limit=40)
+            out += d.play([next(o.label for o in d.decision.options if o.label.startswith(g))])
+    return d, out
+
+
+def test_fragile_armor_sees_the_name_a_monster_had_when_destroyed():
+    # FAQ 17616
+    d, out = _w_run({'hand': ['The Phantom Knights of Fragile Armor', 'Mystical Shine Ball'], 'monsters': [{'card': 'Phantom of Chaos', 'position': 'attack', 'zone': 1, 'summoned': 'special', 'properly_summoned': True}], 'graveyard': ['The Phantom Knights of Ancient Cloak'], 'deck_filler': 10},
+                  {'spells_traps': [{'card': 'Ring of Destruction', 'face_up': False}], 'deck_filler': 10},
+                  ['@1', 'Activate Phantom of Chaos', '#1', 'Activate Ring of Destruction', '#0'], seed=1)
+    seen, more = _w_seen(d, 'The Phantom Knights of Fragile Armor')
+    assert seen or "activates The Phantom Knights of Fragile Armor" in out, out + more + d.describe_decision()
+
+
+def test_shinobird_salvation_counts_a_monster_that_was_a_spirit_on_the_field():
+    # FAQ 20137
+    d, out = _w_run({'hand': ['Hebo, Lord of the River', 'Mystical Shine Ball'], 'monsters': [{'card': 'Spiritual Whisper', 'position': 'attack', 'zone': 1}], 'spells_traps': [{'card': 'Shinobird Salvation', 'face_up': True}, {'card': 'Raigeki Break', 'face_up': False}], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Battle Ox', 'position': 'attack', 'zone': 1}], 'deck_filler': 10},
+                  ['@1', 'Normal Summon Hebo', '#0', 'Yes', '#0', '#1', 'Activate Raigeki Break', '#1', 'End the turn'], seed=1)
+    assert "Spiritual Whisper: P1 Monster Zone 1 → P1 hand" in out, out
+    seen, more = _w_seen(d, 'Shinobird Salvation')
+    assert seen or "activates Shinobird Salvation" in out, out + more + d.describe_decision()
+
+
+def test_headhunt_negation_ends_when_the_control_returns():
+    # FAQ 23499
+    d, out = _w_run({'monsters': [{'card': 'D/D/D Flame King Genghis', 'position': 'attack', 'zone': 1}], 'spells_traps': [{'card': 'D/D/D Headhunt', 'face_up': False}], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Dark Magician Girl', 'position': 'attack', 'zone': 1}], 'graveyard': ['Dark Magician'], 'deck_filler': 10},
+                  ['Activate D/D/D Headhunt'], seed=1)
+    _until(d, lambda d: d.decision.kind == "idle")
+    out += _w_turn(d, 3)
+    assert "Dark Magician Girl, face-up Attack, ATK 2300" in d.board(), d.board()
+
+
+def test_zexal_alliance_can_be_activated_with_10_lp():
+    # FAQ 23448
+    d, out = _w_run({'lp': 10, 'monsters': [{'card': 'Number C39: Utopia Ray', 'position': 'attack', 'zone': 1}, {'card': 'Dinomorphia Stealthbergia', 'position': 'attack', 'zone': 2}], 'spells_traps': [{'card': 'Zexal Alliance', 'face_up': False}], 'graveyard': [{'card': 'Number 39: Utopia', 'properly_summoned': True}], 'deck_filler': 10},
+                  {'hand': ['Offerings to the Doomed'], 'deck_filler': 10},
+                  ['End the turn', 'Activate Offerings to the Doomed', '#0', '#0'], seed=1)
+    seen, more = _w_seen(d, 'Zexal Alliance')
+    assert seen or "activates Zexal Alliance" in out, out + more + d.describe_decision()
+
+
+def test_miracle_rupture_needs_two_cards_in_the_deck_with_fossil_fusion():
+    # FAQ 23032
+    d, out = _w_run({'hand': ['Miracle Rupture'], 'deck': ['Giant Soldier of Stone'], 'graveyard': ['Fossil Fusion'], 'deck_filler': 0},
+                  {'deck_filler': 10},
+                  ['@1'], seed=1)
+    assert not _offered(d, "Activate Miracle Rupture"), d.describe_decision()
+
+
+def test_miracle_rupture_with_fossil_fusion_and_two_cards():
+    # FAQ 23032
+    d, out = _w_run({'hand': ['Miracle Rupture'], 'deck': ['Giant Soldier of Stone', 'Mystical Shine Ball'], 'graveyard': ['Fossil Fusion'], 'deck_filler': 0},
+                  {'deck_filler': 10},
+                  ['@1'], seed=1)
+    assert _offered(d, "Activate Miracle Rupture"), d.describe_decision()
+
+
+def test_malefic_tune_destroyed_with_the_malefic_cannot_search():
+    # FAQ 22448
+    d, out = _w_run({'monsters': [{'card': 'Malefic Parallel Gear', 'position': 'attack', 'zone': 1}], 'spells_traps': [{'card': 'Malefic Tune', 'face_up': False}], 'field_spell': {'card': 'Malefic World'}, 'deck_filler': 10, 'deck': ['Malefic Blue-Eyes White Dragon']},
+                  {'monsters': [{'card': 'Harpie Lady', 'zone': 1}], 'spells_traps': [{'card': 'Icarus Attack', 'face_up': False}], 'deck_filler': 10},
+                  ['#0', '#0', [0, 1]], seed=1)
+    assert "Malefic Tune: P1 Spell & Trap Zone 1 → P1 GY" in out, out
+    seen, more = _w_seen(d, 'Malefic Tune')
+    assert not seen and "activates Malefic Tune" not in out + more, out + more + d.describe_decision()
+
+
+def test_bonding_d2o_sent_with_water_dragon_does_not_return():
+    # FAQ 21058
+    d, out = _w_run({'monsters': [{'card': 'Water Dragon', 'position': 'attack', 'zone': 1, 'summoned': 'special', 'properly_summoned': True}], 'spells_traps': [{'card': 'Bonding - D2O', 'face_up': False}], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Scrap Searcher', 'position': 'attack', 'zone': 1}], 'spells_traps': [{'card': 'Icarus Attack', 'face_up': False}], 'deck_filler': 10},
+                  ['#0', '#0', '#0'], seed=1)
+    assert "Bonding - D2O: P1 Spell & Trap Zone 1 → P1 GY" in out, out
+    seen, more = _w_seen(d, 'Bonding - D2O')
+    assert not seen and "activates Bonding - D2O" not in out + more, out + more + d.describe_decision()
+
+
+def test_red_eyes_fang_with_chain_does_not_change_atk_of_an_unaffected_monster():
+    # FAQ 21054
+    d, out = _w_run({'monsters': [{'card': 'Red-Eyes Retro Dragon', 'position': 'attack', 'zone': 1}], 'spells_traps': [{'card': 'Red-Eyes Fang with Chain', 'face_up': True, 'equipped_to': 'Red-Eyes Retro Dragon'}], 'deck_filler': 10},
+                  {'monsters': [{'card': 'The Legendary Fisherman', 'position': 'attack', 'zone': 1}], 'spells_traps': [{'card': 'Forbidden Lance', 'face_up': False}], 'deck_filler': 10},
+                  ['#0', '#0', '#0', '@3'], seed=1)
+    assert "Red-Eyes Retro Dragon, face-up Attack, ATK 1700" in d.board(), out + d.board()
+
+
+def test_titanic_galaxy_does_not_activate_for_an_xyz_returned_to_the_extra_deck():
+    # FAQ 17966
+    d, out = _w_run({'monsters': [{'card': 'Daigusto Emeral', 'position': 'attack', 'zone': 1, 'materials': ['Battle Ox', 'Battle Ox']}, {'card': 'Number 38: Hope Harbinger Dragon Titanic Galaxy', 'position': 'attack', 'zone': 2, 'materials': ['Battle Ox', 'Battle Ox']}], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Evigishki Merrowgeist', 'position': 'attack', 'zone': 1, 'materials': ['Battle Ox', 'Battle Ox']}], 'deck_filler': 10},
+                  ['@2', 'Enter the Battle', 'Attack with', '#0', 'No', 'Yes', '#0'], seed=1)
+    assert "Daigusto Emeral: P1 Monster Zone 1 → P1 Extra Deck" in out, out
+    seen, more = _w_seen(d, 'Number 38: Hope Harbinger Dragon Titanic Galaxy')
+    assert not seen and "activates Number 38: Hope Harbinger Dragon Titanic Galaxy" not in out + more, out + more + d.describe_decision()
+
+
+def test_inferno_reckless_summon_lets_the_opponent_choose_any_face_up_monster():
+    # FAQ 19956
+    d, out = _w_run({'hand': ['Bujingi Wolf'], 'deck': ['Bujin Mikazuchi'], 'monsters': [{'card': 'Bujin Mikazuchi', 'position': 'attack', 'zone': 1}, {'card': 'Bujingi Wolf', 'position': 'attack', 'zone': 2}], 'deck_filler': 10},
+                  {'hand': ['Monster Reborn'], 'deck': ['Card Trooper'], 'graveyard': ['Card Trooper'], 'spells_traps': [{'card': 'Inferno Reckless Summon', 'face_up': False}], 'deck_filler': 10},
+                  ['@2', 'Activate Monster Reborn', '#0', '#0', 'Activate Inferno', '#0'], seed=1)
+    assert _offered(d, "Bujin Mikazuchi") and _offered(d, "Bujingi Wolf"), out + d.describe_decision()
+
+
+def test_demiurgia_loses_its_link_material_flag_when_banished_temporarily():
+    # FAQ 22383
+    d, out = _w_run({'hand': ['Interdimensional Matter Transporter'], 'monsters': [{'card': 'Blue-Eyes White Dragon', 'zone': 1}, {'card': 'Dark Magician', 'zone': 2}, {'card': 'Gaia The Fierce Knight', 'zone': 3}], 'extra_deck': ['World Gears of Theurlogical Demiurgy'], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Cyber Jar', 'zone': 1, 'position': 'set'}], 'deck_filler': 10},
+                  ['@1', 'Special Summon World Gears', '#0', '#0', '#0', '#0', 'Set Interdimensional', '#0', 'End the turn', 'Activate Interdimensional', '@3'], seed=1)
+    assert "World Gears of Theurlogical Demiurgy: P1 banished → P1 Monster Zone" in out, out
+    assert not _offered(d, "Activate World Gears"), d.describe_decision()
+
+
+def test_demiurgia_keeps_its_link_material_flag():
+    # FAQ 22383
+    d, out = _w_run({'hand': ['Interdimensional Matter Transporter'], 'monsters': [{'card': 'Blue-Eyes White Dragon', 'zone': 1}, {'card': 'Dark Magician', 'zone': 2}, {'card': 'Gaia The Fierce Knight', 'zone': 3}], 'extra_deck': ['World Gears of Theurlogical Demiurgy'], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Cyber Jar', 'zone': 1, 'position': 'set'}], 'deck_filler': 10},
+                  ['@1', 'Special Summon World Gears', '#0', '#0', '#0', '#0', '@3'], seed=1)
+    assert _offered(d, "Activate World Gears"), d.describe_decision()
+
+
+def test_gagaga_samurai_cannot_target_a_monster_that_cannot_attack():
+    # FAQ 23911
+    d, out = _w_run({'monsters': [{'card': 'Gagaga Samurai', 'zone': 1, 'materials': ['Gagaga Magician', 'Gagaga Magician']}], 'deck_filler': 10},
+                  {'hand': ['Swords of Revealing Light'], 'monsters': [{'card': 'Amabie', 'zone': 1}], 'deck_filler': 10},
+                  ['@2', 'Activate Swords', '@3'], seed=1)
+    assert not _offered(d, "Activate Gagaga Samurai"), d.describe_decision()
+
+
+def test_gagaga_samurai_can_target_a_monster_that_can_attack():
+    # FAQ 23911
+    d, out = _w_run({'monsters': [{'card': 'Gagaga Samurai', 'zone': 1, 'materials': ['Gagaga Magician', 'Gagaga Magician']}], 'deck_filler': 10},
+                  {'hand': ['Swords of Revealing Light'], 'monsters': [{'card': 'Amabie', 'zone': 1}], 'deck_filler': 10},
+                  ['@3'], seed=1)
+    assert _offered(d, "Activate Gagaga Samurai"), d.describe_decision()
+
+
+def test_grandpa_demetto_needs_an_originally_dark_monster_under_barrier_statue():
+    # FAQ 23163
+    d, out = _w_run({'monsters': [{'card': 'Grandpa Demetto', 'zone': 1}, {'card': 'Princess Cologne', 'zone': 2, 'materials': ['Ojama Green', 'Ojama Green']}], 'graveyard': ['Ojama Green'], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Barrier Statue of the Abyss', 'zone': 1}], 'deck_filler': 10},
+                  ['@1'], seed=1)
+    assert not _offered(d, "Activate Grandpa Demetto"), d.describe_decision()
+
+
+def test_grandpa_demetto_without_barrier_statue():
+    # FAQ 23163
+    d, out = _w_run({'monsters': [{'card': 'Grandpa Demetto', 'zone': 1}, {'card': 'Princess Cologne', 'zone': 2, 'materials': ['Ojama Green', 'Ojama Green']}], 'graveyard': ['Ojama Green'], 'deck_filler': 10},
+                  {'deck_filler': 10},
+                  ['@1'], seed=1)
+    assert _offered(d, "Activate Grandpa Demetto"), d.describe_decision()
+
+
+def test_mind_control_monster_can_be_tributed_after_it_is_set():
+    # FAQ 24100
+    d, out = _w_run({'hand': ['Mind Control', 'Book of Moon', 'Patrician of Darkness'], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Marshmallon', 'position': 'attack'}], 'deck_filler': 10},
+                  ['@1', 'Activate Mind Control', '#0', '#1', '#0', 'Activate Book of Moon', '#0'], seed=1)
+    assert _offered(d, "Normal Summon Patrician of Darkness"), out + d.describe_decision()
+
+
+def test_double_summon_cannot_be_activated_while_you_cannot_normal_summon():
+    # FAQ 61
+    d, out = _w_run({'hand': ['Lava Golem', 'Double Summon', 'Mystical Shine Ball'], 'monsters': [{'card': 'Floowandereeze & Snowl', 'position': 'attack', 'summoned': 'tribute'}], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Marshmallon', 'position': 'attack'}, {'card': 'Moremarshmallon', 'position': 'attack'}], 'deck_filler': 10},
+                  ['@1', 'Special Summon Lava Golem', [0, 1], '#0', '#0', '#0', '#0'], seed=1)
+    assert "Lava Golem is Special Summoned" in out, out
+    assert not _offered(d, "Activate Double Summon") and not _offered(d, "Activate Floowandereeze & Snowl"), d.describe_decision()
+
+
+def test_mayakashi_metamorphosis_protection_keeps_the_activating_players_opponent():
+    # FAQ 22062
+    d, out = _w_run({'hand': ['Mystical Shine Ball', 'Creature Swap'], 'spells_traps': [{'card': 'Mayakashi Metamorphosis', 'face_up': False}, {'card': 'Compulsory Evacuation Device', 'face_up': False}], 'graveyard': ['Tsukahagi, the Poisonous Mayakashi'], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Marshmallon', 'position': 'attack'}], 'spells_traps': [{'card': 'Compulsory Evacuation Device', 'face_up': False}], 'deck_filler': 10},
+                  ['@1', 'Activate Mayakashi Metamorphosis', '#0', '#1', '#1', '#0', '#0', '#1', 'Activate Creature Swap', '#0', '#1', '#1', '#0', '#0', 'Activate Compulsory'], seed=1)
+    assert _offered(d, "Tsukahagi, the Poisonous Mayakashi (P2 Monster Zone"), out + d.describe_decision()
+
+
+def test_tsukahagi_activates_for_a_mayakashi_destroyed_in_the_hand_or_deck():
+    # FAQ 22064
+    d, out = _w_run({'hand': ['Yasha, the Skeletal Mayakashi'], 'graveyard': ['Tsukahagi, the Poisonous Mayakashi'], 'deck': ['Yasha, the Skeletal Mayakashi', 'Mystical Shine Ball'], 'deck_filler': 10},
+                  {'monsters': [{'card': 'Sangan', 'position': 'attack'}], 'spells_traps': [{'card': 'Crush Card Virus', 'face_up': False}], 'deck_filler': 10},
+                  ['Activate Crush Card Virus', '#0', '#0'], seed=1)
+    seen, more = _w_seen(d, 'Tsukahagi, the Poisonous Mayakashi')
+    assert seen or "activates Tsukahagi, the Poisonous Mayakashi" in out, out + more + d.describe_decision()
+
+
+def test_tsukahagi_destroyed_at_the_same_time_cannot_activate():
+    # FAQ 22065
+    d, out = _w_run({'hand': ['Mystical Shine Ball'], 'monsters': [{'card': 'Hajun, the Winged Mayakashi', 'position': 'attack'}, {'card': 'Tsukahagi, the Poisonous Mayakashi', 'position': 'attack'}], 'deck_filler': 10},
+                  {'spells_traps': [{'card': 'Torrential Tribute', 'face_up': False}], 'deck_filler': 10},
+                  ['@1', 'Normal Summon', '#0', 'Activate Torrential'], seed=1)
+    assert "Tsukahagi, the Poisonous Mayakashi: P1 Monster Zone" in out, out
+    seen, more = _w_seen(d, 'Tsukahagi, the Poisonous Mayakashi')
+    assert not seen and "activates Tsukahagi, the Poisonous Mayakashi" not in out + more, out + more + d.describe_decision()
+
+
+def test_red_eyes_retro_dragon_additional_summon_only_once_per_turn():
+    # FAQ 16083
+    d, out = _w_run({'hand': ['Red-Eyes Black Dragon', 'Red-Eyes Black Dragon'], 'monsters': [{'card': 'Red-Eyes Retro Dragon', 'zone': 1, 'position': 'attack'}, {'card': 'Red-Eyes Retro Dragon', 'zone': 2, 'position': 'attack'}], 'deck_filler': 10},
+                  {'hand': [], 'deck_filler': 10},
+                  ['@1', 'Activate Red-Eyes Retro'], seed=1)
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert not _offered(d, "Activate Red-Eyes Retro Dragon"), out + d.describe_decision()
+
+
+def test_red_eyes_retro_dragon_activates_with_one_free_zone():
+    # FAQ 16089
+    d, out = _w_run({'hand': ['Red-Eyes Retro Dragon'], 'monsters': [{'card': 'Red-Eyes Wyvern', 'zone': 1, 'position': 'defense'}, {'card': 'Mystical Elf', 'zone': 2}, {'card': 'Mystical Elf', 'zone': 3}, {'card': 'Mystical Elf', 'zone': 4}, {'card': 'Mystical Elf', 'zone': 5}], 'deck_filler': 10},
+                  {'hand': ['Shield Crush'], 'deck_filler': 10},
+                  ['@2', 'Activate Shield Crush', '#0'], seed=1)
+    seen, more = _w_seen(d, 'Red-Eyes Retro Dragon')
+    assert seen or "activates Red-Eyes Retro Dragon" in out, out + more + d.describe_decision()

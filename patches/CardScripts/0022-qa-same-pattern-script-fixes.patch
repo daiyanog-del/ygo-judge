@@ -1,0 +1,303 @@
+diff --git a/official/c12247206.lua b/official/c12247206.lua
+index 4ec89856..b3119fd1 100644
+--- a/official/c12247206.lua
++++ b/official/c12247206.lua
+@@ -34,7 +34,7 @@ function s.filter(c,tc,e,tp)
+ 	return s.nfilter(c,tc) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+ end
+ function s.selfilter(c,e,tp)
+-	return c:IsFaceup() and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_HAND|LOCATION_DECK|LOCATION_GRAVE,0,1,nil,c,e,tp)
++	return c:IsFaceup() --FAQ 19956: any face-up monster can be chosen
+ end
+ function s.sp(g,tp,pos)
+ 	for sc in aux.Next(g) do
+diff --git a/official/c276357.lua b/official/c276357.lua
+index 262717ad..cd4b933b 100644
+--- a/official/c276357.lua
++++ b/official/c276357.lua
+@@ -52,7 +52,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ end
+ function s.filter(c,tp)
+ 	return c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousPosition(POS_FACEUP)
+-		and c:IsControler(tp) and c:IsType(TYPE_SPIRIT)
++		and c:IsControler(tp) and (c:GetPreviousTypeOnField()&TYPE_SPIRIT)~=0 --FAQ 20137: Spirit when it left the field
+ end
+ function s.descon(e,tp,eg,ep,ev,re,r,rp)
+ 	return eg:IsExists(s.filter,1,nil,tp)
+diff --git a/official/c31712840.lua b/official/c31712840.lua
+index 95bd815c..0ba6887d 100644
+--- a/official/c31712840.lua
++++ b/official/c31712840.lua
+@@ -21,8 +21,8 @@ end
+ s.listed_series={SET_UTOPIA,SET_NUMBER}
+ 	--Pay LP until you have 10 left
+ function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
+-	if chk==0 then return Duel.GetLP(tp)>10 end
+-	Duel.PayLPCost(tp,Duel.GetLP(tp)-10)
++	if chk==0 then return true end --FAQ 23448: can be activated with 10 or less LP
++	if Duel.GetLP(tp)>10 then Duel.PayLPCost(tp,Duel.GetLP(tp)-10) end
+ end
+ 	--If a face-up Xyz monster was destroyed by battle or opponent's card effect
+ function s.cfilter(c,tp)
+@@ -41,7 +41,7 @@ end
+ 	--Activation legality
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+-		and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_GRAVE,0,1,nil,e,tp)
++		and Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_GRAVE,0,1,nil,e,tp)
+ 		and Duel.IsExistingMatchingCard(aux.TRUE,tp,LOCATION_DECK,0,1,nil)
+ 	end
+ 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_GRAVE)
+diff --git a/official/c36704180.lua b/official/c36704180.lua
+index 82e2a589..2f8f4071 100644
+--- a/official/c36704180.lua
++++ b/official/c36704180.lua
+@@ -30,7 +30,7 @@ function s.initial_effect(c)
+ end
+ s.listed_series={SET_THE_PHANTOM_KNIGHTS,SET_PHANTOM_KNIGHTS}
+ function s.filter(c,tp)
+-	return c:IsReason(REASON_BATTLE|REASON_EFFECT) and c:IsSetCard(SET_THE_PHANTOM_KNIGHTS) and c:IsPreviousControler(tp)
++	return c:IsReason(REASON_BATTLE|REASON_EFFECT) and c:IsPreviousSetCard(SET_THE_PHANTOM_KNIGHTS) and c:IsPreviousControler(tp) --FAQ 17616: name when destroyed
+ 		and c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousPosition(POS_FACEUP)
+ end
+ function s.condition(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c37520316.lua b/official/c37520316.lua
+index 9f46436e..d69837ff 100644
+--- a/official/c37520316.lua
++++ b/official/c37520316.lua
+@@ -27,13 +27,13 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 		local reset=RESET_EVENT|(RESETS_STANDARD_PHASE_END&~RESET_TURN_SET)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_UNRELEASABLE_SUM)
+-		e1:SetReset(reset)
++		e1:SetReset(reset|RESET_TURN_SET) --FAQ 24100: ends when it is turned face-down
+ 		e1:SetValue(1)
+ 		tc:RegisterEffect(e1)
+ 		local e2=Effect.CreateEffect(c)
+ 		e2:SetType(EFFECT_TYPE_SINGLE)
+ 		e2:SetCode(EFFECT_UNRELEASABLE_NONSUM)
+-		e2:SetReset(reset)
++		e2:SetReset(reset|RESET_TURN_SET)
+ 		e2:SetValue(1)
+ 		tc:RegisterEffect(e2)
+ 		local e3=Effect.CreateEffect(c)
+diff --git a/official/c39753577.lua b/official/c39753577.lua
+index c4227c76..11f00b03 100644
+--- a/official/c39753577.lua
++++ b/official/c39753577.lua
+@@ -61,7 +61,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 		e1:SetProperty(EFFECT_FLAG_CLIENT_HINT)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_CANNOT_BE_EFFECT_TARGET)
+-		e1:SetValue(aux.tgoval)
++		e1:SetValue(function(_e,_re,rp) return rp==1-tp end) --FAQ 22062: the opponent of the activating player
+ 		e1:SetReset(RESETS_STANDARD_PHASE_END)
+ 		tc:RegisterEffect(e1)
+ 	end
+diff --git a/official/c43422537.lua b/official/c43422537.lua
+index 7bcd7d34..bc41a453 100644
+--- a/official/c43422537.lua
++++ b/official/c43422537.lua
+@@ -17,7 +17,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+ 		for _,te in ipairs(ce) do
+ 			ct=math.max(ct,te:GetValue())
+ 		end
+-		return ct<2
++		return ct<2 and Duel.IsPlayerCanSummon(tp) --FAQ 61: not while you cannot Normal Summon
+ 	end
+ end
+ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c44190146.lua b/official/c44190146.lua
+index eca09d31..0130811f 100644
+--- a/official/c44190146.lua
++++ b/official/c44190146.lua
+@@ -37,7 +37,7 @@ function s.spcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ end
+ function s.spfilter(c,e,tp)
+ 	c:AssumeProperty(ASSUME_LEVEL,8)
+-	c:AssumeProperty(ASSUME_ATTRIBUTE,ATTRIBUTE_DARK)
++	--FAQ 23163: the original Attribute is checked (no ASSUME_ATTRIBUTE)
+ 	return c:IsType(TYPE_NORMAL) and (c:IsAttack(0) or c:IsDefense(0)) and c:IsCanBeSpecialSummoned(e,0,tp,false,false,POS_FACEUP_DEFENSE)
+ end
+ function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+diff --git a/official/c44297127.lua b/official/c44297127.lua
+index 845fc22a..40d5a8e6 100644
+--- a/official/c44297127.lua
++++ b/official/c44297127.lua
+@@ -20,7 +20,7 @@ function s.tgfilter(c)
+ end
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return Duel.IsExistingMatchingCard(s.tgfilter,tp,LOCATION_DECK,0,1,nil)
+-		and (not Duel.IsExistingMatchingCard(Card.IsCode,tp,LOCATION_GRAVE,0,1,nil,CARD_FOSSIL_FUSION) or Duel.GetFieldGroupCount(tp,LOCATION_DECK,0)>0) end
++		and (not Duel.IsExistingMatchingCard(Card.IsCode,tp,LOCATION_GRAVE,0,1,nil,CARD_FOSSIL_FUSION) or Duel.GetFieldGroupCount(tp,LOCATION_DECK,0)>1) end --FAQ 23032: the sent monster and the drawn card
+ 	Duel.SetOperationInfo(0,CATEGORY_TOGRAVE,nil,1,tp,LOCATION_DECK)
+ end
+ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c44763696.lua b/official/c44763696.lua
+index f4833276..e7494892 100644
+--- a/official/c44763696.lua
++++ b/official/c44763696.lua
+@@ -53,7 +53,7 @@ function s.condfilter(c,tp)
+ 	and c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousControler(tp)
+ end
+ function s.thcd(e,tp,eg,ep,ev,re,r,rp)
+-	return eg:IsExists(s.condfilter,1,nil,tp)
++	return eg:IsExists(s.condfilter,1,nil,tp) and not eg:IsContains(e:GetHandler()) --FAQ 22448: not if sent at the same time
+ end
+ function s.thfilter(c)
+ 	return c:IsSetCard(SET_MALEFIC) and c:IsMonster() and c:IsAbleToHand()
+diff --git a/official/c53212882.lua b/official/c53212882.lua
+index aa39950b..afaf1600 100644
+--- a/official/c53212882.lua
++++ b/official/c53212882.lua
+@@ -46,7 +46,7 @@ function s.nstg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 		for _,te in ipairs(ce) do
+ 			ct=math.max(ct,te:GetValue())
+ 		end
+-		return ct<3
++		return ct<3 and Duel.IsPlayerCanSummon(tp) --FAQ 61
+ 	end
+ end
+ function s.nsop(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c5325155.lua b/official/c5325155.lua
+index 998e90ce..641d557d 100644
+--- a/official/c5325155.lua
++++ b/official/c5325155.lua
+@@ -27,10 +27,10 @@ function s.counterfilter(c)
+ end
+ function s.cfilter(c,tp)
+ 	return c:IsReason(REASON_BATTLE|REASON_EFFECT) and c:IsSetCard(SET_MAYAKASHI) and not c:IsCode(id)
+-		and c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousControler(tp) and rp~=tp
++		and (c:IsPreviousLocation(LOCATION_MZONE) or c:IsMonster()) and c:IsPreviousControler(tp) and rp~=tp --FAQ 22064: also in the hand or Deck
+ end
+ function s.spcon(e,tp,eg,ep,ev,re,r,rp)
+-	return eg:IsExists(s.cfilter,1,nil,tp)
++	return eg:IsExists(s.cfilter,1,nil,tp) and not eg:IsContains(e:GetHandler()) --FAQ 22065: not if destroyed at the same time
+ end
+ function s.spcost(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return Duel.GetCustomActivityCount(id,tp,ACTIVITY_SPSUMMON)==0 end
+diff --git a/official/c53485634.lua b/official/c53485634.lua
+index e364affe..d3d714a6 100644
+--- a/official/c53485634.lua
++++ b/official/c53485634.lua
+@@ -18,7 +18,7 @@ function s.initial_effect(c)
+ 	e2:SetDescription(aux.Stringid(id,1))
+ 	e2:SetType(EFFECT_TYPE_IGNITION)
+ 	e2:SetRange(LOCATION_MZONE)
+-	e2:SetCondition(function(_,tp) return Duel.IsPlayerCanAdditionalSummon(tp) end)
++	e2:SetCondition(function(_,tp) return Duel.IsPlayerCanAdditionalSummon(tp) and Duel.GetFlagEffect(tp,id)==0 end) --FAQ 16083: once per turn
+ 	e2:SetCost(Cost.SelfTribute)
+ 	e2:SetTarget(s.sumtg)
+ 	e2:SetOperation(s.sumop)
+@@ -34,7 +34,7 @@ end
+ function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local c=e:GetHandler()
+ 	local g=eg:Filter(s.spfilter,nil,e,tp)
+-	if chk==0 then return not Duel.IsPlayerAffectedByEffect(tp,CARD_BLUEEYES_SPIRIT) and Duel.GetLocationCount(tp,LOCATION_MZONE)>1
++	if chk==0 then return not Duel.IsPlayerAffectedByEffect(tp,CARD_BLUEEYES_SPIRIT) and Duel.GetLocationCount(tp,LOCATION_MZONE)>0 --FAQ 16089: only this card is summoned with 1 zone
+ 		and c:IsCanBeSpecialSummoned(e,0,tp,false,false,POS_FACEUP_DEFENSE) and #g>0 end
+ 	Duel.SetTargetCard(g)
+ 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g+c,#g+1,tp,LOCATION_HAND|LOCATION_GRAVE)
+@@ -73,4 +73,5 @@ function s.sumop(e,tp,eg,ep,ev,re,r,rp)
+ 	e1:SetTarget(aux.TargetBoolFunction(Card.IsSetCard,SET_RED_EYES))
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
++	Duel.RegisterFlagEffect(tp,id,RESET_PHASE|PHASE_END,0,1)
+ end
+\ No newline at end of file
+diff --git a/official/c57135971.lua b/official/c57135971.lua
+index 174051bd..fb30bec0 100644
+--- a/official/c57135971.lua
++++ b/official/c57135971.lua
+@@ -88,8 +88,10 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+ 	if tc:IsRelateToEffect(e) then
+ 		if ec and ec:IsLocation(LOCATION_MZONE) and ec:IsFaceup() then
++			local imm=ec:IsImmuneToEffect(e) --FAQ 21054: no ATK/DEF change if unaffected at resolution
+ 			Duel.Equip(tp,tc,ec)
+ 			--Atk
++			if not imm then
+ 			local e1=Effect.CreateEffect(tc)
+ 			e1:SetType(EFFECT_TYPE_EQUIP)
+ 			e1:SetCode(EFFECT_SET_ATTACK)
+@@ -105,6 +107,7 @@ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 			e2:SetReset(RESET_EVENT|RESETS_STANDARD)
+ 			tc:RegisterEffect(e2)
+ 			end
++			end
+ 			--Equip limit
+ 			local e3=Effect.CreateEffect(tc)
+ 			e3:SetType(EFFECT_TYPE_SINGLE)
+diff --git a/official/c57282724.lua b/official/c57282724.lua
+index 6ab87e5a..9e54d345 100644
+--- a/official/c57282724.lua
++++ b/official/c57282724.lua
+@@ -61,7 +61,7 @@ function s.matcheck(e,c)
+ 	local g=c:GetMaterial()
+ 	local tp=c:GetControler()
+ 	if g:GetClassCount(Card.GetRace,c,SUMMON_TYPE_LINK,tp)==3 and g:GetClassCount(Card.GetAttribute,c,SUMMON_TYPE_LINK,tp)==3 then
+-		c:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD&~(RESET_TOFIELD|RESET_LEAVE|RESET_TEMP_REMOVE),EFFECT_FLAG_CLIENT_HINT,1,0,aux.Stringid(id,0))
++		c:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD&~(RESET_TOFIELD|RESET_LEAVE),EFFECT_FLAG_CLIENT_HINT,1,0,aux.Stringid(id,0)) --FAQ 22383: lost when banished temporarily
+ 	end
+ end
+ function s.descon(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c63767246.lua b/official/c63767246.lua
+index 6bcb4c61..080365eb 100644
+--- a/official/c63767246.lua
++++ b/official/c63767246.lua
+@@ -66,7 +66,7 @@ function s.chngtgop(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ end
+ function s.atkconfilter(c,tp)
+-	return c:IsReason(REASON_BATTLE|REASON_EFFECT) and c:IsType(TYPE_XYZ) and c:GetBaseAttack()>0 and c:IsPreviousPosition(POS_FACEUP)
++	return c:IsReason(REASON_BATTLE|REASON_EFFECT) and not c:IsLocation(LOCATION_DECK|LOCATION_EXTRA) and c:IsType(TYPE_XYZ) and c:GetBaseAttack()>0 and c:IsPreviousPosition(POS_FACEUP) --FAQ 17966: not when it goes to the Deck or Extra Deck
+ 		and c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousControler(tp)
+ end
+ function s.atkcon(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c79402185.lua b/official/c79402185.lua
+index 80a1d5e3..5818d7b9 100644
+--- a/official/c79402185.lua
++++ b/official/c79402185.lua
+@@ -57,7 +57,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	end
+ end
+ function s.thcon(e,tp,eg,ep,ev,re,r,rp)
+-	return eg:IsExists(s.thfilter,1,nil)
++	return eg:IsExists(s.thfilter,1,nil) and not eg:IsContains(e:GetHandler()) --FAQ 21058: not if sent at the same time
+ end
+ function s.thfilter(c)
+ 	return (c:IsCode(85066822) or c:IsCode(6022371)) and c:IsPreviousLocation(LOCATION_ONFIELD)
+diff --git a/official/c91499077.lua b/official/c91499077.lua
+index c92af125..8db3e56d 100644
+--- a/official/c91499077.lua
++++ b/official/c91499077.lua
+@@ -34,6 +34,7 @@ function s.atcon(e,tp,eg,ep,ev,re,r,rp)
+ end
+ function s.filter(c)
+ 	return c:IsFaceup() and c:IsSetCard(SET_GAGAGA) and c:GetEffectCount(EFFECT_EXTRA_ATTACK)==0
++		and not c:IsHasEffect(EFFECT_CANNOT_ATTACK) and not c:IsHasEffect(EFFECT_CANNOT_ATTACK_ANNOUNCE) --FAQ 23911: it must be able to attack
+ end
+ function s.attg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and s.filter(chkc) end
+diff --git a/official/c91781484.lua b/official/c91781484.lua
+index fbf76b94..d3d66a42 100644
+--- a/official/c91781484.lua
++++ b/official/c91781484.lua
+@@ -36,7 +36,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_DISABLE)
+-		e1:SetReset(RESET_EVENT|RESETS_STANDARD)
++		e1:SetReset(RESET_EVENT|RESETS_STANDARD|RESET_CONTROL) --FAQ 23499: ends when the control returns
+ 		tc:RegisterEffect(e1)
+ 		local e2=e1:Clone()
+ 		e2:SetCode(EFFECT_DISABLE_EFFECT)
+@@ -53,7 +53,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 			e4:SetType(EFFECT_TYPE_SINGLE)
+ 			e4:SetCode(EFFECT_ADD_SETCODE)
+ 			e4:SetValue(SET_DDD)
+-			e4:SetReset(RESET_EVENT|RESETS_STANDARD)
++			e4:SetReset(RESET_EVENT|RESETS_STANDARD|RESET_CONTROL)
+ 			tc:RegisterEffect(e4)
+ 		end
+ 	end

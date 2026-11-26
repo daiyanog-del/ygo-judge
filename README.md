@@ -118,6 +118,13 @@
 >     "Fluffal Crane" (15270), "Chaofeng, Phantom of the Yang Zing" (15142) and "Yosen Whirlwind" (15214).
 >   - script patch 0021, found by testing the nineteenth to twenty-second 100 official Q&As: "Trick Box" (15732), "Graydle Split"
 >     (16622), "Alich, Malebranche of the Burning Abyss" (17028) and "Dice Roll Battle" (16727).
+>   - script patch 0022, found by testing the official Q&As of cards whose scripts share a pattern (a card that left the
+>     field checked by its current name or type, and so on): "The Phantom Knights of Fragile Armor" (17616), "Shinobird
+>     Salvation" (20137), "D/D/D Headhunt" (23499), "Zexal Alliance" (23448), "Miracle Rupture" (23032), "Malefic Tune"
+>     (22448), "Bonding - D2O" (21058), "Red-Eyes Fang with Chain" (21054), "Number 38: Hope Harbinger Dragon Titanic Galaxy"
+>     (17966), "Inferno Reckless Summon" (19956), "World Gears of Theurlogical Demiurgy" (22383), "Gagaga Samurai" (23911),
+>     "Grandpa Demetto" (23163), "Mind Control" (24100), "Double Summon" and "Floowandereeze & Snowl" (61), "Mayakashi
+>     Metamorphosis" (22062), "Tsukahagi, the Poisonous Mayakashi" (22064, 22065) and "Red-Eyes Retro Dragon" (16083, 16089).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
