@@ -2591,3 +2591,53 @@ def test_yosen_whirlwind_needs_a_yosenju_on_the_field():
                   {"hand": ["Mystical Shine Ball"], "monsters": [{"card": "Performapal Stamp Turtle", "zone": 1}], "deck_filler": 10},
                   ["Activate Hero Mask", "#0", "Pass", "#0", "#0"])
     assert "Yosenju Kama 1: P1 Monster Zone 1 → P1 hand" in out and "Yosen Whirlwind" not in d.describe_decision(), out + d.describe_decision()
+
+
+# ---------------------------------------------------------------- the 19th-22nd 100 official Q&As
+def test_trick_box_needs_a_performage_destroyed_under_that_name():
+    # FAQ 15732: "Performage Hat Tricker" renamed by "Hero Mask" is not a "Performage" when destroyed
+    d, out = _run({"hand": ["Hero Mask", "Mystical Shine Ball"], "monsters": [{"card": "Performage Hat Tricker", "zone": 1}],
+                   "spells_traps": [{"card": "Trick Box"}, {"card": "Raigeki Break"}], "deck": ["Elemental HERO Sparkman"], "deck_filler": 10},
+                  {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "deck_filler": 10},
+                  ["@1", "Activate Hero Mask", "#0", "#1", "Activate Raigeki Break", "#0"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or _offered(d, "Activate Trick Box"))
+    assert "Performage Hat Tricker: P1 Monster Zone 1 → P1 GY — destroyed by an effect" in out, out
+    assert not _offered(d, "Activate Trick Box"), out + d.describe_decision()
+
+
+def test_graydle_split_equips_a_target_the_opponent_took_control_of():
+    # FAQ 16622
+    d, out = _run({"monsters": [{"card": "Graydle Cobra", "zone": 1}], "spells_traps": [{"card": "Graydle Split"}], "deck_filler": 10},
+                  {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "spells_traps": [{"card": "Enemy Controller"}], "deck_filler": 10},
+                  ["Activate Graydle Split", "Activate Enemy Controller", "#1", "#0", "#0"])
+    out += _until(d, lambda d: d.decision.kind == "idle" or "P1: choose a zone" in d.describe_decision())
+    assert "Graydle Split (P1 Spell & Trap Zone 1) is equipped to Graydle Cobra (P2 Monster Zone 1)" in out, out
+
+
+def test_alich_cannot_target_a_token_or_a_normal_monster():
+    # FAQ 17028
+    d, out = _run({"hand": ["Scapegoat"], "monsters": [{"card": "Alich, Malebranche of the Burning Abyss", "zone": 1}], "deck_filler": 10},
+                  {"monsters": [{"card": "Blue-Eyes White Dragon", "zone": 1}, {"card": "Dark Magician Girl", "zone": 2}], "deck_filler": 10},
+                  ["@1", "Activate Scapegoat", "#0", "#0", "#0", "#0", "#0"])
+    out += _until(d, lambda d: d.decision.kind == "idle")
+    assert "Targets: Dark Magician Girl (P2 Monster Zone 2)" in out, out + d.describe_decision()
+
+
+def _dice_roll_battle(vanity):
+    d, out = _run({"hand": ["Speedroid CarTurbo"], "graveyard": ["Speedroid Terrortop"], "extra_deck": ["Hi-Speedroid Kendama"],
+                   "spells_traps": [{"card": "Dice Roll Battle"}], "deck_filler": 10},
+                  {"monsters": [{"card": "Goyo Predator", "zone": 1}], "spells_traps": [{"card": "Vanity's Emptiness"}], "deck_filler": 10},
+                  ["@2", "Enter the Battle Phase", "Attack with Goyo", "#1", "Activate Dice Roll Battle", "#0" if vanity else "#1"])
+    return d, out + _until(d, lambda d: d.decision.kind == "idle" or "Battle Phase: choose" in d.describe_decision())
+
+
+def test_dice_roll_battle_still_banishes_under_vanitys_emptiness():
+    # FAQ 16727
+    d, out = _dice_roll_battle(True)
+    assert "Speedroid CarTurbo: P1 hand → P1 banished — by an effect" in out, out
+    assert "Speedroid Terrortop: P1 GY → P1 banished — by an effect" in out and "Hi-Speedroid Kendama" not in out.split("Resolving Chain Link 1")[-1], out
+
+
+def test_dice_roll_battle_synchro_summons_without_vanitys_emptiness():
+    d, out = _dice_roll_battle(False)
+    assert "Speedroid Terrortop: P1 GY → P1 banished — by an effect" in out and "Hi-Speedroid Kendama is Special Summoned" in out, out

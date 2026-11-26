@@ -116,6 +116,8 @@
 >     (13826), "Smashing Horn" (13882), "D-Boyz" (14022), "Bujingi Pavo" (13684), "Synchron Carrier"
 >     (14519), "Noble Knight Bedwyr" (14611), "Diceversity" (14942), "Superheavy Samurai Gigagloves" (14884), "Performage Damage Juggler" (15396),
 >     "Fluffal Crane" (15270), "Chaofeng, Phantom of the Yang Zing" (15142) and "Yosen Whirlwind" (15214).
+>   - script patch 0021, found by testing the nineteenth to twenty-second 100 official Q&As: "Trick Box" (15732), "Graydle Split"
+>     (16622), "Alich, Malebranche of the Burning Abyss" (17028) and "Dice Roll Battle" (16727).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
