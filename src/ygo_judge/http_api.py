@@ -39,9 +39,9 @@ def build_ja_index() -> None:
 
 
 def _norm(s: str) -> str:
-    """Ignore width (NFKC), spaces, middle dots and the different dashes."""
+    """Ignore width (NFKC), spaces, middle dots, quotation marks and the different dashes."""
     s = unicodedata.normalize("NFKC", s)
-    s = re.sub(r"[\s・･]", "", s)
+    s = re.sub(r"[\s・･•·`'\"＂“”‘’]", "", s)
     return re.sub(r"[‐‑‒–—―−ー－-]", "-", s).lower()
 
 

@@ -1,0 +1,1580 @@
+diff --git a/official/c10019086.lua b/official/c10019086.lua
+index 7ea8199d..bed0179e 100644
+--- a/official/c10019086.lua
++++ b/official/c10019086.lua
+@@ -1,4 +1,4 @@
+---鉄獣式強襲機動兵装改＂ＢｕｃｅｐｈａｌｕｓⅡ＂
++--鉄獣式強襲機動兵装改“BucephalusⅡ”
+ --Tri-Brigade Arms Bucephalus II
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c10040267.lua b/official/c10040267.lua
+index f18d3d12..3e63c7f4 100644
+--- a/official/c10040267.lua
++++ b/official/c10040267.lua
+@@ -1,4 +1,4 @@
+---新生代化石マシン スカルバギ
++--新生代化石マシン スカルバギー
+ --Fossil Machine Skull Buggy
+ --Logical Nonsense
+ --Substitute ID
+diff --git a/official/c10182251.lua b/official/c10182251.lua
+index ce4569e6..6560cff4 100644
+--- a/official/c10182251.lua
++++ b/official/c10182251.lua
+@@ -1,4 +1,4 @@
+---ＬＬ－ベリル・カナリ
++--LL－ベリル・カナリー
+ --Lyrilusc - Beryl Canary
+ --scripted by Rundas
+ local s,id=GetID()
+diff --git a/official/c10493654.lua b/official/c10493654.lua
+index 73b3133d..6767ea9f 100644
+--- a/official/c10493654.lua
++++ b/official/c10493654.lua
+@@ -1,4 +1,4 @@
+---－Ai－コンタクト
++--Ai－コンタクト
+ --A.I. Contact
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c11132674.lua b/official/c11132674.lua
+index 5c3f99a5..c04f400d 100644
+--- a/official/c11132674.lua
++++ b/official/c11132674.lua
+@@ -1,4 +1,4 @@
+---ギガンティック＂チャンピオン＂サルガス
++--ギガンティック“チャンピオン”サルガス
+ --Gigantic "Champion" Sargas
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c12015000.lua b/official/c12015000.lua
+index c79f996a..096bb716 100644
+--- a/official/c12015000.lua
++++ b/official/c12015000.lua
+@@ -1,4 +1,4 @@
+---新生代化石竜 スカルガ
++--新生代化石竜 スカルガー
+ --Fossil Dragon Skullgar
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c12160911.lua b/official/c12160911.lua
+index 2fcf5267..a05c7562 100644
+--- a/official/c12160911.lua
++++ b/official/c12160911.lua
+@@ -1,4 +1,4 @@
+---恵災いの像
++--災いの像
+ --Elephant Statue of Disaster
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c13298352.lua b/official/c13298352.lua
+index 38ad2822..730d221a 100644
+--- a/official/c13298352.lua
++++ b/official/c13298352.lua
+@@ -1,4 +1,4 @@
+---鎧の忍者－櫓丸
++--冑の忍者－櫓丸
+ --Yaguramaru the Armor Ninja
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c13408726.lua b/official/c13408726.lua
+index f4e0ccef..717158f3 100644
+--- a/official/c13408726.lua
++++ b/official/c13408726.lua
+@@ -1,4 +1,4 @@
+---メタトロンの影霊依
++--メタトロンの影霊衣
+ --Nekroz of Metaltron
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c14625090.lua b/official/c14625090.lua
+index 71138c90..3e2351bc 100644
+--- a/official/c14625090.lua
++++ b/official/c14625090.lua
+@@ -1,4 +1,4 @@
+---オラゴンメイドのお出迎え
++--ドラゴンメイドのお出迎え
+ --Dragonmaid Welcome
+ --Scripted by Hel
+ local s,id=GetID()
+diff --git a/official/c15001619.lua b/official/c15001619.lua
+index 61bbe0ec..741b3397 100644
+--- a/official/c15001619.lua
++++ b/official/c15001619.lua
+@@ -1,4 +1,4 @@
+---パペット・クイーン
++--パペット・クィーン
+ --Puppet Queen
+ --Scripted by Cybercatman
+ local s,id=GetID()
+diff --git a/official/c15291624.lua b/official/c15291624.lua
+index 78a3ebd7..200132eb 100644
+--- a/official/c15291624.lua
++++ b/official/c15291624.lua
+@@ -1,4 +1,4 @@
+---超雷龍ーサンダー•ドラゴン
++--超雷龍－サンダー・ドラゴン
+ --Thunder Dragon Colossus
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c16209941.lua b/official/c16209941.lua
+index cf4ce587..290db411 100644
+--- a/official/c16209941.lua
++++ b/official/c16209941.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのチュパカブラ
++--未界域のチュパカブラ
+ --Danger! Chupacabra!
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c16313112.lua b/official/c16313112.lua
+index f5af2bba..9dd80f57 100644
+--- a/official/c16313112.lua
++++ b/official/c16313112.lua
+@@ -1,4 +1,4 @@
+---転生炎獣エメラルド•イーグル
++--転生炎獣エメラルド・イーグル
+ --Salamangreat Emerald Eagle
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c16893370.lua b/official/c16893370.lua
+index a5ceb09f..fa3a6cfd 100644
+--- a/official/c16893370.lua
++++ b/official/c16893370.lua
+@@ -1,4 +1,4 @@
+---夢現の眠姫－ネムレリア・レアリゼ
++--夢現の寝姫－ネムレリア・レアリゼ
+ --Dreaming Reality of Nemleria, Realized
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c16922142.lua b/official/c16922142.lua
+index aef7fe0c..318ab5b3 100644
+--- a/official/c16922142.lua
++++ b/official/c16922142.lua
+@@ -1,4 +1,4 @@
+---絢嵐たるスエン
++--絢嵐たるクローゼア
+ --Radiant Typhoon Krosea
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c16960120.lua b/official/c16960120.lua
+index b8483bde..a14c72b7 100644
+--- a/official/c16960120.lua
++++ b/official/c16960120.lua
+@@ -1,4 +1,4 @@
+---オラゴンメイド・レィルル
++--ドラゴンメイド・ティルル
+ --Kitchen Dragonmaid
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c18294799.lua b/official/c18294799.lua
+index a7f840f3..217bb12b 100644
+--- a/official/c18294799.lua
++++ b/official/c18294799.lua
+@@ -1,4 +1,4 @@
+---無限竜シュヴァルツシルド
++--無限竜シュヴァルツシルト
+ --Schwarzschild Infinity Dragon
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c1906812.lua b/official/c1906812.lua
+index 3bf234c4..0e3d7950 100644
+--- a/official/c1906812.lua
++++ b/official/c1906812.lua
+@@ -1,4 +1,4 @@
+---灰燼竜バスタード
++--鉄駆竜スプリンド
+ --Sprind the Irondash Dragon
+ --scripted by Logical Nonsense
+ local s,id=GetID()
+diff --git a/official/c2006591.lua b/official/c2006591.lua
+index aaed61d4..b7672379 100644
+--- a/official/c2006591.lua
++++ b/official/c2006591.lua
+@@ -1,4 +1,4 @@
+---目覚める罪宝
++--目醒める罪宝
+ --Sinful Spoils Awakening
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c20560620.lua b/official/c20560620.lua
+index 68c61229..14e14b4f 100644
+--- a/official/c20560620.lua
++++ b/official/c20560620.lua
+@@ -1,4 +1,4 @@
+---お代狸様の代算様ー
++--お代狸様の代算様
+ --Emperor Tanuki's Critter Count
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c20618850.lua b/official/c20618850.lua
+index 7b6d48f6..9f2c6423 100644
+--- a/official/c20618850.lua
++++ b/official/c20618850.lua
+@@ -1,4 +1,4 @@
+---まどろみの神碑
++--黄金の雫の神碑
+ --Runick Golden Droplet
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c20797524.lua b/official/c20797524.lua
+index 777b0049..77ca49c9 100644
+--- a/official/c20797524.lua
++++ b/official/c20797524.lua
+@@ -1,4 +1,4 @@
+---ヴィークラー
++--トライクラー
+ --Tricular
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c212652.lua b/official/c212652.lua
+index af31d436..6086d66b 100644
+--- a/official/c212652.lua
++++ b/official/c212652.lua
+@@ -1,4 +1,4 @@
+---毒サソリの罠毒
++--毒サソリの罠
+ --Trap of the Poisonous Scorpion
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c21368273.lua b/official/c21368273.lua
+index f52467ae..ea2b90a2 100644
+--- a/official/c21368273.lua
++++ b/official/c21368273.lua
+@@ -1,4 +1,4 @@
+---マナドゥム・トリロスークダ
++--マナドゥム・トリロスークタ
+ --Mannadium Trisukta
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c21744288.lua b/official/c21744288.lua
+index 19aef5dd..291863e5 100644
+--- a/official/c21744288.lua
++++ b/official/c21744288.lua
+@@ -1,4 +1,4 @@
+---ウイッチクラフト・シュミッタ
++--ウィッチクラフト・シュミッタ
+ --Witchcrafter Schmietta
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c21903613.lua b/official/c21903613.lua
+index 613a06e8..e1e14d86 100644
+--- a/official/c21903613.lua
++++ b/official/c21903613.lua
+@@ -1,4 +1,4 @@
+---森羅の舞踏娘－ピオネ
++--森羅の舞踏娘 ピオネ
+ --Sylvan Dancepione
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c22850702.lua b/official/c22850702.lua
+index c1b33c99..1640bb1b 100644
+--- a/official/c22850702.lua
++++ b/official/c22850702.lua
+@@ -1,4 +1,4 @@
+---カオス・アンヘル－混沌の双翼
++--カオス・アンヘル－混沌の双翼－
+ --Chaos Angel
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c23619206.lua b/official/c23619206.lua
+index e7dbfa38..823d6c8f 100644
+--- a/official/c23619206.lua
++++ b/official/c23619206.lua
+@@ -1,4 +1,4 @@
+---招神鳥シムルグ
++--死神鳥シムルグ
+ --Simorgh, Bird of Calamity
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c23792058.lua b/official/c23792058.lua
+index 1f8ec281..4cce3d3c 100644
+--- a/official/c23792058.lua
++++ b/official/c23792058.lua
+@@ -1,4 +1,4 @@
+---スピードロイドヘキサソーサー
++--SRヘキサソーサー
+ --Speedroid Hexasaucer
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c25109950.lua b/official/c25109950.lua
+index 2bae52e3..4e7f6d23 100644
+--- a/official/c25109950.lua
++++ b/official/c25109950.lua
+@@ -1,4 +1,4 @@
+---陽アイルの小剣士
++--アイルの小剣士
+ --The Little Swordsman of Aile
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c25200959.lua b/official/c25200959.lua
+index f983a152..61093912 100644
+--- a/official/c25200959.lua
++++ b/official/c25200959.lua
+@@ -1,4 +1,4 @@
+---サイバース·インテグレーター
++--サイバース・インテグレーター
+ --Cyberse Integrator
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c25857977.lua b/official/c25857977.lua
+index be6f1367..4060a7da 100644
+--- a/official/c25857977.lua
++++ b/official/c25857977.lua
+@@ -1,4 +1,4 @@
+---DDD死謳王バイス・レイクエム
++--DDD死謳王バイス・レクイエム
+ --D/D/D Vice King Requiem
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c26302107.lua b/official/c26302107.lua
+index 0c2f814d..11def5d0 100644
+--- a/official/c26302107.lua
++++ b/official/c26302107.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのワーウルフ
++--未界域のワーウルフ
+ --Danger! Dogman!
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c28400508.lua b/official/c28400508.lua
+index 3a14b7db..f068afe5 100644
+--- a/official/c28400508.lua
++++ b/official/c28400508.lua
+@@ -1,4 +1,4 @@
+---龍影神ドラッグラビオン
++--No.97 龍影神ドラッグラビオン
+ --Number 97: Draglubion
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c28669235.lua b/official/c28669235.lua
+index 1d4e4190..7f1e224a 100644
+--- a/official/c28669235.lua
++++ b/official/c28669235.lua
+@@ -1,4 +1,4 @@
+---登竜華海巄門
++--登竜華海瀧門
+ --Ryu-Ge Realm - Sea Spires
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c28720123.lua b/official/c28720123.lua
+index 572c2c1d..1e5c5463 100644
+--- a/official/c28720123.lua
++++ b/official/c28720123.lua
+@@ -1,4 +1,4 @@
+---竜剣士ダイノマイトＰ
++--竜剣士ダイナマイトP
+ --Dinomight Powerload, the Dracoslayer
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c28762303.lua b/official/c28762303.lua
+index 5af8d1d9..b606110a 100644
+--- a/official/c28762303.lua
++++ b/official/c28762303.lua
+@@ -1,4 +1,4 @@
+---氷水のアクティ
++--氷水のティノーラ
+ --Icejade Tinola
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c29053656.lua b/official/c29053656.lua
+index 75211ae5..603df537 100644
+--- a/official/c29053656.lua
++++ b/official/c29053656.lua
+@@ -1,4 +1,4 @@
+---赤き竜－ケッツァーコアトル
++--赤き竜 ケッツァーコアトル
+ --Crimson Dragon Quetzacoatl
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c2930675.lua b/official/c2930675.lua
+index 9c40d11a..976f1f16 100644
+--- a/official/c2930675.lua
++++ b/official/c2930675.lua
+@@ -1,4 +1,4 @@
+---星遺物へと至る鍵
++--星遺物へ至る鍵
+ --World Legacy Key
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c29867611.lua b/official/c29867611.lua
+index a9890839..6a1baef3 100644
+--- a/official/c29867611.lua
++++ b/official/c29867611.lua
+@@ -1,4 +1,4 @@
+---Ａ・Ɐ・ＭＭ
++--A・∀・MM
+ --Amaze Attraction Majestic Merry-Go-Round
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c30068809.lua b/official/c30068809.lua
+index 6dd56ac0..30032571 100644
+--- a/official/c30068809.lua
++++ b/official/c30068809.lua
+@@ -1,4 +1,4 @@
+---魔救の合緑
++--魔救の合縁
+ --Adamancipator Mates
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c30327674.lua b/official/c30327674.lua
+index 99c787dc..e985155a 100644
+--- a/official/c30327674.lua
++++ b/official/c30327674.lua
+@@ -1,4 +1,4 @@
+---カオス・ウィッチ－混沌の魔女
++--カオス・ウィッチ－混沌の魔女－
+ --Chaos Witch
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c30765615.lua b/official/c30765615.lua
+index 9414e539..afd419b7 100644
+--- a/official/c30765615.lua
++++ b/official/c30765615.lua
+@@ -1,4 +1,4 @@
+---百檎龍－リンゴヴルム
++--百檎龍－リンゴブルム
+ --Ringowurm, the Dragon Guarding the Hundred Apples
+ --Scripted by Larry126
+ local s,id=GetID()
+diff --git a/official/c31286915.lua b/official/c31286915.lua
+index 24905380..f80cf990 100644
+--- a/official/c31286915.lua
++++ b/official/c31286915.lua
+@@ -1,4 +1,4 @@
+---Ｋ９－ＥＸ ”Ｒｉｐｐｅｒ／Ｍ”
++--K９－EX “Ripper／M”
+ --K9-X "Ripper/M"
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c33206889.lua b/official/c33206889.lua
+index 873c95d3..0163fcac 100644
+--- a/official/c33206889.lua
++++ b/official/c33206889.lua
+@@ -1,4 +1,4 @@
+---Ｅｍトラピーズ・フォーズ・ウィッチ
++--Emトラピーズ・フォース・ウィッチ
+ --Performage Trapeze Witch
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c33543890.lua b/official/c33543890.lua
+index b7951521..fcdf93e4 100644
+--- a/official/c33543890.lua
++++ b/official/c33543890.lua
+@@ -1,4 +1,4 @@
+---竜儀巧－ラスβ
++--竜輝巧－ラスβ
+ --Drytron Beta Rastaban
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c33781156.lua b/official/c33781156.lua
+index c75370bf..ad0cf1da 100644
+--- a/official/c33781156.lua
++++ b/official/c33781156.lua
+@@ -1,4 +1,4 @@
+---鉄獣式撃滅兵争“Ｍｏｕｓｅｒ”
++--鉄獣式撃滅兵装“Mouser”
+ --Tri-Brigade Arms Mouser
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c34690953.lua b/official/c34690953.lua
+index 894cb8ba..6f905e2d 100644
+--- a/official/c34690953.lua
++++ b/official/c34690953.lua
+@@ -1,4 +1,4 @@
+---禁呪アラティア
++--禁呪アラマティア
+ --Curse of Aramatir
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c35405755.lua b/official/c35405755.lua
+index 41f1047f..3aaf912d 100644
+--- a/official/c35405755.lua
++++ b/official/c35405755.lua
+@@ -1,4 +1,4 @@
+---倶利伽羅天童
++--俱利伽羅天童
+ --Kurikara Divincarnate
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c39030883.lua b/official/c39030883.lua
+index 6706970c..4cf9e933 100644
+--- a/official/c39030883.lua
++++ b/official/c39030883.lua
+@@ -1,4 +1,4 @@
+---ダーク・アームド・ドラゴン・パニッシャー
++--ダーク・アームド・ドラゴン・バニッシャー
+ --Dark Armed Dragon Punisher
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c39109382.lua b/official/c39109382.lua
+index 315bb1a5..e676003c 100644
+--- a/official/c39109382.lua
++++ b/official/c39109382.lua
+@@ -1,4 +1,4 @@
+---機皇統制
++--機皇創出
+ --Meklord Assembly
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c40110009.lua b/official/c40110009.lua
+index e05050c7..0ea4c524 100644
+--- a/official/c40110009.lua
++++ b/official/c40110009.lua
+@@ -1,4 +1,4 @@
+---ドラゴンメイドのお召めし替かえ
++--ドラゴンメイドのお召し替え
+ --Dragonmaid Changeover
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c40398073.lua b/official/c40398073.lua
+index db2d3e8b..1f4140d5 100644
+--- a/official/c40398073.lua
++++ b/official/c40398073.lua
+@@ -1,4 +1,4 @@
+---オラゴンメイド・ナサリ
++--ドラゴンメイド・ナサリー
+ --Nurse Dragonmaid
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c41002238.lua b/official/c41002238.lua
+index c254f6fa..0a28931b 100644
+--- a/official/c41002238.lua
++++ b/official/c41002238.lua
+@@ -1,4 +1,4 @@
+---カイザー・グライダー－ゴルデン・バースト
++--カイザー・グライダー－ゴールデン・バースト
+ --Kaiser Glider - Golden Burst
+ --scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c41044418.lua b/official/c41044418.lua
+index 61368bfb..141dd519 100644
+--- a/official/c41044418.lua
++++ b/official/c41044418.lua
+@@ -1,4 +1,4 @@
+---千先の啓示
++--千年の啓示
+ --Millennium Revelation
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c42469671.lua b/official/c42469671.lua
+index 2db1381e..41cd746a 100644
+--- a/official/c42469671.lua
++++ b/official/c42469671.lua
+@@ -1,4 +1,4 @@
+---超伝導波サンダーフォース
++--超電導波サンダーフォース
+ --Thunderforce Attack
+ --Scripted by Larry126
+ local s,id=GetID()
+diff --git a/official/c42517468.lua b/official/c42517468.lua
+index aeaa91d9..79bb4f9a 100644
+--- a/official/c42517468.lua
++++ b/official/c42517468.lua
+@@ -1,4 +1,4 @@
+---ジャマ・ピンク
++--おジャマ・ピンク
+ --Ojama Pink
+ --Scripted by The Razgriz
+ local s,id=GetID()
+diff --git a/official/c42542842.lua b/official/c42542842.lua
+index e150e992..601b394d 100644
+--- a/official/c42542842.lua
++++ b/official/c42542842.lua
+@@ -1,4 +1,4 @@
+---麗の魔妖(まやかし)-妲姫
++--麗の魔妖－妲姫
+ --Dakki, the Graceful Mayakashi
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c42544773.lua b/official/c42544773.lua
+index cb896e2c..b53db3d3 100644
+--- a/official/c42544773.lua
++++ b/official/c42544773.lua
+@@ -1,4 +1,4 @@
+---封印の魔道士スプーン
++--封印の魔導士スプーン
+ --Spenta, the Magistus Sealer
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c43228023.lua b/official/c43228023.lua
+index 32836e65..3eb6ac87 100644
+--- a/official/c43228023.lua
++++ b/official/c43228023.lua
+@@ -1,4 +1,4 @@
+---青眼の究極亜龍
++--青眼の究極亜竜
+ --Blue-Eyes Alternative Ultimate Dragon
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c43316238.lua b/official/c43316238.lua
+index 1379d710..521a8dfa 100644
+--- a/official/c43316238.lua
++++ b/official/c43316238.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのビッグフット
++--未界域のビッグフット
+ --Danger! Bigfoot!
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c43528009.lua b/official/c43528009.lua
+index 0de31068..e2bd1e13 100644
+--- a/official/c43528009.lua
++++ b/official/c43528009.lua
+@@ -1,4 +1,4 @@
+---星ほしの金きん貨
++--星の金貨
+ --Gold Moon Coin
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c43694650.lua b/official/c43694650.lua
+index fc0d1982..a615df5e 100644
+--- a/official/c43694650.lua
++++ b/official/c43694650.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのジャッカロープ
++--未界域のジャッカロープ
+ --Danger!? Jackalope?
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c4388680.lua b/official/c4388680.lua
+index 3b393ff8..bfef4f28 100644
+--- a/official/c4388680.lua
++++ b/official/c4388680.lua
+@@ -1,4 +1,4 @@
+---リヴェンデット・スレイヤ
++--リヴェンデット・スレイヤー
+ --Revendread Slayer
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c44179224.lua b/official/c44179224.lua
+index 147fa7c6..f78dc135 100644
+--- a/official/c44179224.lua
++++ b/official/c44179224.lua
+@@ -1,4 +1,4 @@
+---魔界劇団－カーテン・ライザー
++--魔界劇団カーテン・ライザー
+ --Abyss Actor - Curtain Raiser
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c46253216.lua b/official/c46253216.lua
+index 90373ae2..64a33ff5 100644
+--- a/official/c46253216.lua
++++ b/official/c46253216.lua
+@@ -1,4 +1,4 @@
+---フレンドリーファイヤ
++--フレンドリーファイア
+ --Bad Aim
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c46294982.lua b/official/c46294982.lua
+index 1852f306..1e978153 100644
+--- a/official/c46294982.lua
++++ b/official/c46294982.lua
+@@ -1,4 +1,4 @@
+---ヘクサ・トゥルーデ
++--ヘクサ・トルーデ
+ --Hexe Trude
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c47699948.lua b/official/c47699948.lua
+index a50730ef..1d883456 100644
+--- a/official/c47699948.lua
++++ b/official/c47699948.lua
+@@ -1,4 +1,4 @@
+---ンクロ・ディレンマ
++--シンクロ・ディレンマ
+ --Synchro Dilemma
+ --scripted by Rundas
+ local s,id=GetID()
+diff --git a/official/c48285768.lua b/official/c48285768.lua
+index c8d6ef0b..80b63593 100644
+--- a/official/c48285768.lua
++++ b/official/c48285768.lua
+@@ -1,4 +1,4 @@
+---スプリガンズ・メリーメイカ
++--スプリガンズ・メリーメイカー
+ --Springans Merrymaker
+ --Logical Nonsense
+ local s,id=GetID()
+diff --git a/official/c48633301.lua b/official/c48633301.lua
+index e28b9d74..84a8dcd4 100644
+--- a/official/c48633301.lua
++++ b/official/c48633301.lua
+@@ -1,4 +1,4 @@
+---TG ブースタ・ラプトル
++--TG ブースター・ラプトル
+ --T.G. Booster Raptor
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c48805472.lua b/official/c48805472.lua
+index 615b02e4..f52f5b51 100644
+--- a/official/c48805472.lua
++++ b/official/c48805472.lua
+@@ -1,4 +1,4 @@
+---調和の宝札
++--蟲惑の誘い
+ --Traptantalizing Tune
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c48806195.lua b/official/c48806195.lua
+index 3a08ba2b..bf65ad72 100644
+--- a/official/c48806195.lua
++++ b/official/c48806195.lua
+@@ -1,4 +1,4 @@
+---セリオンズ＂エンプレス＂アラシア
++--セリオンズ“エンプレス”アラシア
+ --Therion "Empress" Alasia
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c48891960.lua b/official/c48891960.lua
+index d2985cc6..8b1f23eb 100644
+--- a/official/c48891960.lua
++++ b/official/c48891960.lua
+@@ -1,4 +1,4 @@
+---ドラグニティナイト-アスカロン`
++--ドラグニティナイト－アスカロン
+ --Dragunity Knight - Ascalon
+ --Scripted by ahtelel
+ local s,id=GetID()
+diff --git a/official/c4928565.lua b/official/c4928565.lua
+index 3e07c710..5ce0d195 100644
+--- a/official/c4928565.lua
++++ b/official/c4928565.lua
+@@ -1,4 +1,4 @@
+---スティアラメンツ・クシャトリラ
++--ティアラメンツ・クシャトリラ
+ --Tearlaments Kashtira
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c49565413.lua b/official/c49565413.lua
+index 26bac39d..5bc3a813 100644
+--- a/official/c49565413.lua
++++ b/official/c49565413.lua
+@@ -1,4 +1,4 @@
+---カオス・ビースト－混沌の魔獣
++--カオス・ビースト－混沌の魔獣－
+ --Chaos Beast
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c50457953.lua b/official/c50457953.lua
+index 66986c5b..27d5a927 100644
+--- a/official/c50457953.lua
++++ b/official/c50457953.lua
+@@ -1,4 +1,4 @@
+---幻木龙
++--幻木龍
+ --Mythic Tree Dragon
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c50604072.lua b/official/c50604072.lua
+index 8a8df47e..f6f8c34a 100644
+--- a/official/c50604072.lua
++++ b/official/c50604072.lua
+@@ -1,4 +1,4 @@
+---クリムゾン・ブレーダー／バスタ
++--クリムゾン・ブレーダー／バスター
+ --Crimson Blader/Assault Mode
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c51618973.lua b/official/c51618973.lua
+index ad142a46..5d8044fe 100644
+--- a/official/c51618973.lua
++++ b/official/c51618973.lua
+@@ -1,4 +1,4 @@
+---影霊依の魔剣士 アバンス
++--影霊衣の魔剣士 アバンス
+ --Avance, Swordsman of the Nekroz
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c52350806.lua b/official/c52350806.lua
+index 3b3bfde0..1accb3b4 100644
+--- a/official/c52350806.lua
++++ b/official/c52350806.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのモスマン
++--未界域のモスマン
+ --Danger! Mothman!
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c53865474.lua b/official/c53865474.lua
+index 9b354c68..1c199f6b 100644
+--- a/official/c53865474.lua
++++ b/official/c53865474.lua
+@@ -1,4 +1,4 @@
+---ベアルクティ・スライダ
++--ベアルクティ・スライダー
+ --Ursarctic Slider
+ --scripted by Rundas
+ local s,id=GetID()
+diff --git a/official/c54374642.lua b/official/c54374642.lua
+index ed857413..877dfb41 100644
+--- a/official/c54374642.lua
++++ b/official/c54374642.lua
+@@ -1,4 +1,4 @@
+---－Ａｉ－ＳＨＯＷ
++--Ai－SHOW
+ --A.I.'s Show
+ --Scripted by Larry126
+ local s,id=GetID()
+diff --git a/official/c54455664.lua b/official/c54455664.lua
+index 39470fa4..c0ad9e31 100644
+--- a/official/c54455664.lua
++++ b/official/c54455664.lua
+@@ -1,4 +1,4 @@
+---ドラグニティ－ブラックスピア
++--ドラグニティ－ブランディストック
+ --Dragunity Brandistock
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c55154344.lua b/official/c55154344.lua
+index b98640f9..594c05da 100644
+--- a/official/c55154344.lua
++++ b/official/c55154344.lua
+@@ -1,4 +1,4 @@
+---登竜華幻巄門
++--登竜華幻朧門
+ --Ryu-Ge Realm - Wyrm Winds
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c55262310.lua b/official/c55262310.lua
+index 0d6f7ab2..f2104b28 100644
+--- a/official/c55262310.lua
++++ b/official/c55262310.lua
+@@ -1,4 +1,4 @@
+---Ａ・Ɐ・ＲＲ
++--A・∀・RR
+ --Amaze Attraction Rapid Racing
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c55276522.lua b/official/c55276522.lua
+index dd22b700..88158b4d 100644
+--- a/official/c55276522.lua
++++ b/official/c55276522.lua
+@@ -1,4 +1,4 @@
+---登竜華転生門
++--登竜華転生紋
+ --Ryu-Ge War Zone
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c56256517.lua b/official/c56256517.lua
+index f436a13d..6f392bc7 100644
+--- a/official/c56256517.lua
++++ b/official/c56256517.lua
+@@ -1,4 +1,4 @@
+---予言通帳
++--予見通帳
+ --Ledger of Legerdemain
+ --fixed by Larry126
+ local s,id=GetID()
+diff --git a/official/c56421754.lua b/official/c56421754.lua
+index eca8c229..1507f5c1 100644
+--- a/official/c56421754.lua
++++ b/official/c56421754.lua
+@@ -1,4 +1,4 @@
+---U.A.マイティースラッガー
++--U.A.マイティスラッガー
+ --U.A. Mighty Slugger
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c56499179.lua b/official/c56499179.lua
+index 4888cfe0..1e945fb2 100644
+--- a/official/c56499179.lua
++++ b/official/c56499179.lua
+@@ -1,4 +1,4 @@
+---幻朧竜華-覇巴
++--幻朧竜華－霸巴
+ --Genro Ryu-Ge Hakva
+ --Scripted by Satellaa
+ local s,id=GetID()
+diff --git a/official/c58139997.lua b/official/c58139997.lua
+index 341b74d7..1f5dc499 100644
+--- a/official/c58139997.lua
++++ b/official/c58139997.lua
+@@ -1,4 +1,4 @@
+---ウイッチクラフト・エーデル
++--ウィッチクラフト・エーデル
+ --Witchcrafter Edel
+ --scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c58884063.lua b/official/c58884063.lua
+index d36398e1..a98ec3c0 100644
+--- a/official/c58884063.lua
++++ b/official/c58884063.lua
+@@ -1,4 +1,4 @@
+---ＧＰ－Ｎブラスタ
++--GP－Nブラスター
+ --Gold Pride - Nytro Blaster
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c59531356.lua b/official/c59531356.lua
+index 6ef62f5b..2f11ccee 100644
+--- a/official/c59531356.lua
++++ b/official/c59531356.lua
+@@ -1,4 +1,4 @@
+---中世代化石騎士 スカルナイト
++--中生代化石騎士 スカルナイト
+ --Fossil Warrior Skull Knight
+ --Logical Nonsense
+ --Substitute ID
+diff --git a/official/c59789370.lua b/official/c59789370.lua
+index 17ae385c..1d80bf39 100644
+--- a/official/c59789370.lua
++++ b/official/c59789370.lua
+@@ -1,4 +1,4 @@
+---機巧蛙－伊服岐雹荒神
++--機巧猪－伊服岐雹荒神
+ --Gizmek Arakami, the Hailbringer Hog
+ --scripted by Rundas
+ local s,id=GetID()
+diff --git a/official/c59851535.lua b/official/c59851535.lua
+index f5edfc7b..1a3c9c27 100644
+--- a/official/c59851535.lua
++++ b/official/c59851535.lua
+@@ -1,4 +1,4 @@
+---ウイッチクラフト・ポトリー
++--ウィッチクラフト・ポトリー
+ --Witchcrafter Potterie
+ --scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c60303245.lua b/official/c60303245.lua
+index 5f74cb01..51000670 100644
+--- a/official/c60303245.lua
++++ b/official/c60303245.lua
+@@ -1,4 +1,4 @@
+---転生炎獣ベイルリンクス
++--転生炎獣アルミラージ
+ --Salamangreat Almiraj
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c60362066.lua b/official/c60362066.lua
+index e4e7b889..175ae06d 100644
+--- a/official/c60362066.lua
++++ b/official/c60362066.lua
+@@ -1,4 +1,4 @@
+---壱世壊を劈く弦声
++--壱世壊を揺るがす鼓動
+ --Tearlaments Heartbeat
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c60942444.lua b/official/c60942444.lua
+index 26d73027..a99874c9 100644
+--- a/official/c60942444.lua
++++ b/official/c60942444.lua
+@@ -1,4 +1,4 @@
+---天威龍－アーダラ
++--天威龍－マニラ
+ --Tenyi Spirit - Mapura
+ --Scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c62405028.lua b/official/c62405028.lua
+index b5f9f91e..6a730435 100644
+--- a/official/c62405028.lua
++++ b/official/c62405028.lua
+@@ -1,4 +1,4 @@
+---冥界の淳一ナイア
++--溟界の滓－ナイア
+ --Nauya, the Ogdoadic Remnant
+ --scripted by Xylen5967
+ local s,id=GetID()
+diff --git a/official/c63017368.lua b/official/c63017368.lua
+index abd2d344..166ee9c7 100644
+--- a/official/c63017368.lua
++++ b/official/c63017368.lua
+@@ -1,4 +1,4 @@
+---石板の神殿
++--石版の神殿
+ --Wedju Temple
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c63436931.lua b/official/c63436931.lua
+index 38a33169..96e3365d 100644
+--- a/official/c63436931.lua
++++ b/official/c63436931.lua
+@@ -1,4 +1,4 @@
+---赤き龍
++--赤き竜
+ --Crimson Dragon
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c64203620.lua b/official/c64203620.lua
+index c0607677..621cc10a 100644
+--- a/official/c64203620.lua
++++ b/official/c64203620.lua
+@@ -1,4 +1,4 @@
+---極星邪竜ヨルムンガンド
++--極星邪龍ヨルムンガンド
+ --Jormungardr the Nordic Serpent
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c64753157.lua b/official/c64753157.lua
+index 8c65e695..372d7a59 100644
+--- a/official/c64753157.lua
++++ b/official/c64753157.lua
+@@ -1,4 +1,4 @@
+---ＲＥＳＯＲＴ」 ＳＴＡＦＦ－チャーミング
++--「RESORT」 STAFF－チャーミング
+ --Charming Resort Staff
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c64867422.lua b/official/c64867422.lua
+index 3f0f47df..d3ec754a 100644
+--- a/official/c64867422.lua
++++ b/official/c64867422.lua
+@@ -1,4 +1,4 @@
+---焔聖剣－オートクレール
++--『焔聖剣－オートクレール』
+ --"Infernoble Arms - Hauteclere"
+ --Scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c65325949.lua b/official/c65325949.lua
+index f5ccf86a..c7605e37 100644
+--- a/official/c65325949.lua
++++ b/official/c65325949.lua
+@@ -1,4 +1,4 @@
+---蟲神の色鬼 クズハ
++--蠱神の色鬼 クズハ
+ --Kuzuha the Bewitching Deity Ashtra
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c66870733.lua b/official/c66870733.lua
+index e81f70a9..eb11a74f 100644
+--- a/official/c66870733.lua
++++ b/official/c66870733.lua
+@@ -1,4 +1,4 @@
+---氷の魔妖-雪女　リンク
++--氷の魔妖－雪女
+ --Yuki-Onna, the Ice Mayakashi
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c66961194.lua b/official/c66961194.lua
+index 3742380c..41290d64 100644
+--- a/official/c66961194.lua
++++ b/official/c66961194.lua
+@@ -1,4 +1,4 @@
+---ロード・オブ・ドラゴン－ドラゴンの独裁者
++--ロード・オブ・ドラゴン－ドラゴンの独裁者－
+ --Dictator of D.
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c66984907.lua b/official/c66984907.lua
+index 08fa991b..d288d574 100644
+--- a/official/c66984907.lua
++++ b/official/c66984907.lua
+@@ -1,4 +1,4 @@
+---Ａ・Ɐ・ＣＣ
++--A・∀・CC
+ --Amaze Attraction Cyclo-Coaster
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c68078978.lua b/official/c68078978.lua
+index fed1d04e..431dae73 100644
+--- a/official/c68078978.lua
++++ b/official/c68078978.lua
+@@ -1,4 +1,4 @@
+---占い魔女 占い魔女 チーちゃん
++--占い魔女 チーちゃん
+ --Fortune Fairy Chee
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c68431965.lua b/official/c68431965.lua
+index a1f4b146..cecb0c5d 100644
+--- a/official/c68431965.lua
++++ b/official/c68431965.lua
+@@ -1,4 +1,4 @@
+---シューティング・ライザー・ドラゴ
++--シューティング・ライザー・ドラゴン
+ --Shooting Riser Dragon
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c68490573.lua b/official/c68490573.lua
+index 104468ba..dbdc3ab8 100644
+--- a/official/c68490573.lua
++++ b/official/c68490573.lua
+@@ -1,4 +1,4 @@
+- --大いなる魂
++--大いなる魂
+ --Time to Stand Up
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c69381150.lua b/official/c69381150.lua
+index e82991fa..d5078444 100644
+--- a/official/c69381150.lua
++++ b/official/c69381150.lua
+@@ -1,4 +1,4 @@
+---－Ａｉ－Ｑ
++--Ai－Q
+ --A.I.Q
+ --Anime version scripted by Larry126
+ local s,id=GetID()
+diff --git a/official/c69553552.lua b/official/c69553552.lua
+index 4b7e2f83..e267a5f2 100644
+--- a/official/c69553552.lua
++++ b/official/c69553552.lua
+@@ -1,4 +1,4 @@
+---Ｆ．Ａ．フォーミュラアスリートウィナーズ
++--F.A.ウィナーズ
+ --F.A. Winners
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c70711847.lua b/official/c70711847.lua
+index 163fce1d..b47cd2da 100644
+--- a/official/c70711847.lua
++++ b/official/c70711847.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのネッシー
++--未界域のネッシー
+ --Danger! Nessie!
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c7133305.lua b/official/c7133305.lua
+index 9584015c..eed669de 100644
+--- a/official/c7133305.lua
++++ b/official/c7133305.lua
+@@ -1,4 +1,4 @@
+---命いのちの水
++--命の水
+ --Water of Life
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c72453068.lua b/official/c72453068.lua
+index aaa8b6ea..073106a1 100644
+--- a/official/c72453068.lua
++++ b/official/c72453068.lua
+@@ -1,4 +1,4 @@
+---ロスライム
++--ロスタイム
+ --Loss Time
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c73121813.lua b/official/c73121813.lua
+index ba91f78d..78cec256 100644
+--- a/official/c73121813.lua
++++ b/official/c73121813.lua
+@@ -1,4 +1,4 @@
+---天威龍－ムーダ・アーダラ
++--天威龍－ムーラ・アーダラ
+ --Tenyi Spirit - Mula Adhara
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c73239437.lua b/official/c73239437.lua
+index 741b514b..5b49b70a 100644
+--- a/official/c73239437.lua
++++ b/official/c73239437.lua
+@@ -1,4 +1,4 @@
+---ダッブルヒーローアタック
++--ダブルヒーローアタック
+ --Double Hero Attack
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c75147529.lua b/official/c75147529.lua
+index b3945a83..d73e6aab 100644
+--- a/official/c75147529.lua
++++ b/official/c75147529.lua
+@@ -1,4 +1,4 @@
+---閃刀姫 ジーク
++--閃刀姫－ジーク
+ --Sky Striker Ace - Zeke
+ --Scripted by Hel
+ local s,id=GetID()
+diff --git a/official/c76375976.lua b/official/c76375976.lua
+index 8fbf52cd..0f3d72b9 100644
+--- a/official/c76375976.lua
++++ b/official/c76375976.lua
+@@ -1,4 +1,4 @@
+---魔鐘洞
++--魔鍾洞
+ --Mystic Mine
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c76442616.lua b/official/c76442616.lua
+index a1238e1e..5107c190 100644
+--- a/official/c76442616.lua
++++ b/official/c76442616.lua
+@@ -1,4 +1,4 @@
+---HERO'S ボンド
++--HERO’S ボンド
+ --HERO's Bond
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c77432167.lua b/official/c77432167.lua
+index 93941d2b..9685ed93 100644
+--- a/official/c77432167.lua
++++ b/official/c77432167.lua
+@@ -1,4 +1,4 @@
+---太陽神の合一
++--太陽神合一
+ --Sun God Unification
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c77714963.lua b/official/c77714963.lua
+index f7290c15..ba28cd1f 100644
+--- a/official/c77714963.lua
++++ b/official/c77714963.lua
+@@ -1,4 +1,4 @@
+---骸魔妖ー夜叉 
++--骸の魔妖－夜叉
+ --Yasha, the Skeletal Mayakashi
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c79791695.lua b/official/c79791695.lua
+index 6a4e9618..39706002 100644
+--- a/official/c79791695.lua
++++ b/official/c79791695.lua
+@@ -1,4 +1,4 @@
+---ＣＸ 冀望皇龍カオス・バリアン
++--CX 冀望皇龍カオス・バリアン・ドラゴン
+ --CXyz Chaos Barian Hope Dragon
+ --Scripted by The Razgriz
+ local s,id=GetID()
+diff --git a/official/c80181649.lua b/official/c80181649.lua
+index 267c4d7c..ecec262f 100644
+--- a/official/c80181649.lua
++++ b/official/c80181649.lua
+@@ -1,4 +1,4 @@
+---＂Ｃａｓｅ ｏｆ Ｋ９＂
++--“Case of K９”
+ --"A Case for K9"
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c80529459.lua b/official/c80529459.lua
+index dc080ea2..0c3bc4da 100644
+--- a/official/c80529459.lua
++++ b/official/c80529459.lua
+@@ -1,4 +1,4 @@
+---スクラップ・ラプタ
++--スクラップ・ラプター
+ --Scrap Raptor
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c80551022.lua b/official/c80551022.lua
+index a40eb5a9..525f9d47 100644
+--- a/official/c80551022.lua
++++ b/official/c80551022.lua
+@@ -1,4 +1,4 @@
+---ミミグル・ルーム
++--ミミグル・スライム
+ --Mimighoul Slime
+ --scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c80845034.lua b/official/c80845034.lua
+index 5f6f1531..a183e5ec 100644
+--- a/official/c80845034.lua
++++ b/official/c80845034.lua
+@@ -1,4 +1,4 @@
+---＂罪宝狩りの悪魔＂
++--“罪宝狩りの悪魔”
+ --WANTED: Seeker of Sinful Spoils
+ --Scripted by Satellaa
+ local s,id=GetID()
+diff --git a/official/c81263643.lua b/official/c81263643.lua
+index 068affea..e1e97150 100644
+--- a/official/c81263643.lua
++++ b/official/c81263643.lua
+@@ -1,4 +1,4 @@
+---幻姫フルドラ
++--幻妖フルドラ
+ --Mystrick Hulder
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c82361809.lua b/official/c82361809.lua
+index a0be1a27..371eefcc 100644
+--- a/official/c82361809.lua
++++ b/official/c82361809.lua
+@@ -1,4 +1,4 @@
+---スケアクロー・トライヒハート
++--スケアクロー・ライヒハート
+ --Scareclaw Reichheart
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c83518674.lua b/official/c83518674.lua
+index 03cd3a02..f6839431 100644
+--- a/official/c83518674.lua
++++ b/official/c83518674.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのオゴポゴ
++--未界域のオゴポゴ
+ --Danger! Ogopogo!
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c84330567.lua b/official/c84330567.lua
+index e174a301..85f1460c 100644
+--- a/official/c84330567.lua
++++ b/official/c84330567.lua
+@@ -1,4 +1,4 @@
+---ティアラメンツ・ルルカルス
++--ティアラメンツ・ルルカロス
+ --Tearlaments Rulkallos
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c85840608.lua b/official/c85840608.lua
+index 29d4818b..3189aa5f 100644
+--- a/official/c85840608.lua
++++ b/official/c85840608.lua
+@@ -1,4 +1,4 @@
+---オスペース・コネクター
++--ネオスペース・コネクター
+ --Neo Space Connector
+ --Scripted by ahtelel
+ local s,id=GetID()
+diff --git a/official/c87003671.lua b/official/c87003671.lua
+index 1247f2e7..9dba695d 100644
+--- a/official/c87003671.lua
++++ b/official/c87003671.lua
+@@ -1,4 +1,4 @@
+---影霊依の舞巫女 エミリア
++--影霊衣の舞巫女 エミリア
+ --Emilia, Dance Priestess of the Nekroz
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c87052196.lua b/official/c87052196.lua
+index 62432090..cf3cb1ef 100644
+--- a/official/c87052196.lua
++++ b/official/c87052196.lua
+@@ -1,4 +1,4 @@
+---天威龍－アーダラ
++--天威龍－アシュナ
+ --Tenyi Spirit - Ashuna
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c88021907.lua b/official/c88021907.lua
+index 27295da0..f546f44e 100644
+--- a/official/c88021907.lua
++++ b/official/c88021907.lua
+@@ -1,4 +1,4 @@
+---塊斬機ラプラシア
++--塊斬機ラプラシアン
+ --Primathmech Laplacian
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c88240808.lua b/official/c88240808.lua
+index 4576d5ab..fd5933a7 100644
+--- a/official/c88240808.lua
++++ b/official/c88240808.lua
+@@ -1,4 +1,4 @@
+---霊滅術師 カイク
++--霊滅術師 カイクウ
+ --Kycoo the Ghost Destroyer
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c88581108.lua b/official/c88581108.lua
+index 17bce443..c2f8c759 100644
+--- a/official/c88581108.lua
++++ b/official/c88581108.lua
+@@ -1,4 +1,4 @@
+---真竜皇V.F.D
++--真竜皇V.F.D.
+ --True King of All Calamities
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c90050480.lua b/official/c90050480.lua
+index e522efdd..07cc465e 100644
+--- a/official/c90050480.lua
++++ b/official/c90050480.lua
+@@ -1,4 +1,4 @@
+---E HERO コズモ・ネオス
++--E・HERO コスモ・ネオス
+ --Elemental HERO Cosmo Neos
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c90126061.lua b/official/c90126061.lua
+index 6703ecc0..7f81db21 100644
+--- a/official/c90126061.lua
++++ b/official/c90126061.lua
+@@ -1,4 +1,4 @@
+---No.5 亡霊竜デス・キマイラ・ドラゴン
++--No.5 亡朧竜 デス・キマイラ・ドラゴン
+ --Number 5: Doom Chimera Dragon
+ --Scripted by ahtelel
+ local s,id=GetID()
+diff --git a/official/c90807199.lua b/official/c90807199.lua
+index ba308a7f..1490c6a0 100644
+--- a/official/c90807199.lua
++++ b/official/c90807199.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのサンダーバード
++--未界域のサンダーバード
+ --Danger! Thunderbird!
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c9213491.lua b/official/c9213491.lua
+index 5cdb8f87..d761881a 100644
+--- a/official/c9213491.lua
++++ b/official/c9213491.lua
+@@ -1,4 +1,4 @@
+---静寂のサイコガール+
++--静寂のサイコガール
+ --Serene Psychic Girl
+ --scripted by Naim
+ local s,id=GetID()
+diff --git a/official/c92650018.lua b/official/c92650018.lua
+index 2f107032..93617018 100644
+--- a/official/c92650018.lua
++++ b/official/c92650018.lua
+@@ -1,4 +1,4 @@
+---Ａ・Ɐ・ＨＨ
++--A・∀・HH
+ --Amaze Attraction Horror House
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c93229151.lua b/official/c93229151.lua
+index 9624e067..3393816a 100644
+--- a/official/c93229151.lua
++++ b/official/c93229151.lua
+@@ -1,4 +1,4 @@
+---黄金の雫の神碑
++--怒れる嵐の神碑
+ --Runick Smiting Storm
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c93294363.lua b/official/c93294363.lua
+index 8395526a..41c5bb1b 100644
+--- a/official/c93294363.lua
++++ b/official/c93294363.lua
+@@ -1,4 +1,4 @@
+---えざる誘う手
++--見えざる誘い手
+ --Ib'al-Hecahands
+ --Scripted by The Razgriz
+ local s,id=GetID()
+diff --git a/official/c93445074.lua b/official/c93445074.lua
+index 6a086ed0..eb0d200e 100644
+--- a/official/c93445074.lua
++++ b/official/c93445074.lua
+@@ -1,4 +1,4 @@
+---グレイドル・アリゲーター
++--グレイドル・コブラ
+ --Graydle Cobra
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c93473606.lua b/official/c93473606.lua
+index 8d836024..4ca9fdfd 100644
+--- a/official/c93473606.lua
++++ b/official/c93473606.lua
+@@ -1,4 +1,4 @@
+---Ａ・Ɐ・ＷＷ
++--A・∀・WW
+ --Amaze Attraction Wonder Wheel
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c93672138.lua b/official/c93672138.lua
+index 4d2aec0f..b1626519 100644
+--- a/official/c93672138.lua
++++ b/official/c93672138.lua
+@@ -1,4 +1,4 @@
+---Ｅｖｉｌ★Ｔｗｉｎ'ｓ トラブル・サニー
++--Evil★Twin’s トラブル・サニー
+ --Evil★Twin's Trouble Sunny
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c94821366.lua b/official/c94821366.lua
+index 27ea34c3..9bddcb01 100644
+--- a/official/c94821366.lua
++++ b/official/c94821366.lua
+@@ -1,4 +1,4 @@
+---驚楽園の支配人 <Ɐrlechino>
++--驚楽園の支配人 ＜∀rlechino＞
+ --Amazement Administrator Arlekino
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c95506252.lua b/official/c95506252.lua
+index 91f28555..5dfffe05 100644
+--- a/official/c95506252.lua
++++ b/official/c95506252.lua
+@@ -1,4 +1,4 @@
+---影装騎士 ブラック・ジャク
++--影装騎士 ブラック・ジャック
+ --Black Jack the Shadow-Armored Knight
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c95626382.lua b/official/c95626382.lua
+index 21cb971a..9c90a14b 100644
+--- a/official/c95626382.lua
++++ b/official/c95626382.lua
+@@ -1,4 +1,4 @@
+---終刻龍機ⅩⅡ－ドラストリウス
++--終獄龍機ⅩⅡ－ドラストリウス
+ --DoomZ XII End - Drastrius
+ --Scripted by Hatter
+ local s,id=GetID()
+diff --git a/official/c95973569.lua b/official/c95973569.lua
+index e6709bdf..14db0b29 100644
+--- a/official/c95973569.lua
++++ b/official/c95973569.lua
+@@ -1,4 +1,4 @@
+---ＴＧ グレイブ・ブラスター
++--TG グレイヴ・ブラスター
+ --T.G. Glaive Blaster
+ local s,id=GetID()
+ function s.initial_effect(c)
+diff --git a/official/c96026108.lua b/official/c96026108.lua
+index ce95d68c..05469619 100644
+--- a/official/c96026108.lua
++++ b/official/c96026108.lua
+@@ -1,4 +1,4 @@
+---竜儀巧－アルζ
++--竜輝巧－アルζ
+ --Drytron Zeta Aldhibah
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c97182396.lua b/official/c97182396.lua
+index d62e6766..e02f400e 100644
+--- a/official/c97182396.lua
++++ b/official/c97182396.lua
+@@ -1,4 +1,4 @@
+---Ａ・Ɐ・ＶＶ
++--A・∀・VV
+ --Amaze Attraction Viking Vortex
+ --scripted by pyrQ
+ local s,id=GetID()
+diff --git a/official/c97661969.lua b/official/c97661969.lua
+index f4566e4d..bf5316b6 100644
+--- a/official/c97661969.lua
++++ b/official/c97661969.lua
+@@ -1,4 +1,4 @@
+---蒼翠の風霊使いウィン
++--崔嵬の地霊使いアウス
+ --Aussa the Earth Charmer, Immovable
+ --Scripted by ahtelel
+ local s,id=GetID()
+diff --git a/official/c99115354.lua b/official/c99115354.lua
+index 05f92fe2..7da18122 100644
+--- a/official/c99115354.lua
++++ b/official/c99115354.lua
+@@ -1,4 +1,4 @@
+---ハイパーサイコライダー
++--ハイパーサイコライザー
+ --Hyper Psychic Riser
+ --Scripted by Eerie Code
+ local s,id=GetID()
+diff --git a/official/c99456344.lua b/official/c99456344.lua
+index 04d20d22..89eb8a18 100644
+--- a/official/c99456344.lua
++++ b/official/c99456344.lua
+@@ -1,4 +1,4 @@
+---デスピアの大導劇神s
++--デスピアの大導劇神
+ --Dramaturge of Despia
+ --scripted by Rundas
+ local s,id=GetID()
+diff --git a/official/c99745551.lua b/official/c99745551.lua
+index 95b3b1d2..cabcc55d 100644
+--- a/official/c99745551.lua
++++ b/official/c99745551.lua
+@@ -1,4 +1,4 @@
+---未み界かい域いきのツチノコ
++--未界域のツチノコ
+ --Danger!? Tsuchinoko?
+ --Scripted by AlphaKretin
+ local s,id=GetID()
+diff --git a/official/c99792080.lua b/official/c99792080.lua
+index 4a71d0b1..70131ad3 100644
+--- a/official/c99792080.lua
++++ b/official/c99792080.lua
+@@ -1,4 +1,4 @@
+---夢魔鏡の聖獣－パンタス
++--夢魔鏡の魔獣－パンタス
+ --Phantasos, the Dream Mirror Foe
+ --Scripted by Hel
+ local s,id=GetID()
