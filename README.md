@@ -334,7 +334,9 @@ Each Konami FAQ fix in `patches/` carries a comment with the FAQ number. Newer f
 same rule applied by analogy to a card with the same text but no FAQ of its own, `[exception]` for an exception to a rule
 the engine applies elsewhere (for example a flag that only some cards use), and `[card]` for one card's own handling.
 `python tools/list_fixes.py > fixes.csv` lists every fix with its patch, file, FAQ numbers and tag; the tag is empty for
-fixes written before the tags.
+fixes written before the tags unless `docs/fix_kinds.csv` gives one. That table was drafted by
+`tools/draft_fix_kinds.py` (core fixes, and FAQs shared by several cards, are general; a fix in one card is `card`); a
+row whose `basis` starts with "draft:" has not been reviewed by hand yet.
 
 ## Accuracy
 

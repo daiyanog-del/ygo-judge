@@ -27,9 +27,12 @@ def rows():
             if line.startswith("diff --git "):
                 current = line.split(" b/", 1)[-1]
                 continue
+            if line.startswith("+++ b/"):
+                current = line[len("+++ b/"):]
+                continue
             if not line.startswith("+") or line.startswith("+++") or "FAQ" not in line:
                 continue
-            numbers = sorted({int(n) for m in FAQ.finditer(line) for n in re.findall(r"\d{3,5}", m.group(1))})
+            numbers = sorted({int(n) for m in FAQ.finditer(line) for n in re.findall(r"\d{1,5}", m.group(1))})
             tag = TAG.search(line)
             comment = re.sub(r"^\+\s*", "", line)
             comment = comment.split("--", 1)[-1].split("//", 1)[-1].strip() if ("--" in comment or "//" in comment) else comment.strip()
@@ -43,9 +46,19 @@ def rows():
 
 
 def main():
-    writer = csv.DictWriter(sys.stdout, fieldnames=["patch", "file", "faq", "kind", "comment"], lineterminator="\n")
+    """Untagged rows take their kind from docs/fix_kinds.csv (drafted by tools/draft_fix_kinds.py, then reviewed)."""
+    kinds = {}
+    table = ROOT.parent / "docs" / "fix_kinds.csv"
+    if table.exists():
+        for r in csv.DictReader(open(table, encoding="utf-8")):
+            kinds[(r["patch"], r["file"], r["faq"], r["comment"])] = (r["kind"], r["basis"])
+    writer = csv.DictWriter(sys.stdout, fieldnames=["patch", "file", "faq", "kind", "source", "comment"], lineterminator="\n")
     writer.writeheader()
     for row in rows():
+        if row["kind"]:
+            row["source"] = "tag"
+        else:
+            row["kind"], row["source"] = kinds.get((row["patch"], row["file"], row["faq"], row["comment"]), ("", ""))
         writer.writerow(row)
 
 
