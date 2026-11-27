@@ -1,0 +1,170 @@
+diff --git a/official/c15175429.lua b/official/c15175429.lua
+index 52788586..55d28508 100644
+--- a/official/c15175429.lua
++++ b/official/c15175429.lua
+@@ -7,7 +7,7 @@ function s.initial_effect(c)
+ 	e1:SetDescription(aux.Stringid(id,0))
+ 	e1:SetCategory(CATEGORY_DAMAGE+CATEGORY_DESTROY)
+ 	e1:SetType(EFFECT_TYPE_QUICK_O)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
++	--e1:SetProperty() removed --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e1:SetCode(EVENT_CHAINING)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetCountLimit(1)
+diff --git a/official/c18190572.lua b/official/c18190572.lua
+index 062544ae..821ea0a4 100644
+--- a/official/c18190572.lua
++++ b/official/c18190572.lua
+@@ -7,7 +7,7 @@ function s.initial_effect(c)
+ 	e1:SetCategory(CATEGORY_DEFCHANGE)
+ 	e1:SetType(EFFECT_TYPE_ACTIVATE)
+ 	e1:SetHintTiming(TIMING_DAMAGE_STEP)
+-	e1:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DAMAGE_STEP)
++	e1:SetProperty(EFFECT_FLAG_CARD_TARGET) --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e1:SetCode(EVENT_FREE_CHAIN)
+ 	e1:SetCondition(aux.StatChangeDamageStepCondition)
+ 	e1:SetTarget(s.target)
+diff --git a/official/c19027895.lua b/official/c19027895.lua
+index d403af3b..42980bc4 100644
+--- a/official/c19027895.lua
++++ b/official/c19027895.lua
+@@ -20,7 +20,7 @@ function s.initial_effect(c)
+ 	e2:SetDescription(aux.Stringid(id,1))
+ 	e2:SetCategory(CATEGORY_TODECK+CATEGORY_ATKCHANGE)
+ 	e2:SetType(EFFECT_TYPE_QUICK_O)
+-	e2:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DAMAGE_STEP)
++	e2:SetProperty(EFFECT_FLAG_CARD_TARGET) --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e2:SetCode(EVENT_FREE_CHAIN)
+ 	e2:SetRange(LOCATION_GRAVE)
+ 	e2:SetHintTiming(TIMING_DAMAGE_STEP,TIMING_DAMAGE_STEP|TIMINGS_CHECK_MONSTER_E)
+diff --git a/official/c24842059.lua b/official/c24842059.lua
+index ebb09472..97eca6a0 100644
+--- a/official/c24842059.lua
++++ b/official/c24842059.lua
+@@ -10,7 +10,7 @@ function s.initial_effect(c)
+ 	local e1=Effect.CreateEffect(c)
+ 	e1:SetDescription(aux.Stringid(id,0))
+ 	e1:SetCategory(CATEGORY_DISABLE+CATEGORY_DESTROY)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
++	--e1:SetProperty() removed --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e1:SetType(EFFECT_TYPE_QUICK_O)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetCountLimit(1,id)
+diff --git a/official/c31353051.lua b/official/c31353051.lua
+index 2aae9868..541a3ac5 100644
+--- a/official/c31353051.lua
++++ b/official/c31353051.lua
+@@ -9,7 +9,7 @@ function s.initial_effect(c)
+ 	e1:SetCategory(CATEGORY_DESTROY+CATEGORY_DAMAGE)
+ 	e1:SetType(EFFECT_TYPE_QUICK_O)
+ 	e1:SetCode(EVENT_CHAINING)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
++	--e1:SetProperty() removed --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetCountLimit(1,id)
+ 	e1:SetCondition(s.descon)
+diff --git a/official/c35129241.lua b/official/c35129241.lua
+index 1f30b78b..a4aca0ba 100644
+--- a/official/c35129241.lua
++++ b/official/c35129241.lua
+@@ -15,7 +15,7 @@ function s.initial_effect(c)
+ 	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+ 	e2:SetRange(LOCATION_SZONE)
+ 	e2:SetCode(EVENT_RELEASE)
+-	e2:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY+EFFECT_FLAG_CARD_TARGET)
++	e2:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_CARD_TARGET) --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e2:SetCountLimit(1,0,EFFECT_COUNT_CODE_SINGLE)
+ 	e2:SetCondition(s.spcon)
+ 	e2:SetTarget(s.sptg)
+diff --git a/official/c36328300.lua b/official/c36328300.lua
+index 32655ea1..94a19f9b 100644
+--- a/official/c36328300.lua
++++ b/official/c36328300.lua
+@@ -15,7 +15,7 @@ function s.initial_effect(c)
+ 	--place
+ 	local e2=Effect.CreateEffect(c)
+ 	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+-	e2:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
++	e2:SetProperty(EFFECT_FLAG_DELAY) --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e2:SetCode(EVENT_LEAVE_FIELD)
+ 	e2:SetRange(LOCATION_GRAVE)
+ 	e2:SetCondition(s.plcon)
+diff --git a/official/c42596828.lua b/official/c42596828.lua
+index 275c5ed1..b1f28917 100644
+--- a/official/c42596828.lua
++++ b/official/c42596828.lua
+@@ -9,7 +9,8 @@ function s.initial_effect(c)
+ 	e1:SetCategory(CATEGORY_DEFCHANGE)
+ 	e1:SetType(EFFECT_TYPE_QUICK_O)
+ 	e1:SetCode(EVENT_FREE_CHAIN)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
++	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP) --card FAQ [general:faq]: only until before damage calculation
++	e1:SetCondition(aux.StatChangeDamageStepCondition)
+ 	e1:SetHintTiming(TIMING_DAMAGE_STEP)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetCountLimit(1)
+diff --git a/official/c48654323.lua b/official/c48654323.lua
+index 73070e4e..208746be 100644
+--- a/official/c48654323.lua
++++ b/official/c48654323.lua
+@@ -29,7 +29,7 @@ function s.initial_effect(c)
+ 	e3:SetDescription(aux.Stringid(id,1))
+ 	e3:SetCategory(CATEGORY_TOGRAVE)
+ 	e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+-	e3:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
++	e3:SetProperty(EFFECT_FLAG_DELAY) --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetCountLimit(1,id)
+diff --git a/official/c5087128.lua b/official/c5087128.lua
+index b6eeecc2..58c2fe16 100644
+--- a/official/c5087128.lua
++++ b/official/c5087128.lua
+@@ -9,7 +9,7 @@ function s.initial_effect(c)
+ 	e1:SetCategory(CATEGORY_DESTROY)
+ 	e1:SetType(EFFECT_TYPE_QUICK_O)
+ 	e1:SetCode(EVENT_CHAINING)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
++	--e1:SetProperty() removed --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetCountLimit(1,id)
+ 	e1:SetCondition(s.descon)
+diff --git a/official/c52286175.lua b/official/c52286175.lua
+index 8a1b9908..c4871210 100644
+--- a/official/c52286175.lua
++++ b/official/c52286175.lua
+@@ -7,7 +7,7 @@ function s.initial_effect(c)
+ 	e1:SetDescription(aux.Stringid(id,0))
+ 	e1:SetCategory(CATEGORY_DAMAGE+CATEGORY_DESTROY)
+ 	e1:SetType(EFFECT_TYPE_QUICK_O)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DAMAGE_CAL)
++	--e1:SetProperty() removed --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e1:SetCode(EVENT_CHAINING)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetCountLimit(1)
+diff --git a/official/c57458399.lua b/official/c57458399.lua
+index 0eeea325..17bd679a 100644
+--- a/official/c57458399.lua
++++ b/official/c57458399.lua
+@@ -8,7 +8,7 @@ function s.initial_effect(c)
+ 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
+ 	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+ 	e1:SetRange(LOCATION_HAND)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
++	e1:SetProperty(EFFECT_FLAG_DELAY) --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e1:SetCode(EVENT_SPSUMMON_SUCCESS)
+ 	e1:SetCountLimit(1,id)
+ 	e1:SetCondition(s.spcon)
+diff --git a/official/c94585852.lua b/official/c94585852.lua
+index 29bde6fe..e1dce7a4 100644
+--- a/official/c94585852.lua
++++ b/official/c94585852.lua
+@@ -21,7 +21,7 @@ function s.initial_effect(c)
+ 	e4:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
+ 	e4:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+ 	e4:SetRange(LOCATION_FZONE)
+-	e4:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_EVENT_PLAYER)
++	e4:SetProperty(EFFECT_FLAG_EVENT_PLAYER) --card FAQ [general:faq]: cannot be activated in the Damage Step
+ 	e4:SetCode(EVENT_CUSTOM+id)
+ 	e4:SetTarget(s.target)
+ 	e4:SetOperation(s.operation)

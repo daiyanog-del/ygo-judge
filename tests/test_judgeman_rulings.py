@@ -3167,3 +3167,19 @@ def test_flying_red_carp_cannot_raise_its_atk_after_damage_calculation():
         out += d.play([P if P in labels else next(l for l in labels if not l.startswith("Activate"))])
     assert "Damage calculation:" in out, out
     assert before > 0 and after == 0, (before, after, out)
+
+
+def test_trap_reactor_cannot_respond_to_a_trap_in_the_damage_step():
+    # card FAQ of Trap Reactor・RR: it cannot be activated in the Damage Step
+    d = start({"monsters": [{"card": "Battle Ox", "zone": 1, "summoned": "normal"}, {"card": "Trap Reactor ・Y FI", "zone": 2, "summoned": "normal"}],
+               "deck_filler": 10},
+              {"monsters": [{"card": "Mystical Shine Ball", "zone": 1, "summoned": "normal"}],
+               "spells_traps": [{"card": "Reinforcements", "face_up": False}], "deck_filler": 10}, seed=1)
+    out = _w_turn(d, 3)
+    out += d.play(["Enter the Battle Phase"])
+    out += _until(d, lambda d: _offered(d, "Attack with Battle Ox"))
+    out += d.play(["Attack with Battle Ox"])
+    out += _until(d, lambda d: "Damage Step" in d.describe_decision() and _offered(d, "Activate Reinforcements"))
+    out += d.play(["Activate Reinforcements", 0])
+    assert "Chain Link 1: P2 activates Reinforcements" in out, out
+    assert not _offered(d, "Activate Trap Reactor"), d.describe_decision()
