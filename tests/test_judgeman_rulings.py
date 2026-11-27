@@ -3144,3 +3144,26 @@ def test_garbage_collector_does_not_return_a_target_that_was_destroyed():
     out = d.play(["Pass (don't respond)", "Pass (don't respond)", "Activate Garbage Collector", "Activate Ring of Destruction", "Cyberse Gadget"])
     assert "Cyberse Gadget: P1 Monster Zone 2 → P1 GY" in out, out
     assert "P1 GY → P1 hand" not in out and "choose a zone" not in d.describe_decision(), out + d.describe_decision()
+
+
+def test_flying_red_carp_cannot_raise_its_atk_after_damage_calculation():
+    # FAQ 157 and the Damage Step rule: ATK/DEF changes only from the start of the Damage Step until before damage calculation
+    d = start({"hand": ["Penguin Soldier"], "monsters": [{"card": "Flying Red Carp", "position": "attack", "zone": 1, "summoned": "normal"}],
+               "deck_filler": 10},
+              {"monsters": [{"card": "Big Shield Gardna", "position": "defense", "zone": 1, "summoned": "normal"}], "deck_filler": 10}, seed=1)
+    out = _w_turn(d, 3)
+    out += d.play(["Enter the Battle Phase"])
+    out += _until(d, lambda d: _offered(d, "Attack with Flying Red Carp"))
+    out += d.play(["Attack with Flying Red Carp"])
+    before = after = 0
+    for _ in range(30):
+        if _offered(d, "Go to Main Phase 2"):
+            break
+        if "Damage calculation:" in out:
+            after += _offered(d, "Activate Flying Red Carp")
+        else:
+            before += _offered(d, "Activate Flying Red Carp")
+        labels = [o.label for o in d.decision.options]
+        out += d.play([P if P in labels else next(l for l in labels if not l.startswith("Activate"))])
+    assert "Damage calculation:" in out, out
+    assert before > 0 and after == 0, (before, after, out)
