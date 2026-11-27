@@ -3134,3 +3134,13 @@ def test_dragonmaid_tinkhec_does_not_raise_the_atk_of_a_target_turned_face_down(
     assert "Laundry Dragonmaid (P1 Monster Zone 1) changes to face-down Defense Position" in out, out
     assert "P1 Flip Summons Laundry Dragonmaid" in out, out
     assert "Laundry Dragonmaid, face-up Attack, ATK 500/DEF 1600" in d.board(), d.board()
+
+
+def test_garbage_collector_does_not_return_a_target_that_was_destroyed():
+    # FAQ 20869 (same rule): nothing happens to a target that has left the field
+    d = start({"monsters": [{"card": "Garbage Collector", "zone": 1, "summoned": "normal"}, {"card": "Cyberse Gadget", "zone": 2, "summoned": "special"}],
+               "deck": ["Cyberse Wizard"], "deck_filler": 10},
+              {"spells_traps": [{"card": "Ring of Destruction", "face_up": False}], "deck_filler": 10}, seed=1)
+    out = d.play(["Pass (don't respond)", "Pass (don't respond)", "Activate Garbage Collector", "Activate Ring of Destruction", "Cyberse Gadget"])
+    assert "Cyberse Gadget: P1 Monster Zone 2 → P1 GY" in out, out
+    assert "P1 GY → P1 hand" not in out and "choose a zone" not in d.describe_decision(), out + d.describe_decision()
