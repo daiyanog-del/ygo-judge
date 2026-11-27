@@ -1,0 +1,157 @@
+diff --git a/constant.lua b/constant.lua
+index 1f6662ee..218dcc12 100644
+--- a/constant.lua
++++ b/constant.lua
+@@ -356,6 +356,7 @@ EFFECT_FLAG_IMMEDIATELY_APPLY   = 0x80000000
+ EFFECT_FLAG2_CONTINUOUS_EQUIP   = 0x0001
+ EFFECT_FLAG2_COF                = 0x0002
+ EFFECT_FLAG2_CHECK_SIMULTANEOUS = 0x0004 --the effect shouldn't trigger if the card was sent in the triggering location at the same time of the event that triggered it
++EFFECT_FLAG2_MERGE_CHAIN_SOLVING = 0x20000000 --JudgemanAI [exception]: queued once for the whole chain resolution, with the event cards merged (FAQ 17974, 16090)
+ EFFECT_FLAG2_FORCE_ACTIVATE_LOCATION = 0x40000000
+ EFFECT_FLAG2_MAJESTIC_MUST_COPY = 0x80000000
+ --Effect codes
+diff --git a/official/c13857930.lua b/official/c13857930.lua
+index f060c73e..ef726fd2 100644
+--- a/official/c13857930.lua
++++ b/official/c13857930.lua
+@@ -42,7 +42,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetOperatedGroup():GetFirst()
+ 	Duel.ConfirmCards(1-tp,tc)
+ 	if tc:IsMonster() then
+-		Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
++		aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
+ 	elseif tc:IsSpell() then
+ 		if c==Duel.GetAttacker() and not c:IsHasEffect(EFFECT_CANNOT_DIRECT_ATTACK)
+ 			and c:IsRelateToEffect(e) and c:IsFaceup() and Duel.SelectYesNo(tp,aux.Stringid(id,1)) then
+diff --git a/official/c17732278.lua b/official/c17732278.lua
+index 5006f8fb..f7cb4d02 100644
+--- a/official/c17732278.lua
++++ b/official/c17732278.lua
+@@ -30,7 +30,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	if tc:IsMonster() then
+ 		if not Duel.IsPlayerAffectedByEffect(Duel.GetTurnPlayer(),EFFECT_SKIP_BP) then
+ 			Duel.BreakEffect()
+-			Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
++			aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
+ 		end
+ 	elseif tc:IsSpell() then
+ 		if c==Duel.GetAttacker() and not c:IsHasEffect(EFFECT_CANNOT_DIRECT_ATTACK)
+diff --git a/official/c39552584.lua b/official/c39552584.lua
+index 082b1a1e..7b21cd5b 100644
+--- a/official/c39552584.lua
++++ b/official/c39552584.lua
+@@ -46,6 +46,7 @@ function s.repop(e,tp,eg,ep,ev,re,r,rp)
+ 	if #g>0 then
+ 		Duel.DiscardHand(1-tp,nil,1,1,REASON_EFFECT|REASON_DISCARD)
+ 	end
++	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [card]: the added destruction still applies after the effect is replaced
+ end
+ function s.spcon(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+diff --git a/official/c51275027.lua b/official/c51275027.lua
+index 601bbdf6..b2f40ea7 100644
+--- a/official/c51275027.lua
++++ b/official/c51275027.lua
+@@ -15,5 +15,5 @@ function s.condition(e,tp,eg,ep,ev,re,r,rp)
+ 	return e:GetHandler():IsLocation(LOCATION_GRAVE) and e:GetHandler():IsReason(REASON_BATTLE)
+ end
+ function s.operation(e,tp,eg,ep,ev,re,r,rp)
+-	Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
++	aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
+ end
+\ No newline at end of file
+diff --git a/official/c53485634.lua b/official/c53485634.lua
+index d3d714a6..99f51b80 100644
+--- a/official/c53485634.lua
++++ b/official/c53485634.lua
+@@ -7,7 +7,7 @@ function s.initial_effect(c)
+ 	e1:SetDescription(aux.Stringid(id,0))
+ 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
+ 	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+-	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
++	e1:SetProperty(EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY,EFFECT_FLAG2_MERGE_CHAIN_SOLVING) --FAQ 16090 [exception]: once for the whole chain
+ 	e1:SetCode(EVENT_TO_GRAVE)
+ 	e1:SetRange(LOCATION_HAND)
+ 	e1:SetTarget(s.sptg)
+diff --git a/official/c63767246.lua b/official/c63767246.lua
+index 080365eb..e24548f2 100644
+--- a/official/c63767246.lua
++++ b/official/c63767246.lua
+@@ -32,7 +32,7 @@ function s.initial_effect(c)
+ 	e3:SetDescription(aux.Stringid(id,2))
+ 	e3:SetCategory(CATEGORY_ATKCHANGE)
+ 	e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+-	e3:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
++	e3:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY,EFFECT_FLAG2_MERGE_CHAIN_SOLVING) --FAQ 17974 [exception]: once for the whole chain
+ 	e3:SetCode(EVENT_DESTROYED)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetCondition(s.atkcon)
+diff --git a/official/c64325438.lua b/official/c64325438.lua
+index dee9a3cd..543f47f6 100644
+--- a/official/c64325438.lua
++++ b/official/c64325438.lua
+@@ -50,4 +50,5 @@ function s.repop(e,tp,eg,ep,ev,re,r,rp)
+ 	if e:IsSpellTrapEffect() and e:IsHasType(EFFECT_TYPE_ACTIVATE) then
+ 		c:CancelToGrave(false)
+ 	end
++	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [card]: the added destruction still applies after the effect is replaced
+ end
+\ No newline at end of file
+diff --git a/official/c69840739.lua b/official/c69840739.lua
+index 13270b39..7b1b746d 100644
+--- a/official/c69840739.lua
++++ b/official/c69840739.lua
+@@ -84,4 +84,5 @@ function s.repop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.HintSelection(g)
+ 		Duel.Destroy(g,REASON_EFFECT)
+ 	end
++	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [card]: the added destruction still applies after the effect is replaced
+ end
+diff --git a/official/c79205581.lua b/official/c79205581.lua
+index dbab9784..1b2c2437 100644
+--- a/official/c79205581.lua
++++ b/official/c79205581.lua
+@@ -32,5 +32,5 @@ end
+ function s.bpop(e,tp,eg,ep,ev,re,r,rp)
+ 	if not e:GetHandler():IsRelateToEffect(e) then return end
+ 	if Duel.GetFlagEffect(0,86049351)>0 then return end --FAQ 242
+-	Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
++	aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
+ end
+\ No newline at end of file
+diff --git a/official/c86682165.lua b/official/c86682165.lua
+index f5f51321..623f470e 100644
+--- a/official/c86682165.lua
++++ b/official/c86682165.lua
+@@ -63,6 +63,10 @@ function s.immop(e,tp,eg,ep,ev,re,r,rp)
+ 	if ch<=1 then return end
+ 	local chp,chcode=Duel.GetChainInfo(ch-1,CHAININFO_TRIGGERING_PLAYER,CHAININFO_TRIGGERING_CODE)
+ 	if chp~=1-tp or not chcode then return end
++	--FAQ 23907 [card]: the name at resolution if the card is still where it activated the effect, the name at activation if it left
++	local te,tl,ts,tcp=Duel.GetChainInfo(ch-1,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_LOCATION,CHAININFO_TRIGGERING_SEQUENCE,CHAININFO_TRIGGERING_CONTROLER)
++	local rc=te and te:GetHandler()
++	if rc and rc:IsLocation(tl) and rc:GetSequence()==ts and rc:IsControler(tcp) and rc:IsRelateToEffect(te) then chcode=rc:GetCode() end
+ 	local g=Duel.GetMatchingGroup(s.rmfilter,tp,0,LOCATION_ONFIELD|LOCATION_GRAVE,nil,chcode)
+ 	if #g>0 and Duel.SelectYesNo(tp,aux.Stringid(id,3)) then
+ 		Duel.BreakEffect()
+diff --git a/utility.lua b/utility.lua
+index 17abb8e5..1097c019 100644
+--- a/utility.lua
++++ b/utility.lua
+@@ -3064,3 +3064,16 @@ Duel.LoadScript("proc_gemini.lua")
+ Duel.LoadScript("proc_spirit.lua")
+ Duel.LoadScript("proc_unofficial.lua")
+ Duel.LoadScript("deprecated_functions.lua")
++
++--JudgemanAI [general] FAQ 6059: "end this turn's Battle Phase" also ends a second Battle Phase this turn
++function Auxiliary.EndThisTurnBattlePhase(e)
++	local p=Duel.GetTurnPlayer()
++	Duel.SkipPhase(p,PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
++	local e1=Effect.CreateEffect(e:GetHandler())
++	e1:SetType(EFFECT_TYPE_FIELD)
++	e1:SetCode(EFFECT_CANNOT_BP)
++	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
++	e1:SetTargetRange(1,0)
++	e1:SetReset(RESET_PHASE|PHASE_END)
++	Duel.RegisterEffect(e1,p)
++end

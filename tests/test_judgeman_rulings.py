@@ -3002,3 +3002,71 @@ def test_decoy_dragon_calculates_damage_before_malefic_blue_eyes_destroys_itself
     after = out.split("Malefic Blue-Eyes White Dragon is Special Summoned")[-1]
     assert "Damage calculation: Gazelle the King of Mythical Beasts" in after, out
     assert after.index("Damage calculation") < after.index("Malefic Blue-Eyes White Dragon: P1 Monster Zone 2 → P1 GY — destroyed by an effect"), out
+
+
+# ---------------------------------------------------------------- the remaining Q&As ("this turn's" Battle Phase, Labrynth, Gymir, merged chain triggers)
+
+
+def test_the_unhappy_maiden_also_ends_a_second_battle_phase():
+    # FAQ 6059
+    d, out = _w_run({'hand': ['Offerings to the Doomed', 'Ages of Stars and Frost'], 'monsters': [{'card': 'Mystical Shine Ball', 'zone': 1}, {'card': 'Battle Ox', 'zone': 2}], 'deck_filler': 10},
+                    {'monsters': [{'card': 'The Unhappy Maiden', 'zone': 1, 'position': 'attack'}, {'card': 'Mystical Shine Ball', 'zone': 2, 'position': 'attack'}], 'deck_filler': 10},
+                    ['@3', 'Activate Offerings', '#0', '#0', '#0', '#0', 'Enter the Battle', 'Attack with Battle Ox', '#0'], seed=1)
+    assert "activates The Unhappy Maiden" in out, out
+    assert "Main Phase 2: choose an action" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_ages_of_stars_and_frost_still_gives_a_second_battle_phase():
+    # FAQ 6059
+    d, out = _w_run({'hand': ['Offerings to the Doomed', 'Ages of Stars and Frost'], 'monsters': [{'card': 'Mystical Shine Ball', 'zone': 1}, {'card': 'Battle Ox', 'zone': 2}], 'deck_filler': 10},
+                    {'monsters': [{'card': 'The Unhappy Maiden', 'zone': 1, 'position': 'attack'}, {'card': 'Mystical Shine Ball', 'zone': 2, 'position': 'attack'}], 'deck_filler': 10},
+                    ['@3', 'Activate Offerings', '#0', '#0', '#0', '#0', 'Enter the Battle', 'Go to Main Phase 2'], seed=1)
+    assert "Conduct another Battle Phase" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_labrynth_labyrinth_adds_destruction_after_durendal_replaces_the_effect():
+    # FAQ 24185
+    d = start({'hand': [], 'field_spell': {'card': 'Labrynth Labyrinth'}, 'spells_traps': [{'card': 'Welcome Labrynth', 'face_up': False}, {'card': 'Mirror Force', 'face_up': False}], 'deck': ['Arianna the Labrynth Servant'], 'deck_filler': 10},
+              {'monsters': [{'card': 'Artifact Durendal', 'zone': 1, 'materials': ['Cyber Dragon', 'Cyber Dragon']}], 'deck_filler': 10, 'spells_traps': [{'card': 'Mirror Force', 'face_up': False}]}, seed=1)
+    out = _w_turn(d, 1)
+    out += _w_step(d, ['Activate Welcome', '#0', '#0'])
+    assert "Mirror Force: P2 Spell & Trap Zone 1 → P2 GY — destroyed by an effect" in out, out
+    assert "Add the" in d.describe_decision() and "destroy 1 card on the field" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_gymir_uses_the_name_at_resolution_of_a_card_set_face_down_where_it_activated():
+    # FAQ 23907
+    d = start({'hand': [], 'monsters': [{'card': 'Icejade Gymir Aegirine', 'zone': 1, 'position': 'attack', 'summoned': 'synchro', 'properly_summoned': True}], 'deck_filler': 10, 'spells_traps': [{'card': 'Book of Moon', 'face_up': False}]},
+              {'hand': ['Cyber Dragon Core'], 'spells_traps': [{'card': 'Cyber Dragon Core', 'face_up': True}], 'graveyard': ['Cyber Dragon Core'], 'deck': ['Mystical Shine Ball', 'Cyber Emergency'], 'deck_filler': 10}, seed=1)
+    out = _w_turn(d, 2)
+    out += _w_step(d, ['Normal Summon Cyber', '#0', 'Activate Icejade', 'Activate Book', '#0', 'Yes'])
+    assert "Cyber Dragon Core: P2 Spell & Trap Zone 1 → P2 banished" in out, out
+    assert "Cyber Dragon Core: P2 GY → P2 banished" not in out, out
+
+
+def test_gymir_uses_the_name_at_activation_of_a_card_that_left():
+    # FAQ 23907
+    d = start({'monsters': [{'card': 'Icejade Gymir Aegirine', 'zone': 1, 'position': 'attack', 'summoned': 'synchro', 'properly_summoned': True}], 'deck_filler': 10},
+              {'hand': ['Wightprincess'], 'monsters': [{'card': 'Wightprincess', 'zone': 1}], 'graveyard': ['Wightprincess'], 'deck_filler': 10}, seed=1)
+    out = _w_turn(d, 2)
+    out += _w_step(d, ['#0', 'Activate Icejade', 'P', 'Yes'])
+    assert "Wightprincess: P2 Monster Zone 1 → P2 banished" in out, out
+    assert "P2 GY → P2 banished" not in out, out
+
+
+def test_red_eyes_retro_dragon_summons_monsters_destroyed_in_different_chain_links():
+    # FAQ 16090
+    d, out = _w_run({'hand': ['Red-Eyes Retro Dragon'], 'monsters': [{'card': 'Red-Eyes Black Dragon', 'zone': 1, 'position': 'attack'}, {'card': 'Red-Eyes Wyvern', 'zone': 2, 'position': 'attack'}], 'deck_filler': 10},
+                    {'hand': ['Fissure', 'Mystical Shine Ball'], 'spells_traps': [{'card': 'Raigeki Break', 'face_up': False}], 'deck_filler': 10},
+                    ['@2', 'Activate Fissure', '#0', 'Activate Raigeki', '#0', '#1', 'Activate Red-Eyes Retro', '#0', '#0', '#0', '#0', '#0'], seed=1)
+    assert "Red-Eyes Black Dragon is Special Summoned" in out and "Red-Eyes Wyvern is Special Summoned" in out, out
+
+
+def test_titanic_galaxy_activates_once_and_chooses_from_every_destroyed_xyz():
+    # FAQ 17974
+    d = start({'monsters': [{'card': 'Number 38: Hope Harbinger Dragon Titanic Galaxy', 'position': 'defense', 'materials': ['Blue-Eyes White Dragon', 'Blue-Eyes White Dragon']}, {'card': 'Thunder End Dragon', 'position': 'attack'}, {'card': 'Number 62: Galaxy-Eyes Prime Photon Dragon', 'position': 'attack'}, {'card': 'Galaxy-Eyes Full Armor Photon Dragon', 'position': 'attack'}], 'deck_filler': 10},
+              {'monsters': [{'card': 'Marshmallon', 'position': 'attack'}], 'hand': ['Mystical Shine Ball'], 'spells_traps': [{'card': 'Mirror Force', 'face_up': False}, {'card': 'Raigeki Break', 'face_up': False}], 'deck_filler': 10}, seed=1)
+    out = _w_turn(d, 3)
+    out += _w_step(d, ['Enter the Battle', 'P', 'P', 'Attack with Thunder End', '#0', 'Activate Mirror', 'Activate Raigeki', '#0', '#3', 'P', 'Yes', 'P'])
+    for name in ["Number 62: Galaxy-Eyes Prime Photon Dragon", "Thunder End Dragon", "Galaxy-Eyes Full Armor Photon Dragon"]:
+        assert _offered(d, name), out + d.describe_decision()

@@ -131,6 +131,12 @@
 >     chooses which unique monster stays (FAQ 8792, "Earthbound Immortal"), and a Pendulum Scale change whose condition is met
 >     later keeps its timestamp (14394, 16043, "Stargazer Magician").
 >   - script patch 0024: "Decoy Dragon" calculates damage before the summoned monster destroys itself (9227).
+>   - core patch 0017 and script patch 0025, from the remaining Q&As: an effect that ends "this turn's" Battle Phase also
+>     ends a second one ("The Unhappy Maiden" and the three cards with the same text, 6059); the added destruction of
+>     "Labrynth Labyrinth" still applies after "Artifact Durendal", "Grapha, Dragon Overlord of Dark World" or "Generaider
+>     Boss Room" replaces the effect (24185); "Icejade Gymir Aegirine" uses the name at resolution while the card is still
+>     where it activated (23907); "Number 38: Hope Harbinger Dragon Titanic Galaxy" and "Red-Eyes Retro Dragon" trigger once
+>     for the whole chain with every destroyed card (17974, 16090), through a flag only they use.
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
@@ -318,6 +324,14 @@ uv run ygo-judge         # http://127.0.0.1:8000/<access key>/mcp, key in state/
 | `src/ygo_judge/cards.py` | Card data, scripts and strings |
 | `src/ygo_judge/rulings.py` | YGOrg client with a disk cache |
 | `src/ygo_judge/server.py` | MCP tools and HTTP routes |
+
+### Fixes by kind
+
+Each Konami FAQ fix in `patches/` carries a comment with the FAQ number. Newer fixes also carry one of three tags:
+`[general]` for a general rule that covers every card it applies to, `[card]` for one card's own handling, and
+`[exception]` for an exception to a rule the engine applies elsewhere (for example a flag that only some cards use).
+`python tools/list_fixes.py > fixes.csv` lists every fix with its patch, file, FAQ numbers and tag; the tag is empty for
+fixes written before the tags.
 
 ## Accuracy
 
