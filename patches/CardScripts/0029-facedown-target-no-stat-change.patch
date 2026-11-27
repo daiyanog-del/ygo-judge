@@ -1,0 +1,154 @@
+diff --git a/official/c14220547.lua b/official/c14220547.lua
+index 3ef40f3e..d484d1e0 100644
+--- a/official/c14220547.lua
++++ b/official/c14220547.lua
+@@ -71,7 +71,7 @@ end
+ function s.atkop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local tc=Duel.GetFirstTarget()
+-	if c:IsRelateToEffect(e) and tc:IsRelateToEffect(e) then
++	if c:IsRelateToEffect(e) and tc:IsRelateToEffect(e) and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		--Increase ATK
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+diff --git a/official/c26773909.lua b/official/c26773909.lua
+index e1a2a884..eff64146 100644
+--- a/official/c26773909.lua
++++ b/official/c26773909.lua
+@@ -43,7 +43,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ end
+ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc:IsRelateToEffect(e) then
++	if tc:IsRelateToEffect(e) and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		Duel.SetLP(tp,Duel.GetLP(tp)-tc:GetAttack())
+ 		local c=e:GetHandler()
+ 		--Double its ATK
+diff --git a/official/c28593329.lua b/official/c28593329.lua
+index f33ac0a7..9f0ff7d0 100644
+--- a/official/c28593329.lua
++++ b/official/c28593329.lua
+@@ -35,6 +35,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	if tc and tc:IsRelateToEffect(e) then
+ 		Duel.ChangeAttackTarget(tc)
++		if not tc:IsFaceup() then return end --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_UPDATE_ATTACK)
+diff --git a/official/c28651380.lua b/official/c28651380.lua
+index 0c2200b5..dda16925 100644
+--- a/official/c28651380.lua
++++ b/official/c28651380.lua
+@@ -91,7 +91,7 @@ end
+ function s.adop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+ 	local c=e:GetHandler()
+-	if tc:IsRelateToEffect(e) then
++	if tc:IsRelateToEffect(e) and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+diff --git a/official/c33062423.lua b/official/c33062423.lua
+index 83ac74f9..f4ea4ad4 100644
+--- a/official/c33062423.lua
++++ b/official/c33062423.lua
+@@ -26,7 +26,7 @@ end
+ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local tc=Duel.GetFirstTarget()
+-	if not tc:IsRelateToEffect(e) then return end
++	if not tc:IsRelateToEffect(e) or not tc:IsFaceup() then return end --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 	local lc=tc:GetLinkedGroupCount()
+ 	if tc then
+ 		local e0=Effect.CreateEffect(e:GetHandler())
+diff --git a/official/c42055234.lua b/official/c42055234.lua
+index a4076450..e6593069 100644
+--- a/official/c42055234.lua
++++ b/official/c42055234.lua
+@@ -49,7 +49,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ end
+ function s.operation(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc and tc:IsRelateToEffect(e) then
++	if tc and tc:IsRelateToEffect(e) and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+diff --git a/official/c42551040.lua b/official/c42551040.lua
+index b65c8fb5..a1d822b5 100644
+--- a/official/c42551040.lua
++++ b/official/c42551040.lua
+@@ -34,7 +34,7 @@ function s.postg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ end
+ function s.posop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc:IsRelateToEffect(e) and Duel.ChangePosition(tc,POS_FACEUP_DEFENSE)~=0 then
++	if tc:IsRelateToEffect(e) and tc:IsFaceup() and Duel.ChangePosition(tc,POS_FACEUP_DEFENSE)~=0 then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_SET_DEFENSE_FINAL)
+diff --git a/official/c45283341.lua b/official/c45283341.lua
+index b9843655..455160b6 100644
+--- a/official/c45283341.lua
++++ b/official/c45283341.lua
+@@ -91,6 +91,7 @@ function s.ctop(e,tp,eg,ep,ev,re,r,rp)
+ 		e1:SetTarget(s.atktg)
+ 		e1:SetReset(RESET_PHASE|PHASE_END)
+ 		Duel.RegisterEffect(e1,tp)
++		if not tc:IsFaceup() then return end --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		--change ATK
+ 		local atk=Duel.GetMatchingGroup(Card.IsSetCard,tp,LOCATION_MZONE,0,nil,SET_PHOTON):GetSum(Card.GetBaseAttack)
+ 		local e2=Effect.CreateEffect(e:GetHandler())
+diff --git a/official/c50901852.lua b/official/c50901852.lua
+index 226fc205..16c2b5e6 100644
+--- a/official/c50901852.lua
++++ b/official/c50901852.lua
+@@ -63,7 +63,7 @@ function s.atkop(e,tp,eg,ep,ev,re,r,rp)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc:IsRelateToEffect(e) then
++	if tc:IsRelateToEffect(e) and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local atk=0
+ 		local g=Duel.GetMatchingGroup(s.ffilter,tp,LOCATION_MZONE,0,nil)
+ 		for tc in aux.Next(g) do
+diff --git a/official/c86120751.lua b/official/c86120751.lua
+index 70942d4f..6c3e6c74 100644
+--- a/official/c86120751.lua
++++ b/official/c86120751.lua
+@@ -41,7 +41,7 @@ function s.atkdeftg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ end
+ function s.atkdefop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc:IsRelateToEffect(e) then
++	if tc:IsRelateToEffect(e) and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+diff --git a/official/c88240999.lua b/official/c88240999.lua
+index 2102ccb9..3c54015f 100644
+--- a/official/c88240999.lua
++++ b/official/c88240999.lua
+@@ -52,7 +52,7 @@ function s.adtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ end
+ function s.adop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc:IsRelateToEffect(e) then
++	if tc:IsRelateToEffect(e) and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_UPDATE_ATTACK)
+diff --git a/official/c97091969.lua b/official/c97091969.lua
+index a4ee2fe0..d5227b77 100644
+--- a/official/c97091969.lua
++++ b/official/c97091969.lua
+@@ -55,7 +55,7 @@ function s.opteffect(e,tp,eg,ep,ev,re,r,rp)
+ 	if not c:IsRelateToEffect(e) or not tc:IsRelateToEffect(e)
+ 		or tc:IsImmuneToEffect(e) then return end
+ 	local op=e:GetLabel()
+-	if op~=1 then
++	if op~=1 and tc:IsFaceup() then --FAQ 19425 13844 [general:analogy]: no ATK/DEF change if the target is face-down at resolution
+ 		local val=tc:GetLevel()*100
+ 		if val~=0 then
+ 			local e1=Effect.CreateEffect(c)

@@ -3122,3 +3122,15 @@ def test_flip_monster_effects_can_be_activated_without_royal_command():
     out = _w_turn(d, 1)
     out += _w_step(d, [])
     assert _offered(d, 'Activate Proto Enneacraft - "orgIA" (P1 hand): "Special Summon'), d.describe_decision()
+
+
+# ---------------------------------------------------------------- ATK/DEF changes skip a target turned face-down (peer scan of 428 functions)
+def test_dragonmaid_tinkhec_does_not_raise_the_atk_of_a_target_turned_face_down():
+    # FAQ 19425 and 13844 (same rule): no ATK/DEF change if the target is face-down at resolution
+    d = start({"hand": ["Dragonmaid Tinkhec"], "monsters": [{"card": "Laundry Dragonmaid", "position": "attack", "zone": 1, "summoned": "normal"}],
+               "deck_filler": 10},
+              {"spells_traps": [{"card": "Book of Moon", "face_up": False}], "deck_filler": 10}, seed=1)
+    out = d.play(["Activate Dragonmaid Tinkhec", "Activate Book of Moon", "Change the battle"])
+    assert "Laundry Dragonmaid (P1 Monster Zone 1) changes to face-down Defense Position" in out, out
+    assert "P1 Flip Summons Laundry Dragonmaid" in out, out
+    assert "Laundry Dragonmaid, face-up Attack, ATK 500/DEF 1600" in d.board(), d.board()
