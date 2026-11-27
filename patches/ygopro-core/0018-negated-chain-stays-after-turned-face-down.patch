@@ -1,0 +1,15 @@
+diff --git a/libduel.cpp b/libduel.cpp
+index a9a2e90..b93f652 100644
+--- a/libduel.cpp
++++ b/libduel.cpp
+@@ -1617,7 +1617,9 @@ LUA_STATIC_FUNCTION(NegateRelatedChain) {
+ 			negeff->type = EFFECT_TYPE_SINGLE;
+ 			negeff->code = EFFECT_DISABLE_CHAIN;
+ 			negeff->value = it->chain_id;
+-			negeff->reset_flag = RESET_CHAIN | RESET_EVENT | reset_flag;
++			//JudgemanAI 2026-11-27: an effect negated on the chain stays negated even if the card is then turned face-down
++			//(the scripts pass RESET_TURN_SET). Konami FAQ 24426 (Forbidden Chalice, then Book of Moon). [general:faq]
++			negeff->reset_flag = RESET_CHAIN | RESET_EVENT | (reset_flag & ~RESET_TURN_SET);
+ 			pcard->add_effect(negeff);
+ 		}
+ 	}

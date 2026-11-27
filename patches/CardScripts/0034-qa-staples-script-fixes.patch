@@ -1,0 +1,809 @@
+diff --git a/official/c10086952.lua b/official/c10086952.lua
+index 2629683a..0311b53a 100644
+--- a/official/c10086952.lua
++++ b/official/c10086952.lua
+@@ -67,7 +67,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	Duel.SummonOrSet(tp,sc,true,nil)
+ end
+ function s.thfilter(c,tp)
+-	return c:IsLevelAbove(5) and c:IsSummonableCard() and Duel.CheckTribute(c,c:GetTributeRequirement()) and c:CanSummonOrSet(true,nil,1)
++	return c:IsLevelAbove(5) and c:IsSummonableCard() and (Duel.CheckTribute(c,c:GetTributeRequirement()) or s.ownproc(c)) and c:CanSummonOrSet(true,nil,1) --FAQ 24374 [general:faq]: the monster's own way to Tribute Summon it also counts
+ 		and Duel.IsPlayerCanSummon(tp,SUMMON_TYPE_TRIBUTE,c) and c:IsAbleToHand()
+ end
+ function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
+@@ -86,4 +86,12 @@ function s.thop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.SummonOrSet(tp,sc,true,nil,1)
+ 	end
+-end
+\ No newline at end of file
++end
++
++function s.ownproc(c) --FAQ 24374 [general:faq]: the monster's own way to Tribute Summon it also counts
++	for _,eff in ipairs({c:GetCardEffect(EFFECT_SUMMON_PROC)}) do
++		local con=eff:GetCondition()
++		if eff:GetValue()==SUMMON_TYPE_TRIBUTE and (not con or con(eff,c,0)) then return true end
++	end
++	return false
++end
+diff --git a/official/c10509340.lua b/official/c10509340.lua
+index 137f8e4b..561307b4 100644
+--- a/official/c10509340.lua
++++ b/official/c10509340.lua
+@@ -22,7 +22,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ end
+ function s.disop(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c12255007.lua b/official/c12255007.lua
+index b0d79e04..dc0bf465 100644
+--- a/official/c12255007.lua
++++ b/official/c12255007.lua
+@@ -12,7 +12,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--negate attack
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c12652643.lua b/official/c12652643.lua
+index 42d2ca42..ba544e26 100644
+--- a/official/c12652643.lua
++++ b/official/c12652643.lua
+@@ -25,7 +25,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ 	--Special Summon 1 "Ancient Gear Golem" from your GY
+ 	local e4=Effect.CreateEffect(c)
+diff --git a/official/c1278431.lua b/official/c1278431.lua
+index 039103dd..a3ff9b71 100644
+--- a/official/c1278431.lua
++++ b/official/c1278431.lua
+@@ -22,7 +22,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(s.aclimit)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--Special Summon up to 3 "Ancient Gear Golem" and/or "Ancient Gear Golem - Ultimate Pound" from your hand
+ 	local e3=Effect.CreateEffect(c)
+diff --git a/official/c13293158.lua b/official/c13293158.lua
+index 65411af9..e96fafca 100644
+--- a/official/c13293158.lua
++++ b/official/c13293158.lua
+@@ -28,7 +28,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(s.aclimit)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--Destroy all face-down Spell/Trap
+ 	local e3=Effect.CreateEffect(c)
+diff --git a/official/c17663375.lua b/official/c17663375.lua
+index 1d681a38..574800ed 100644
+--- a/official/c17663375.lua
++++ b/official/c17663375.lua
+@@ -24,7 +24,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ end
+ s.listed_series={SET_ANCIENT_GEAR}
+diff --git a/official/c18486927.lua b/official/c18486927.lua
+index a193a12f..3e3763fb 100644
+--- a/official/c18486927.lua
++++ b/official/c18486927.lua
+@@ -47,7 +47,7 @@ function s.decop(e,tp,eg,ep,ev,re,r,rp)
+ 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetLabel(ct)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetValue(s.actlimit)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
+diff --git a/official/c1953925.lua b/official/c1953925.lua
+index 6503778a..a3fa3732 100644
+--- a/official/c1953925.lua
++++ b/official/c1953925.lua
+@@ -28,7 +28,7 @@ function s.initial_effect(c)
+ 	e4:SetRange(LOCATION_MZONE)
+ 	e4:SetTargetRange(0,1)
+ 	e4:SetValue(s.aclimit)
+-	e4:SetCondition(s.actcon)
++	e4:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e4)
+ 	--Destroy 1 Spell/Trap at the end of the Damage Step
+ 	local e5=Effect.CreateEffect(c)
+diff --git a/official/c22858242.lua b/official/c22858242.lua
+index 9ab30941..ac518f8b 100644
+--- a/official/c22858242.lua
++++ b/official/c22858242.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--negate attack
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c22900219.lua b/official/c22900219.lua
+index 073d04a9..7e881f82 100644
+--- a/official/c22900219.lua
++++ b/official/c22900219.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--pierce damage
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c24203749.lua b/official/c24203749.lua
+index d66badf7..524d2541 100644
+--- a/official/c24203749.lua
++++ b/official/c24203749.lua
+@@ -17,13 +17,14 @@ function s.initial_effect(c)
+ 		local tp=c:GetControler()
+ 		if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 or Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)>0 then return false end
+ 		local mg=Duel.GetMatchingGroup(Card.IsReleasable,tp,LOCATION_HAND,LOCATION_MZONE,c,tp)
+-		return #mg>0 and #mg>=min_tributes
++		return #mg>0 and mg:CheckWithSumGreater(s.tributes,min_tributes,c) --FAQ 24367 [card]: a monster that counts as 2 Tributes counts as 2
+ 	end)
+ 	e0:SetTarget(function(e,tp,eg,ep,ev,re,r,rp,chk,c,minc,zone,relzone,exeff)
+ 		local min_tributes,max_tributes=c:GetTributeRequirement()
+ 		if min_tributes<minc then min_tributes=minc end
+ 		local mg=Duel.GetMatchingGroup(Card.IsReleasable,tp,LOCATION_HAND,LOCATION_MZONE,c,tp)
+-		local sg=aux.SelectUnselectGroup(mg,e,tp,min_tributes,max_tributes,nil,1,tp,HINTMSG_RELEASE,nil,nil,Duel.IsSummonCancelable())
++		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RELEASE)
++		local sg=mg:SelectWithSumGreater(tp,s.tributes,min_tributes,c) --FAQ 24367 [card]: a monster that counts as 2 Tributes counts as 2
+ 		if sg and #sg>0 then
+ 			e:SetLabelObject(sg)
+ 			return true
+@@ -95,3 +96,13 @@ function s.initial_effect(c)
+ 	e2:SetHintTiming(0,TIMING_BATTLE_START|TIMING_BATTLE_END|TIMINGS_CHECK_MONSTER)
+ 	c:RegisterEffect(e2)
+ end
++
++function s.tributes(tc,c) --FAQ 24367 [card]: a monster that counts as 2 Tributes counts as 2
++	for code,n in pairs({[EFFECT_TRIPLE_TRIBUTE]=3,[EFFECT_DOUBLE_TRIBUTE]=2}) do
++		for _,eff in ipairs({tc:IsHasEffect(code)}) do
++			local v=eff:GetValue()
++			if v==1 or (type(v)=="function" and v(eff,c)) then return n end
++		end
++	end
++	return 1
++end
+diff --git a/official/c25494711.lua b/official/c25494711.lua
+index 5c73f67a..69097984 100644
+--- a/official/c25494711.lua
++++ b/official/c25494711.lua
+@@ -21,7 +21,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(1)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--If this card would be destroyed by battle or card effect, you can destroy 1 "Deskbot" card you control instead.
+ 	local e3=Effect.CreateEffect(c)
+diff --git a/official/c28645123.lua b/official/c28645123.lua
+index f97f0ef4..97bbca94 100644
+--- a/official/c28645123.lua
++++ b/official/c28645123.lua
+@@ -27,7 +27,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_SZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(1)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--When your "@Ignister" monster is destroyed by battle: You can target 1 other Cyberse monster with 2300 ATK in your GY; Special Summon it
+ 	local e3=Effect.CreateEffect(c)
+diff --git a/official/c29357956.lua b/official/c29357956.lua
+index 66cebe1c..0cde773b 100644
+--- a/official/c29357956.lua
++++ b/official/c29357956.lua
+@@ -20,7 +20,7 @@ function s.initial_effect(c)
+ 	e4:SetRange(LOCATION_MZONE)
+ 	e4:SetTargetRange(0,1)
+ 	e4:SetValue(1)
+-	e4:SetCondition(s.actcon)
++	e4:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e4)
+ 	--special summon
+ 	local e6=Effect.CreateEffect(c)
+diff --git a/official/c32465539.lua b/official/c32465539.lua
+index 1b976d03..0392f93b 100644
+--- a/official/c32465539.lua
++++ b/official/c32465539.lua
+@@ -71,7 +71,7 @@ function s.efop(e,tp,eg,ep,ev,re,r,rp)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(1)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetReset(RESET_EVENT|RESETS_STANDARD)
+ 	rc:RegisterEffect(e1,true)
+ 	if not rc:IsType(TYPE_EFFECT) then
+diff --git a/official/c33026283.lua b/official/c33026283.lua
+index 1f563c60..5b9b2530 100644
+--- a/official/c33026283.lua
++++ b/official/c33026283.lua
+@@ -14,7 +14,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(1)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--Return card to the hand
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c34010534.lua b/official/c34010534.lua
+index bdfd2799..ab9d2b5a 100644
+--- a/official/c34010534.lua
++++ b/official/c34010534.lua
+@@ -26,7 +26,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_SZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(1)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ end
+ s.listed_series={SET_CODE_TALKER}
+diff --git a/official/c34974462.lua b/official/c34974462.lua
+index b44afa84..cc306ae7 100644
+--- a/official/c34974462.lua
++++ b/official/c34974462.lua
+@@ -26,7 +26,7 @@ function s.initial_effect(c)
+ 	e2:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e2:SetValue(1)
+ 	c:RegisterEffect(e2)
+ 	Duel.AddCustomActivityCounter(id,ACTIVITY_SPSUMMON,aux.FilterBoolFunction(Card.IsSetCard,SET_MELODIOUS))
+diff --git a/official/c37663536.lua b/official/c37663536.lua
+index 2d455ce4..d8bf594b 100644
+--- a/official/c37663536.lua
++++ b/official/c37663536.lua
+@@ -27,7 +27,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(function(e,re,tp) return re:IsHasType(EFFECT_TYPE_ACTIVATE) end)
+-	e3:SetCondition(function(e) return Duel.GetAttacker()==e:GetHandler() end)
++	e3:SetCondition(aux.AttackNotNegatedCondition(function(e) return Duel.GetAttacker()==e:GetHandler() end)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ 	--Special Summon 1 "Ultimate Ancient Gear Golem" from your Extra Deck
+ 	local e4=Effect.CreateEffect(c)
+diff --git a/official/c39303359.lua b/official/c39303359.lua
+index bdef25f8..8951baa4 100644
+--- a/official/c39303359.lua
++++ b/official/c39303359.lua
+@@ -10,7 +10,7 @@ function s.initial_effect(c)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+-	e1:SetCondition(function(e) return Gemini.EffectStatusCondition(e) and Duel.GetAttacker()==e:GetHandler() end)
++	e1:SetCondition(aux.AttackNotNegatedCondition(function(e) return Gemini.EffectStatusCondition(e) and Duel.GetAttacker()==e:GetHandler() end)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetValue(function(_,re) return re:IsHasType(EFFECT_TYPE_ACTIVATE) end)
+ 	c:RegisterEffect(e1)
+ end
+\ No newline at end of file
+diff --git a/official/c40509732.lua b/official/c40509732.lua
+index 1d60b7da..6ac8de90 100644
+--- a/official/c40509732.lua
++++ b/official/c40509732.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(1)
+-	e1:SetCondition(s.con)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.con)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--disable
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c41128647.lua b/official/c41128647.lua
+index 5376bb39..66e32b40 100644
+--- a/official/c41128647.lua
++++ b/official/c41128647.lua
+@@ -27,7 +27,7 @@ function s.initial_effect(c)
+ 	e4:SetRange(LOCATION_FZONE)
+ 	e4:SetTargetRange(0,1)
+ 	e4:SetValue(1)
+-	e4:SetCondition(s.actcon)
++	e4:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e4)
+ end
+ s.listed_series={SET_DINOMIST}
+diff --git a/official/c42878636.lua b/official/c42878636.lua
+index d8487680..e4a895c1 100644
+--- a/official/c42878636.lua
++++ b/official/c42878636.lua
+@@ -20,7 +20,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(s.aclimit)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--special summon
+ 	local params = {aux.FilterBoolFunction(Card.IsSetCard,SET_ANCIENT_GEAR)}
+diff --git a/official/c44509529.lua b/official/c44509529.lua
+index 73e4f5be..4a84e837 100644
+--- a/official/c44509529.lua
++++ b/official/c44509529.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetValue(1)
+ 	c:RegisterEffect(e1)
+ 	--Special Summon 2 "Prank-Kids" non-Fusion Monsters with different names from your GY
+diff --git a/official/c44874522.lua b/official/c44874522.lua
+index 213c2ca7..a06a1cf9 100644
+--- a/official/c44874522.lua
++++ b/official/c44874522.lua
+@@ -25,7 +25,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ 	--Destroy
+ 	local e4=Effect.CreateEffect(c)
+diff --git a/official/c45349196.lua b/official/c45349196.lua
+index 9797be44..8c49542c 100644
+--- a/official/c45349196.lua
++++ b/official/c45349196.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+ 	e1:SetTargetRange(0,1)
+-	e1:SetCondition(s.accon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.accon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetValue(1)
+ 	c:RegisterEffect(e1)
+ 	--damage
+diff --git a/official/c49306994.lua b/official/c49306994.lua
+index 20faf035..13eb6264 100644
+--- a/official/c49306994.lua
++++ b/official/c49306994.lua
+@@ -11,7 +11,7 @@ function s.initial_effect(c)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--Disable
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c50933533.lua b/official/c50933533.lua
+index 200e3054..4bdce68f 100644
+--- a/official/c50933533.lua
++++ b/official/c50933533.lua
+@@ -25,7 +25,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ end
+ s.listed_names={41172955,86445415,13839120}
+diff --git a/official/c52709508.lua b/official/c52709508.lua
+index e64d8fb7..3dd46db4 100644
+--- a/official/c52709508.lua
++++ b/official/c52709508.lua
+@@ -40,7 +40,7 @@ function s.regop(e,tp,eg,ep,ev,re,r,rp)
+ 		e1:SetRange(LOCATION_MZONE)
+ 		e1:SetTargetRange(0,1)
+ 		e1:SetValue(s.aclimit)
+-		e1:SetCondition(s.actcon)
++		e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 		e1:SetReset(RESET_EVENT|RESETS_STANDARD)
+ 		c:RegisterEffect(e1)
+ 		c:RegisterFlagEffect(0,RESET_EVENT|RESETS_STANDARD,EFFECT_FLAG_CLIENT_HINT,1,0,aux.Stringid(id,2))
+diff --git a/official/c56094445.lua b/official/c56094445.lua
+index 39300d72..f5164b51 100644
+--- a/official/c56094445.lua
++++ b/official/c56094445.lua
+@@ -10,7 +10,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ end
+ function s.aclimit(e,re,tp)
+diff --git a/official/c56421754.lua b/official/c56421754.lua
+index 1507f5c1..ac038061 100644
+--- a/official/c56421754.lua
++++ b/official/c56421754.lua
+@@ -21,7 +21,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(1)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ end
+ s.listed_series={SET_UA}
+diff --git a/official/c56832966.lua b/official/c56832966.lua
+index 01fa3fe2..5fbdea77 100644
+--- a/official/c56832966.lua
++++ b/official/c56832966.lua
+@@ -19,7 +19,7 @@ function s.initial_effect(c)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+-	e1:SetCondition(function(e) local c=e:GetHandler() return Duel.GetAttacker()==c or Duel.GetAttackTarget()==c end)
++	e1:SetCondition(aux.AttackNotNegatedCondition(function(e) local c=e:GetHandler() return Duel.GetAttacker()==c or Duel.GetAttackTarget()==c end)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetValue(1)
+ 	c:RegisterEffect(e1)
+ 	--This card's ATK becomes 5000 during that damage calculation only
+diff --git a/official/c57477163.lua b/official/c57477163.lua
+index fa2389ae..7a2507fd 100644
+--- a/official/c57477163.lua
++++ b/official/c57477163.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(1)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--spsummon
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c58672736.lua b/official/c58672736.lua
+index ae121881..78b13f30 100644
+--- a/official/c58672736.lua
++++ b/official/c58672736.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--atk limit (opponent)
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c62000467.lua b/official/c62000467.lua
+index 02427946..4322a422 100644
+--- a/official/c62000467.lua
++++ b/official/c62000467.lua
+@@ -23,7 +23,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(1)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--special summon
+ 	local e6=Effect.CreateEffect(c)
+diff --git a/official/c63465535.lua b/official/c63465535.lua
+index 09a4565d..ddef15af 100644
+--- a/official/c63465535.lua
++++ b/official/c63465535.lua
+@@ -12,7 +12,7 @@ function s.initial_effect(c)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+-	e1:SetCondition(function(e) return Duel.GetAttacker()==e:GetHandler() end)
++	e1:SetCondition(aux.AttackNotNegatedCondition(function(e) return Duel.GetAttacker()==e:GetHandler() end)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetValue(function(e,re,tp) return re:IsHasType(EFFECT_TYPE_ACTIVATE) end)
+ 	c:RegisterEffect(e1)
+ 	--Equip 1 opponent's face-up monster to this card (only 1 monster can be equipped to this card with this effect)
+diff --git a/official/c64603182.lua b/official/c64603182.lua
+index 54d5e6d7..5bc0438f 100644
+--- a/official/c64603182.lua
++++ b/official/c64603182.lua
+@@ -33,7 +33,7 @@ function s.initial_effect(c)
+ 	e4:SetRange(LOCATION_MZONE)
+ 	e4:SetTargetRange(0,1)
+ 	e4:SetValue(function(e,re,tp) return re:IsHasType(EFFECT_TYPE_ACTIVATE) end)
+-	e4:SetCondition(function(e) return Duel.GetAttacker()==e:GetHandler() end)
++	e4:SetCondition(aux.AttackNotNegatedCondition(function(e) return Duel.GetAttacker()==e:GetHandler() end)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e4)
+ end
+ s.listed_names={CARD_ANCIENT_GEAR_GOLEM,37694547,id} --Geartown
+diff --git a/official/c66750703.lua b/official/c66750703.lua
+index 2dd8d2d1..627e43ea 100644
+--- a/official/c66750703.lua
++++ b/official/c66750703.lua
+@@ -78,7 +78,7 @@ function s.op1(e,tp,eg,ep,ev,re,r,rp)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(1)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
+ end
+diff --git a/official/c67985943.lua b/official/c67985943.lua
+index 45556930..0510037e 100644
+--- a/official/c67985943.lua
++++ b/official/c67985943.lua
+@@ -20,7 +20,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(1)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ end
+ s.listed_series={SET_GEM_KNIGHT}
+diff --git a/official/c7171149.lua b/official/c7171149.lua
+index d6538287..fda3943b 100644
+--- a/official/c7171149.lua
++++ b/official/c7171149.lua
+@@ -29,7 +29,7 @@ function s.initial_effect(c)
+ 	e5:SetRange(LOCATION_MZONE)
+ 	e5:SetTargetRange(0,1)
+ 	e5:SetValue(s.aclimit)
+-	e5:SetCondition(s.actcon)
++	e5:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e5)
+ 	--Piercing damage
+ 	local e6=Effect.CreateEffect(c)
+diff --git a/official/c7264861.lua b/official/c7264861.lua
+index d203e762..8d8e5643 100644
+--- a/official/c7264861.lua
++++ b/official/c7264861.lua
+@@ -10,7 +10,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.condition)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.condition)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ end
+ function s.condition(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c72772445.lua b/official/c72772445.lua
+index c4728ca7..ce633a2a 100644
+--- a/official/c72772445.lua
++++ b/official/c72772445.lua
+@@ -24,7 +24,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_FZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(1)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ 	--spsummon
+ 	local e4=Effect.CreateEffect(c)
+diff --git a/official/c75059201.lua b/official/c75059201.lua
+index da6b2d6a..4cccba67 100644
+--- a/official/c75059201.lua
++++ b/official/c75059201.lua
+@@ -49,7 +49,7 @@ function s.initial_effect(c)
+ 	e6:SetRange(LOCATION_MZONE)
+ 	e6:SetTargetRange(0,1)
+ 	e6:SetValue(s.aclimit)
+-	e6:SetCondition(s.actcon)
++	e6:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e6)
+ end
+ s.listed_series={SET_FA}
+diff --git a/official/c7782069.lua b/official/c7782069.lua
+index cd49051b..3d09532d 100644
+--- a/official/c7782069.lua
++++ b/official/c7782069.lua
+@@ -33,7 +33,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(1)
+-	e2:SetCondition(function(e) return Duel.GetAttacker()==e:GetHandler() or Duel.GetAttackTarget()==e:GetHandler() end)
++	e2:SetCondition(aux.AttackNotNegatedCondition(function(e) return Duel.GetAttacker()==e:GetHandler() or Duel.GetAttackTarget()==e:GetHandler() end)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ end
+ s.listed_series={SET_GOUKI}
+diff --git a/official/c77967790.lua b/official/c77967790.lua
+index f98390bd..1f4a14cc 100644
+--- a/official/c77967790.lua
++++ b/official/c77967790.lua
+@@ -14,7 +14,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--attack limit
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c81269231.lua b/official/c81269231.lua
+index 3d4ef782..bd32d355 100644
+--- a/official/c81269231.lua
++++ b/official/c81269231.lua
+@@ -25,7 +25,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ end
+ s.listed_series={SET_ANCIENT_GEAR,SET_GADGET}
+diff --git a/official/c83104731.lua b/official/c83104731.lua
+index e8ca962c..8fac3048 100644
+--- a/official/c83104731.lua
++++ b/official/c83104731.lua
+@@ -21,7 +21,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ end
+ function s.aclimit(e,re,tp)
+diff --git a/official/c83347294.lua b/official/c83347294.lua
+index bb491feb..b5e5637a 100644
+--- a/official/c83347294.lua
++++ b/official/c83347294.lua
+@@ -23,7 +23,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(s.aclimit)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--destroy replace
+ 	local e3=Effect.CreateEffect(c)
+diff --git a/official/c83866861.lua b/official/c83866861.lua
+index e9b5aa19..36c93ba8 100644
+--- a/official/c83866861.lua
++++ b/official/c83866861.lua
+@@ -20,7 +20,7 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_MZONE)
+ 	e2:SetTargetRange(0,1)
+ 	e2:SetValue(1)
+-	e2:SetCondition(s.actcon)
++	e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e2)
+ 	--special summon
+ 	local e3=Effect.CreateEffect(c)
+diff --git a/official/c8414337.lua b/official/c8414337.lua
+index 7a639bfa..bcd308af 100644
+--- a/official/c8414337.lua
++++ b/official/c8414337.lua
+@@ -23,7 +23,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+ 	e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e1:SetTargetRange(0,1)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e1:SetValue(1)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,tp)
+diff --git a/official/c87911394.lua b/official/c87911394.lua
+index 7bc0cefa..a38d4acd 100644
+--- a/official/c87911394.lua
++++ b/official/c87911394.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--destroy
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/official/c88033975.lua b/official/c88033975.lua
+index c76bde85..21eafdc6 100644
+--- a/official/c88033975.lua
++++ b/official/c88033975.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(1)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ end
+ function s.actcon(e)
+diff --git a/official/c90640901.lua b/official/c90640901.lua
+index c8114900..31433fa8 100644
+--- a/official/c90640901.lua
++++ b/official/c90640901.lua
+@@ -19,7 +19,7 @@ function s.initial_effect(c)
+ 	e3:SetRange(LOCATION_MZONE)
+ 	e3:SetTargetRange(0,1)
+ 	e3:SetValue(s.aclimit)
+-	e3:SetCondition(s.actcon)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e3)
+ 	--destroy
+ 	local e4=Effect.CreateEffect(c)
+diff --git a/official/c91677585.lua b/official/c91677585.lua
+index b19334f3..75eceea5 100644
+--- a/official/c91677585.lua
++++ b/official/c91677585.lua
+@@ -46,7 +46,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 		e2:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 		e2:SetTargetRange(0,1)
+ 		e2:SetValue(s.aclimit)
+-		e2:SetCondition(s.actcon)
++		e2:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 		e2:SetReset(RESET_EVENT|RESETS_STANDARD|RESET_PHASE|PHASE_BATTLE)
+ 		tc:RegisterEffect(e2)
+ 	end
+diff --git a/official/c93317313.lua b/official/c93317313.lua
+index e331afd5..c3b10d3e 100644
+--- a/official/c93317313.lua
++++ b/official/c93317313.lua
+@@ -75,7 +75,7 @@ function s.effop(e,tp,eg,ep,ev,re,r,rp,chk)
+ 		e1:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 		e1:SetRange(LOCATION_MZONE)
+ 		e1:SetTargetRange(0,1)
+-		e1:SetCondition(s.actcon)
++		e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 		e1:SetValue(1)
+ 		e1:SetReset(RESET_PHASE|PHASE_END)
+ 		Duel.RegisterEffect(e1,tp)
+diff --git a/official/c94151981.lua b/official/c94151981.lua
+index 23c637a0..09754585 100644
+--- a/official/c94151981.lua
++++ b/official/c94151981.lua
+@@ -31,7 +31,7 @@ function s.initial_effect(c)
+ 	e3:SetCode(EFFECT_CANNOT_ACTIVATE)
+ 	e3:SetRange(LOCATION_SZONE)
+ 	e3:SetTargetRange(0,1)
+-	e3:SetCondition(s.btlcond)
++	e3:SetCondition(aux.AttackNotNegatedCondition(s.btlcond)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	e3:SetValue(1)
+ 	c:RegisterEffect(e3)
+ 	--Negate the effects of your opponent's monsters if the equipped monster battles
+diff --git a/official/c94515289.lua b/official/c94515289.lua
+index 271b279a..dc482e82 100644
+--- a/official/c94515289.lua
++++ b/official/c94515289.lua
+@@ -13,7 +13,7 @@ function s.initial_effect(c)
+ 	e1:SetRange(LOCATION_MZONE)
+ 	e1:SetTargetRange(0,1)
+ 	e1:SetValue(s.aclimit)
+-	e1:SetCondition(s.actcon)
++	e1:SetCondition(aux.AttackNotNegatedCondition(s.actcon)) --FAQ 23595 [general:faq]: the restriction ends when the attack is negated
+ 	c:RegisterEffect(e1)
+ 	--special summon
+ 	local e2=Effect.CreateEffect(c)
+diff --git a/utility.lua b/utility.lua
+index bf60d277..90d685fe 100644
+--- a/utility.lua
++++ b/utility.lua
+@@ -3077,3 +3077,12 @@ function Auxiliary.EndThisTurnBattlePhase(e)
+ 	e1:SetReset(RESET_PHASE|PHASE_END)
+ 	Duel.RegisterEffect(e1,p)
+ end
++
++--JudgemanAI 2026-11-27: "while this card battles, your opponent cannot activate ..." ends when the attack is negated.
++--Konami FAQ 23595 (Speedroid Tri-Eyed Dice vs Number S39: Utopia the Lightning).
++function Auxiliary.AttackNotNegatedCondition(con)
++	return function(e,...)
++		local a=Duel.GetAttacker()
++		return not (a and a:IsStatus(STATUS_ATTACK_CANCELED)) and con(e,...)
++	end
++end

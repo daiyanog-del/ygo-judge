@@ -3183,3 +3183,64 @@ def test_trap_reactor_cannot_respond_to_a_trap_in_the_damage_step():
     out += d.play(["Activate Reinforcements", 0])
     assert "Chain Link 1: P2 activates Reinforcements" in out, out
     assert not _offered(d, "Activate Trap Reactor"), d.describe_decision()
+
+
+# ---------------------------------------------------------------- Q&As of staples and cards users asked about (wideW)
+def test_great_gallant_bandit_counts_a_double_tribute_monster_from_the_hand_as_two():
+    # FAQ 24367
+    d = start({"hand": ["The Great Gallant Bandit", "Gaia the Fierce Knight Origin"], "deck_filler": 10}, {"deck_filler": 10}, seed=1)
+    out = _w_turn(d, 1)
+    out += d.play(["Normal Summon The Great Gallant Bandit"])
+    assert "Gaia the Fierce Knight Origin (P1 hand) [2]" in d.describe_decision(), d.describe_decision()
+    out += d.play([0])
+    assert "Gaia the Fierce Knight Origin: P1 hand → P1 GY — Tributed" in out, out
+
+
+def test_quick_summon_can_fetch_a_monster_that_tribute_summons_itself_from_the_hand_and_the_opponents_field():
+    # FAQ 24374 (B)
+    d = start({"hand": ["Battle Ox"], "graveyard": ["Quick Summon"], "deck": ["The Great Gallant Bandit"], "deck_filler": 10},
+              {"monsters": [{"card": "Axe Raider", "zone": 1, "summoned": "normal"}], "deck_filler": 10}, seed=1)
+    out = _w_turn(d, 1)
+    out += d.play(["Activate Quick Summon (P1 GY)"])
+    out += _until(d, lambda d: "Tribute" in d.describe_decision())
+    assert "The Great Gallant Bandit: P1 Deck → P1 hand" in out and "Axe Raider (P2 Monster Zone 1)" in d.describe_decision(), out
+
+
+def test_an_effect_negated_by_forbidden_chalice_stays_negated_after_book_of_moon():
+    # FAQ 24426
+    d = start({"spells_traps": [{"card": "The Sun God's Protector - Egyptian God Slime", "face_up": False}], "deck": ["Sun God Unification"],
+               "deck_filler": 10},
+              {"spells_traps": [{"card": "Book of Moon", "face_up": False}, {"card": "Forbidden Chalice", "face_up": False}], "deck_filler": 10}, seed=1)
+    out = d.play([0, 0, 0, 0, 0, 0])
+    assert "Resolving Chain Link 2 (Book of Moon)" in out, out
+    assert "Chain Link 1 (The Sun God's Protector - Egyptian God Slime): its effect is negated" in out, out
+    assert "Sun God Unification: P1 Deck → P1 hand" not in out, out
+
+
+def _utopia_attacks(dice):
+    d = start({"monsters": [{"card": "Number S39: Utopia the Lightning", "zone": 1, "materials": ["Mystical Shine Ball"] * 3}], "deck_filler": 10},
+              {"graveyard": ["Speedroid Tri-Eyed Dice"] if dice else [], "spells_traps": [{"card": "Mirror Force", "face_up": False}],
+               "deck_filler": 10}, seed=1)
+    out = _w_turn(d, 3)
+    out += d.play(["Enter the Battle Phase"])
+    for _ in range(10):
+        if _offered(d, "Attack with Number S39"):
+            break
+        labels = [o.label for o in d.decision.options]
+        pick = next((l for l in labels if l.startswith(("Activate Speedroid", "Enter the Battle Phase"))), P if P in labels else 0)
+        out += d.play([pick])
+    out += d.play(["Attack with Number S39"])
+    for _ in range(10):
+        if _offered(d, "Activate Mirror Force") or d.decision.kind == "idle" or _offered(d, "Go to Main Phase 2"):
+            break
+        labels = [o.label for o in d.decision.options]
+        out += d.play([P if P in labels else 0])
+    return d, out
+
+
+def test_utopia_the_lightning_stops_locking_activations_once_its_attack_is_negated():
+    # FAQ 23595
+    d, out = _utopia_attacks(dice=True)
+    assert "(Speedroid Tri-Eyed Dice's effect applies)" in out and _offered(d, "Activate Mirror Force"), out + d.describe_decision()
+    d, out = _utopia_attacks(dice=False)
+    assert not _offered(d, "Activate Mirror Force"), out + d.describe_decision()
