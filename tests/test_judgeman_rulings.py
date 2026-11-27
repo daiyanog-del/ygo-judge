@@ -3244,3 +3244,95 @@ def test_utopia_the_lightning_stops_locking_activations_once_its_attack_is_negat
     assert "(Speedroid Tri-Eyed Dice's effect applies)" in out and _offered(d, "Activate Mirror Force"), out + d.describe_decision()
     d, out = _utopia_attacks(dice=False)
     assert not _offered(d, "Activate Mirror Force"), out + d.describe_decision()
+
+
+def _play_until(d, pick, stop, limit=60):
+    """Each step: stop(d) ends; pick(d, labels) chooses (None = pass, else End the turn / first option)."""
+    out = ""
+    for _ in range(limit):
+        if stop(d):
+            return out
+        labels = [o.label for o in d.decision.options]
+        choice = pick(d, labels)
+        if choice is None:
+            choice = P if P in labels else next((l for l in labels if l.startswith("End the turn")), 0)
+        out += d.play([choice])
+    raise AssertionError(out + d.describe_decision())
+
+
+def test_uni_song_tuning_can_target_only_a_monster_your_opponent_controls():
+    # card text: "a face-up monster on the field"
+    d = start({"hand": ["Uni-Song Tuning"], "graveyard": ["Junk Synchron"], "deck_filler": 10},
+              {"monsters": [{"card": "Battle Ox", "zone": 1, "summoned": "normal"}], "deck_filler": 10}, seed=1)
+    _w_turn(d, 1)
+    assert _offered(d, "Activate Uni-Song Tuning"), d.describe_decision()
+
+
+def test_despian_tragedy_banished_by_macro_cosmos_after_battle_counts_as_banished_by_an_effect():
+    # FAQ 23992
+    d = start({"monsters": [{"card": "Despian Tragedy", "zone": 1}], "deck": ["Despian Comedy"], "deck_filler": 5},
+              {"monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "spells_traps": [{"card": "Macro Cosmos", "face_up": True}], "deck_filler": 10}, seed=1)
+    pick = lambda d, ls: next((l for l in ls if d.turn == 2 and l.startswith(("Enter the Battle Phase", "Attack with Mystical", "Despian Tragedy"))), None)
+    out = _play_until(d, pick, lambda d: "Despian Tragedy" in d.describe_decision().split("\n")[0] or d.turn >= 3)
+    assert "Despian Tragedy: P1 Monster Zone 1 → P1 banished" in out and d.turn == 2, out + d.describe_decision()
+
+
+def test_ash_blossom_can_respond_to_shadow_severing_strike_after_only_a_monster_was_banished():
+    # FAQ 24227
+    d = start({"monsters": [{"card": "Rescue Rabbit", "zone": 1}], "spells_traps": [{"card": "Shadow Severing Strike", "face_up": True}], "deck_filler": 10},
+              {"hand": ["Ash Blossom & Joyous Spring"], "monsters": [{"card": "Mystical Shine Ball", "zone": 1}], "deck_filler": 10}, seed=1)
+    _w_turn(d, 1)
+    state = {"used": False}
+    def pick(d, ls):
+        head = d.describe_decision().split("\n")[0]
+        if "Shadow Severing" in head and "Yes" in ls:
+            state["used"] = True
+            return "Yes"
+        if not state["used"] and any(l.startswith("Activate Rescue Rabbit") for l in ls):
+            return next(l for l in ls if l.startswith("Activate Rescue Rabbit"))
+        return None
+    out = _play_until(d, pick, lambda d: state["used"] and d.describe_decision().startswith("Decision for P2"), limit=40)
+    assert _offered(d, "Activate Ash Blossom"), out + d.describe_decision()
+
+
+def test_salvagent_driver_destroyed_with_the_link_monster_cannot_activate():
+    # FAQ 20937
+    d = start({"monsters": [{"card": "Decode Talker", "zone": 2, "position": "attack"}, {"card": "Salvagent Driver", "zone": 3, "position": "attack"}],
+               "deck_filler": 10},
+              {"spells_traps": [{"card": "Mirror Force", "face_up": False}], "deck_filler": 10}, seed=1)
+    pick = lambda d, ls: next((l for l in ls if d.turn == 3 and l.startswith(("Enter the Battle", "Attack with Decode", "Activate Mirror"))), None)
+    out = ""
+    for _ in range(40):
+        labels = [o.label for o in d.decision.options]
+        head = d.describe_decision().split("\n")[0]
+        assert "Salvagent Driver" not in head, out + d.describe_decision()
+        if "Mirror Force: P2" in out and any(l.startswith("Go to Main Phase 2") for l in labels):
+            break
+        choice = pick(d, labels) or (P if P in labels else next((l for l in labels if l.startswith("End the turn")), 0))
+        out += d.play([choice])
+    assert "Salvagent Driver: P1 Monster Zone 3 → P1 GY" in out, out
+
+
+def test_dirge_of_the_lost_dragon_still_goes_to_the_gy_under_imperial_order():
+    # FAQ 22429
+    d = start({"hand": ["Dirge of the Lost Dragon", "Destrudo the Lost Dragon's Frisson"], "monsters": [{"card": "Sangan", "zone": 2}],
+               "spells_traps": [{"card": "Imperial Order", "face_up": False}], "deck_filler": 10},
+              {"monsters": [{"card": "Mystical Shine Ball", "zone": 2}], "deck_filler": 10}, seed=1)
+    out = ""
+    for c in [[1], [1], [0], [0], ["Destrudo the Lost Dragon's Frisson"], [1], [1], [0], [1], [0], [0], [0], [1]]:
+        out += d.play(c)
+    assert "Imperial Order" in out and "Dirge of the Lost Dragon: P1 Spell & Trap Zone" in out, out
+    assert "→ P1 GY" in out.split("Dirge of the Lost Dragon: P1 Spell & Trap Zone")[-1][:40], out
+
+
+def test_dirge_of_the_lost_dragon_keeps_the_name_declared_under_imperial_order():
+    # FAQ 22410
+    d = start({"hand": ["Dirge of the Lost Dragon"], "deck_filler": 10},
+              {"lp": 1300, "hand": ["Destrudo the Lost Dragon's Frisson"], "monsters": [{"card": "Sangan", "zone": 2}],
+               "spells_traps": [{"card": "Imperial Order", "face_up": True}], "deck_filler": 10}, seed=1)
+    def pick(d, ls):
+        if "Declare" in d.describe_decision() or "declare" in d.describe_decision().split("\n")[0]:
+            return "Destrudo the Lost Dragon's Frisson"
+        return next((l for l in ls if (d.turn == 1 and l.startswith("Activate Dirge")) or (d.turn == 2 and l.startswith("Activate Destrudo"))), None)
+    _play_until(d, pick, lambda d: d.turn >= 3, limit=60)
+    assert d.lp[1] == 150, d.lp
