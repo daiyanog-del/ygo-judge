@@ -1,0 +1,49 @@
+diff --git a/official/c42141493.lua b/official/c42141493.lua
+index e27291ff..7a63449d 100644
+--- a/official/c42141493.lua
++++ b/official/c42141493.lua
+@@ -71,7 +71,7 @@ function s.effop(e,tp,eg,ep,ev,re,r,rp)
+ 	Duel.RegisterEffect(e2,tp)
+ end
+ function s.drconfilter(c,tp)
+-	return c:IsSummonPlayer(1-tp) and c:IsSummonLocation(LOCATION_DECK|LOCATION_EXTRA)
++	return c:IsSummonPlayer(1-tp) and c:IsSummonLocation(LOCATION_DECK|LOCATION_EXTRA) and c:IsOriginalType(TYPE_MONSTER) --FAQ 23504 [card]: a Spell/Trap Special Summoned as a monster is not a monster from the Deck
+ end
+ function s.drcon(e,tp,eg,ep,ev,re,r,rp)
+ 	return eg:IsExists(s.drconfilter,1,nil,tp)
+diff --git a/official/c71275181.lua b/official/c71275181.lua
+index 90e5417d..5baf4cc4 100644
+--- a/official/c71275181.lua
++++ b/official/c71275181.lua
+@@ -63,7 +63,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 		local other_card=sg:GetFirst()
+ 		Duel.ConfirmCards(opp,other_card)
+ 		if other_card:IsMonster() then
+-			Duel.SendtoHand(other_card,nil,REASON_EFFECT)
++			if Duel.SendtoHand(other_card,nil,REASON_EFFECT)==0 then Duel.SendtoGrave(other_card,REASON_EFFECT) end --FAQ 24401 [card]: if it cannot be added to the hand, it is sent to the GY
+ 		else
+ 			Duel.Remove(other_card,POS_FACEUP,REASON_EFFECT)
+ 		end
+diff --git a/official/c77967790.lua b/official/c77967790.lua
+index 1f4a14cc..95abd767 100644
+--- a/official/c77967790.lua
++++ b/official/c77967790.lua
+@@ -60,7 +60,8 @@ function s.atkop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local tc=Duel.GetFirstTarget()
+ 	if tc:IsRelateToEffect(e) then
+-		tc:RegisterFlagEffect(id,RESETS_STANDARD_PHASE_END,0,1)
++		tc:RegisterFlagEffect(id,RESET_EVENT|(RESETS_STANDARD&~RESET_TURN_SET)|RESET_PHASE|PHASE_END,0,1) --FAQ 22004 [card]: the attack lock stays if the target is turned face-down
++		tc:RegisterFlagEffect(id+1,RESETS_STANDARD_PHASE_END,0,1) --FAQ 22004 [card]: the destruction no longer applies once it is turned face-down
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_FIELD)
+ 		e1:SetCode(EFFECT_CANNOT_ATTACK)
+@@ -96,7 +97,7 @@ function s.atktg2(e,c)
+ end
+ function s.descon(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=e:GetLabelObject()
+-	return tc:GetFlagEffect(id)~=0 and tc:GetAttackAnnouncedCount()==0
++	return tc:GetFlagEffect(id+1)~=0 and tc:GetAttackAnnouncedCount()==0
+ end
+ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=e:GetLabelObject()

@@ -3336,3 +3336,75 @@ def test_dirge_of_the_lost_dragon_keeps_the_name_declared_under_imperial_order()
         return next((l for l in ls if (d.turn == 1 and l.startswith("Activate Dirge")) or (d.turn == 2 and l.startswith("Activate Destrudo"))), None)
     _play_until(d, pick, lambda d: d.turn >= 3, limit=60)
     assert d.lp[1] == 150, d.lp
+
+
+def test_t_wrextle_attack_lock_stays_after_the_target_is_turned_face_down():
+    # FAQ 22004
+    d = start({"monsters": [{"card": "Cyberse Magician", "position": "attack", "zone": 1, "summoned": "ritual"},
+                            {"card": "Mystical Shine Ball", "position": "attack", "zone": 2}],
+               "spells_traps": [{"card": "Book of Moon", "face_up": False}], "deck_filler": 10},
+              {"monsters": [{"card": "Dinowrestler King T Wrextle", "position": "attack", "zone": "EMZ left"}], "deck_filler": 10}, seed=1)
+    out = _w_turn(d, 3)
+    def pick(d, ls):
+        p = next((l for l in ls if l.startswith(("Enter the Battle Phase", "Activate Dinowrestler", "Cyberse Magician"))), None)
+        if not p and "Resolving Chain Link 1 (Dinowrestler" in state["out"] and "activates Book of Moon" not in state["out"]:
+            p = next((l for l in ls if l.startswith("Activate Book of Moon")), None)
+        return p
+    state = {"out": out}
+    for _ in range(40):
+        labels = [o.label for o in d.decision.options]
+        if "activates Book of Moon" in state["out"] and any(l.startswith(("Attack with", "Go to Main Phase 2")) for l in labels):
+            break
+        c = pick(d, labels) or (P if P in labels else next((l for l in labels if l.startswith("End the turn")), 0))
+        state["out"] += d.play([c])
+    assert "Cyberse Magician (P1 Monster Zone 1) changes to face-down Defense Position" in state["out"], state["out"]
+    assert not _offered(d, "Attack with Mystical Shine Ball"), state["out"] + d.describe_decision()
+
+
+def test_mulcharmy_fuwalos_does_not_draw_for_spells_special_summoned_by_magical_hats():
+    # FAQ 23504 (B)
+    d, out = _run({"hand": ["Mulcharmy Fuwalos"], "deck_filler": 8},
+                  {"monsters": [{"card": "Mystical Shine Ball", "zone": 2}], "spells_traps": [{"card": "Magical Hats", "face_up": False}],
+                   "deck": ["Mystical Shine Ball", "Dark Hole", "Raigeki"], "deck_filler": 8},
+                  ["@3", "Activate Mulcharmy Fuwalos", "Normal Summon Mystical", "#0", "Enter the Battle Phase", "Activate Magical Hats", "#0", "#0", "#0"])
+    assert "a face-down card is Special Summoned to P2 Monster Zone" in out, out
+    assert "Mulcharmy Fuwalos's effect applies" not in out, out
+
+
+def test_fifty_fifty_sends_the_monster_to_the_gy_when_it_cannot_be_added_to_the_hand():
+    # FAQ 24401
+    d, out = _run({"hand": ["Reinforcement of the Army", "Fifty Fifty?"], "deck": ["Marauding Captain", "Mystical Shine Ball", "Mirror Force", "Solemn Judgment"],
+                   "deck_filler": 6},
+                  {"hand": ["Droll & Lock Bird"], "deck_filler": 10},
+                  ["Activate Reinforcement", "#0", "Activate Droll", "Activate Fifty Fifty", "#0", "#0", "#0", "#0", "#1"])
+    assert "Chosen: Reveal the card that was neither picked nor banished" in out, out
+    assert "Mystical Shine Ball: P1 Deck → P1 GY — by an effect" in out, out
+
+
+def test_schuberta_atk_gain_under_infinite_impermanence_does_not_come_back():
+    # FAQ 24053
+    d = start({"monsters": [{"card": "Bacha the Melodious Maestra", "zone": 2, "summoned": "fusion", "properly_summoned": True},
+                            {"card": "Schuberta the Melodious Maestra", "zone": 3, "summoned": "fusion", "properly_summoned": True}],
+               "graveyard": ["Mystical Shine Ball"] * 3, "deck_filler": 5},
+              {"spells_traps": [{"card": "Infinite Impermanence", "face_up": False}], "deck_filler": 5}, seed=1)
+    out = _w_turn(d, 1)
+    out += d.play(["Activate Schuberta"])
+    def pick(d, ls):
+        head = d.describe_decision().split("\n")[0]
+        if "banish" in head.lower() and "Select" in head:
+            return [0, 1, 2]
+        if "activates Infinite" not in state["out"] and any(l.startswith("Activate Infinite Impermanence") for l in ls):
+            return next(l for l in ls if l.startswith("Activate Infinite Impermanence"))
+        if "negate" in head.lower():
+            return next((l for l in ls if l.startswith("Schuberta")), None)
+        return None
+    state = {"out": out}
+    for _ in range(60):
+        if d.turn >= 3 and d.decision.kind == "idle":
+            break
+        labels = [o.label for o in d.decision.options]
+        c = pick(d, labels)
+        if c is None:
+            c = P if P in labels else next((l for l in labels if l.startswith("End the turn")), 0)
+        state["out"] += d.play([c])
+    assert "Schuberta the Melodious Maestra, face-up Attack, ATK 2400/DEF 2000" in d.board(), state["out"] + d.board()

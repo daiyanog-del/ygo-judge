@@ -1,0 +1,17 @@
+diff --git a/card.cpp b/card.cpp
+index b787701..78dd0aa 100644
+--- a/card.cpp
++++ b/card.cpp
+@@ -1693,6 +1693,12 @@ int32_t card::add_effect(effect* peffect) {
+ 	}
+ 	if (indexer.find(peffect) != indexer.end())
+ 		return 0;
++	//JudgemanAI 2026-11-28: an effect this card gives itself that ends when its effects are negated (RESET_DISABLE) does not apply
++	//if the card's effects are already negated, and it does not come back when the negation ends.
++	//Konami FAQ 24053 (Schubert's ATK gain under Infinite Impermanence). [general:faq]
++	if((peffect->type & EFFECT_TYPE_SINGLE) && peffect->owner == this && (peffect->reset_flag & RESET_EVENT)
++		&& (peffect->reset_flag & RESET_DISABLE) && (get_status(STATUS_DISABLED) || is_affected_by_effect(EFFECT_DISABLE)))
++		return 0;
+ 	card_set check_target = { this };
+ 	effect_container::iterator eit;
+ 	if (peffect->type & EFFECT_TYPE_SINGLE) {
