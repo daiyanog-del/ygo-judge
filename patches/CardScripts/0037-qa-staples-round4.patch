@@ -1,0 +1,40 @@
+diff --git a/official/c52038441.lua b/official/c52038441.lua
+index 46f136f4..bed3b601 100644
+--- a/official/c52038441.lua
++++ b/official/c52038441.lua
+@@ -30,7 +30,7 @@ function s.initial_effect(c)
+ 	c:RegisterEffect(e1a)
+ end
+ function s.cfilter(c,e,tp)
+-	return c:IsSummonPlayer(1-tp) and c:IsCanBeEffectTarget(e) and c:IsLocation(LOCATION_MZONE) and (c:HasNonZeroAttack() or c:IsNegatableMonster())
++	return c:IsSummonPlayer(1-tp) and c:IsCanBeEffectTarget(e) and c:IsLocation(LOCATION_MZONE) and (c:GetTextAttack()>0 or c:IsNegatableMonster()) --FAQ 22948 [card]: the printed ATK (not 0 or ?) decides
+ end
+ function s.regop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tg=eg:Filter(s.cfilter,nil,e,tp)
+diff --git a/official/c58655504.lua b/official/c58655504.lua
+index 786bf30d..dc2fc444 100644
+--- a/official/c58655504.lua
++++ b/official/c58655504.lua
+@@ -29,11 +29,11 @@ end
+ function s.operation(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local tc=Duel.GetFirstTarget()
+-	if tc and tc:IsRelateToEffect(e) and tc:IsFaceup() then
++	if tc and tc:IsRelateToEffect(e) then --FAQ 22800 [general:faq]: it applies even if the target is face-down at resolution
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_UNRELEASABLE_SUM)
+-		e1:SetReset(RESETS_STANDARD_PHASE_END)
++		e1:SetReset(RESET_EVENT|(RESETS_STANDARD&~RESET_TURN_SET)|RESET_PHASE|PHASE_END)
+ 		e1:SetValue(1)
+ 		tc:RegisterEffect(e1)
+ 		local e2=e1:Clone()
+@@ -44,7 +44,7 @@ function s.operation(e,tp,eg,ep,ev,re,r,rp)
+ 		e3:SetDescription(aux.Stringid(id,1))
+ 		e3:SetProperty(EFFECT_FLAG_CLIENT_HINT)
+ 		e3:SetCode(EFFECT_CANNOT_BE_MATERIAL)
+-		e3:SetReset(RESETS_STANDARD_PHASE_END)
++		e3:SetReset(RESET_EVENT|(RESETS_STANDARD&~RESET_TURN_SET)|RESET_PHASE|PHASE_END)
+ 		e3:SetValue(aux.cannotmatfilter(SUMMON_TYPE_FUSION,SUMMON_TYPE_SYNCHRO,SUMMON_TYPE_XYZ,SUMMON_TYPE_LINK))
+ 		tc:RegisterEffect(e3)
+ 	end

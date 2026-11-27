@@ -3408,3 +3408,41 @@ def test_schuberta_atk_gain_under_infinite_impermanence_does_not_come_back():
             c = P if P in labels else next((l for l in labels if l.startswith("End the turn")), 0)
         state["out"] += d.play([c])
     assert "Schuberta the Melodious Maestra, face-up Attack, ATK 2400/DEF 2000" in d.board(), state["out"] + d.board()
+
+
+def test_gnomaterial_still_applies_to_a_target_turned_face_down_in_the_chain():
+    # FAQ 22800
+    d = start({"hand": [83764718, "Summoned Skull"], "monsters": [{"card": "Subterror Guru", "zone": 1, "position": "attack"}],
+               "graveyard": [{"card": "Subterror Behemoth Umastryx", "properly_summoned": True}], "deck_filler": 10},
+              {"hand": ["Gnomaterial"], "deck_filler": 10}, seed=1)
+    out = d.play([0, 0, 0, 0, 1, 0, 1, 0, 0])
+    assert "Subterror Behemoth Umastryx" in out and "face-down Defense" in out and "Gnomaterial" in out, out
+    out += d.play(["Normal Summon Summoned Skull"])
+    assert "Subterror Guru" in d.describe_decision() and "Umastryx" not in d.describe_decision(), out + d.describe_decision()
+
+
+def test_ghost_mourner_cannot_target_the_primal_being_token():
+    # FAQ 22948 (B): the Token's ATK printed on Nibiru is ?
+    d = start({"hand": ["Soul Charge", "Ghost Mourner & Moonlit Chill"],
+               "graveyard": ["Blue-Eyes White Dragon"] * 3 + ["Dark Magician", "Red-Eyes Black Dragon"], "deck_filler": 10},
+              {"hand": ["Nibiru, the Primal Being"], "deck_filler": 10}, seed=1)
+    out = _w_turn(d, 1)
+    state = {"ghost": False}
+    for _ in range(60):
+        labels = [o.label for o in d.decision.options]
+        if state["ghost"]:
+            break
+        if not "Soul Charge" in out and any(l.startswith("Activate Soul Charge") for l in labels):
+            c = next(l for l in labels if l.startswith("Activate Soul Charge"))
+        elif "Pick 1 to 5" in d.describe_decision():
+            c = [0, 1, 2, 3, 4]
+        elif any(l.startswith("Activate Nibiru") for l in labels):
+            c = next(l for l in labels if l.startswith("Activate Nibiru"))
+        elif any(l.startswith("Activate Ghost Mourner") for l in labels):
+            c = next(l for l in labels if l.startswith("Activate Ghost Mourner"))
+            state["ghost"] = True
+        else:
+            c = P if P in labels else 0
+        out += d.play([c])
+    assert state["ghost"] and "Primal Being Token" in out, out
+    assert not _offered(d, "Primal Being Token"), out + d.describe_decision()
