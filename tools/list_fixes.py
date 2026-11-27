@@ -20,7 +20,24 @@ FAQ = re.compile(r"FAQ\s*([\d,\s/]+(?:and\s+\d+)?)")
 TAG = re.compile(r"\[(general:faq|general:analogy|exception|card)\]")
 
 
+def removed_later():
+    """(patch, file, line) pairs whose added line a later patch of the same folder removes again (the line was replaced)."""
+    patches = sorted(ROOT.glob("*/*.patch"))
+    removed = {}
+    for patch in patches:
+        current = ""
+        for line in patch.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("diff --git "):
+                current = line.split(" b/", 1)[-1]
+            elif line.startswith("+++ b/"):
+                current = line[len("+++ b/"):]
+            elif line.startswith("-") and not line.startswith("---"):
+                removed.setdefault((patch.parent.name, current, line[1:]), []).append(patch.name)
+    return removed
+
+
 def rows():
+    removed = removed_later()
     for patch in sorted(ROOT.glob("*/*.patch")):
         current = ""
         for line in patch.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -31,6 +48,8 @@ def rows():
                 current = line[len("+++ b/"):]
                 continue
             if not line.startswith("+") or line.startswith("+++") or "FAQ" not in line:
+                continue
+            if any(later > patch.name for later in removed.get((patch.parent.name, current, line[1:]), [])):
                 continue
             numbers = sorted({int(n) for m in FAQ.finditer(line) for n in re.findall(r"\d{1,5}", m.group(1))})
             tag = TAG.search(line)

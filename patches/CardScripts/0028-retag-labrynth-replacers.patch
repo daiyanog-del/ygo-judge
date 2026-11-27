@@ -1,0 +1,36 @@
+diff --git a/official/c39552584.lua b/official/c39552584.lua
+index 7b21cd5b..b319076a 100644
+--- a/official/c39552584.lua
++++ b/official/c39552584.lua
+@@ -46,7 +46,7 @@ function s.repop(e,tp,eg,ep,ev,re,r,rp)
+ 	if #g>0 then
+ 		Duel.DiscardHand(1-tp,nil,1,1,REASON_EFFECT|REASON_DISCARD)
+ 	end
+-	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [card]: the added destruction still applies after the effect is replaced
++	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [general:faq]: an added effect still applies after the effect is replaced
+ end
+ function s.spcon(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+diff --git a/official/c64325438.lua b/official/c64325438.lua
+index 543f47f6..94acd879 100644
+--- a/official/c64325438.lua
++++ b/official/c64325438.lua
+@@ -50,5 +50,5 @@ function s.repop(e,tp,eg,ep,ev,re,r,rp)
+ 	if e:IsSpellTrapEffect() and e:IsHasType(EFFECT_TYPE_ACTIVATE) then
+ 		c:CancelToGrave(false)
+ 	end
+-	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [card]: the added destruction still applies after the effect is replaced
++	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [general:faq]: an added effect still applies after the effect is replaced
+ end
+\ No newline at end of file
+diff --git a/official/c69840739.lua b/official/c69840739.lua
+index 7b1b746d..66419214 100644
+--- a/official/c69840739.lua
++++ b/official/c69840739.lua
+@@ -84,5 +84,5 @@ function s.repop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.HintSelection(g)
+ 		Duel.Destroy(g,REASON_EFFECT)
+ 	end
+-	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [card]: the added destruction still applies after the effect is replaced
++	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [general:faq]: an added effect still applies after the effect is replaced
+ end
