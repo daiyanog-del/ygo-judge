@@ -139,6 +139,11 @@
 >     for the whole chain with every destroyed card (17974, 16090), through a flag only they use.
 >   - script patch 0026: "DMZ Dragon" checks whether the monster can attack again, like the other cards that let a monster
 >     attack "once more", so it gives no third attack (22561, 23980).
+>   - script patch 0027, from the Q&As of cards whose scripts differ from their peers: 38 lines used a count of cards
+>     (destroyed, sent, summoned, changed) as a yes/no, and in Lua 0 is true, so "if you do" went ahead when nothing
+>     happened ("Big Shield Gardna" after "Ceasefire", 7432, and the same pattern elsewhere); "Arcana Force EX - The Light
+>     Ruler" still tosses the coin after leaving the field (6882); "Royal Command" stops Flip monster effects from being
+>     activated (24209).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

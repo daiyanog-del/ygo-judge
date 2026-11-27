@@ -1,0 +1,530 @@
+diff --git a/official/c12766474.lua b/official/c12766474.lua
+index 72b717a2..982b1f6a 100644
+--- a/official/c12766474.lua
++++ b/official/c12766474.lua
+@@ -64,7 +64,7 @@ function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+ end
+ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+-	if c:IsRelateToEffect(e) and Duel.SpecialSummon(c,0,tp,tp,false,false,POS_FACEUP) then
++	if c:IsRelateToEffect(e) and Duel.SpecialSummon(c,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_UPDATE_ATTACK)
+diff --git a/official/c16172067.lua b/official/c16172067.lua
+index 291c43ce..9be15260 100644
+--- a/official/c16172067.lua
++++ b/official/c16172067.lua
+@@ -83,7 +83,7 @@ end
+ function s.disop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	if Duel.NegateActivation(ev) and re:GetHandler():IsRelateToEffect(re)
+-		and Duel.Destroy(eg,REASON_EFFECT) and c:IsRelateToEffect(e) and c:IsFaceup() then
++		and Duel.Destroy(eg,REASON_EFFECT)>0 and c:IsRelateToEffect(e) and c:IsFaceup() then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_UPDATE_ATTACK)
+diff --git a/official/c16209941.lua b/official/c16209941.lua
+index e16a4670..cf4ce587 100644
+--- a/official/c16209941.lua
++++ b/official/c16209941.lua
+@@ -57,7 +57,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c1784686.lua b/official/c1784686.lua
+index 9efd4e2a..06e82167 100644
+--- a/official/c1784686.lua
++++ b/official/c1784686.lua
+@@ -48,7 +48,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 			sc:SetMaterial(Group.FromCards(tc))
+ 			Duel.SendtoGrave(tc,REASON_EFFECT|REASON_MATERIAL|REASON_FUSION)
+ 			Duel.BreakEffect()
+-			if Duel.SpecialSummon(sc,SUMMON_TYPE_FUSION,tp,tp,false,false,POS_FACEUP) then
++			if Duel.SpecialSummon(sc,SUMMON_TYPE_FUSION,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 				sc:CompleteProcedure()
+ 			end
+ 		end
+diff --git a/official/c18249921.lua b/official/c18249921.lua
+index 1ce54f10..d5110713 100644
+--- a/official/c18249921.lua
++++ b/official/c18249921.lua
+@@ -79,7 +79,7 @@ end
+ 	--Special summon 1 "Virtual World" monster from GY with its effects negate, then send 1 card from hand to GY
+ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc and tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
++	if tc and tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_DISABLE)
+diff --git a/official/c23153227.lua b/official/c23153227.lua
+index ff84b455..54cf588d 100644
+--- a/official/c23153227.lua
++++ b/official/c23153227.lua
+@@ -74,7 +74,7 @@ function s.copytg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	e:SetLabel(0)
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+ 	local g=Duel.SelectMatchingCard(tp,s.copyfilter,tp,LOCATION_HAND,0,1,1,nil)
+-	if not Duel.SendtoGrave(g,REASON_COST) then return end
++	if Duel.SendtoGrave(g,REASON_COST)==0 then return end --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 	local te=g:GetFirst():CheckActivateEffect(true,true,false)
+ 	e:SetLabel(te:GetLabel())
+ 	e:SetLabelObject(te:GetLabelObject())
+diff --git a/official/c24269961.lua b/official/c24269961.lua
+index 09ffd33f..f5b51881 100644
+--- a/official/c24269961.lua
++++ b/official/c24269961.lua
+@@ -67,7 +67,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 	local g=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(s.spfilter),tp,LOCATION_GRAVE|LOCATION_HAND,0,1,1,nil,e,tp)
+-	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP) then
++	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local dg=Duel.GetMatchingGroup(nil,tp,LOCATION_ONFIELD,0,nil)
+ 		if #dg>0 and Duel.SelectYesNo(tp,aux.Stringid(id,2)) then
+ 			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
+diff --git a/official/c26302107.lua b/official/c26302107.lua
+index 13edd517..0c2f814d 100644
+--- a/official/c26302107.lua
++++ b/official/c26302107.lua
+@@ -56,7 +56,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c33950246.lua b/official/c33950246.lua
+index 67ffa29e..f8f171e3 100644
+--- a/official/c33950246.lua
++++ b/official/c33950246.lua
+@@ -14,6 +14,15 @@ function s.initial_effect(c)
+ 	e2:SetRange(LOCATION_SZONE)
+ 	e2:SetOperation(s.disop)
+ 	c:RegisterEffect(e2)
++	--FAQ 24209 [card]: the monster effects of Flip monsters cannot be activated at all (a Pendulum Zone effect is a Spell effect and still can)
++	local e3=Effect.CreateEffect(c)
++	e3:SetType(EFFECT_TYPE_FIELD)
++	e3:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
++	e3:SetCode(EFFECT_CANNOT_ACTIVATE)
++	e3:SetRange(LOCATION_SZONE)
++	e3:SetTargetRange(1,1)
++	e3:SetValue(function(_e,re) return re:IsMonsterEffect() and re:GetHandler():IsType(TYPE_FLIP) end)
++	c:RegisterEffect(e3)
+ end
+ function s.disop(e,tp,eg,ep,ev,re,r,rp)
+ 	if re:IsActiveType(TYPE_FLIP) then
+diff --git a/official/c35129241.lua b/official/c35129241.lua
+index 81336369..1f30b78b 100644
+--- a/official/c35129241.lua
++++ b/official/c35129241.lua
+@@ -56,7 +56,7 @@ end
+ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+ 	if e:GetHandler():IsRelateToEffect(e) and tc and tc:IsRelateToEffect(e) and Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+-		and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
++		and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		tc:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD,EFFECT_FLAG_CLIENT_HINT,1,0,aux.Stringid(id,2))
+ 	end
+ end
+diff --git a/official/c35770983.lua b/official/c35770983.lua
+index f66342c9..53f0c6c5 100644
+--- a/official/c35770983.lua
++++ b/official/c35770983.lua
+@@ -87,7 +87,7 @@ function s.sstg(e,tp,eg,ep,ev,re,r,rp,chk)
+ end
+ function s.ssop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+-	if e:GetHandler():IsRelateToEffect(e) and Duel.SpecialSummon(e:GetHandler(),0,tp,tp,false,false,POS_FACEUP) then
++	if e:GetHandler():IsRelateToEffect(e) and Duel.SpecialSummon(e:GetHandler(),0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_LEAVE_FIELD_REDIRECT)
+diff --git a/official/c38984832.lua b/official/c38984832.lua
+index 9f16f59e..872a3401 100644
+--- a/official/c38984832.lua
++++ b/official/c38984832.lua
+@@ -67,7 +67,7 @@ function s.excavop(e,tp,eg,ep,ev,re,r,rp)
+ 			Duel.ConfirmDecktop(tp,excav_count)
+ 			local excav_g=Duel.GetDecktopGroup(tp,excav_count)
+ 			Duel.RaiseEvent(excav_g,EVENT_CUSTOM+1595137,e,REASON_EFFECT,tp,tp,excav_count)
+-			if Duel.SendtoHand(sc,nil,REASON_EFFECT) then
++			if Duel.SendtoHand(sc,nil,REASON_EFFECT)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 				Duel.ConfirmCards(1-tp,sc)
+ 				Duel.ShuffleHand(tp)
+ 			end
+diff --git a/official/c39706423.lua b/official/c39706423.lua
+index 4b38c46a..17f15d45 100644
+--- a/official/c39706423.lua
++++ b/official/c39706423.lua
+@@ -72,7 +72,7 @@ function s.excavop(e,tp,eg,ep,ev,re,r,rp)
+ 			local excav_g=Duel.GetDecktopGroup(tp,excav_count)
+ 			Duel.RaiseEvent(excav_g,EVENT_CUSTOM+1595137,e,REASON_EFFECT,tp,tp,excav_count)
+ 			local tc=Duel.GetFirstTarget()
+-			if Duel.SendtoGrave(sc,REASON_EFFECT|REASON_EXCAVATE) and sc:IsLocation(LOCATION_GRAVE) and tc:IsRelateToEffect(e)
++			if Duel.SendtoGrave(sc,REASON_EFFECT|REASON_EXCAVATE)>0 and sc:IsLocation(LOCATION_GRAVE) and tc:IsRelateToEffect(e) --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 				and tc:IsFaceup() and not tc:IsRace(RACE_DINOSAUR) then
+ 				--The targeted monster becomes a Dinosaur monster (until the end of this turn)
+ 				local e1=Effect.CreateEffect(e:GetHandler())
+diff --git a/official/c43316238.lua b/official/c43316238.lua
+index 4967b00a..1379d710 100644
+--- a/official/c43316238.lua
++++ b/official/c43316238.lua
+@@ -56,7 +56,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c43694650.lua b/official/c43694650.lua
+index 5cfe5041..fc0d1982 100644
+--- a/official/c43694650.lua
++++ b/official/c43694650.lua
+@@ -57,7 +57,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c44297127.lua b/official/c44297127.lua
+index 40d5a8e6..012950a5 100644
+--- a/official/c44297127.lua
++++ b/official/c44297127.lua
+@@ -26,7 +26,7 @@ end
+ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+ 	local g=Duel.SelectMatchingCard(tp,s.tgfilter,tp,LOCATION_DECK,0,1,1,nil)
+-	if #g>0 and Duel.SendtoGrave(g,REASON_EFFECT) and g:GetFirst():IsLocation(LOCATION_GRAVE) and Duel.IsPlayerCanDraw(tp)
++	if #g>0 and Duel.SendtoGrave(g,REASON_EFFECT)>0 and g:GetFirst():IsLocation(LOCATION_GRAVE) and Duel.IsPlayerCanDraw(tp) --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		and Duel.IsExistingMatchingCard(Card.IsCode,tp,LOCATION_GRAVE,0,1,nil,CARD_FOSSIL_FUSION) then
+ 		Duel.BreakEffect()
+ 		Duel.Draw(tp,1,REASON_EFFECT)
+diff --git a/official/c45409943.lua b/official/c45409943.lua
+index 500985d2..b4229372 100644
+--- a/official/c45409943.lua
++++ b/official/c45409943.lua
+@@ -59,7 +59,7 @@ end
+ function s.tgdesop(e,tp,eg,ep,ev,re,r,rp)
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+ 	local g=Duel.SelectMatchingCard(tp,s.tgfilter,tp,LOCATION_DECK,0,1,1,nil)
+-	if #g>0 and Duel.SendtoGrave(g,REASON_EFFECT) and g:GetFirst():IsLocation(LOCATION_GRAVE) then
++	if #g>0 and Duel.SendtoGrave(g,REASON_EFFECT)>0 and g:GetFirst():IsLocation(LOCATION_GRAVE) then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local tc=Duel.GetFirstTarget()
+ 		if tc:IsRelateToEffect(e) then
+ 			Duel.Destroy(tc,REASON_EFFECT)
+diff --git a/official/c47810543.lua b/official/c47810543.lua
+index 11b4903a..7c3d2aaf 100644
+--- a/official/c47810543.lua
++++ b/official/c47810543.lua
+@@ -38,7 +38,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 	local tc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp):GetFirst()
+-	if tc and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
++	if tc and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local seq=tc:GetSequence()
+ 		local nseq=4-seq
+ 		if Duel.CheckLocation(1-tp,LOCATION_MZONE,nseq) then
+diff --git a/official/c52350806.lua b/official/c52350806.lua
+index 731c7b40..3b3bfde0 100644
+--- a/official/c52350806.lua
++++ b/official/c52350806.lua
+@@ -56,7 +56,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c5267507.lua b/official/c5267507.lua
+index 1ebb6ef5..8ea6da5f 100644
+--- a/official/c5267507.lua
++++ b/official/c5267507.lua
+@@ -67,7 +67,7 @@ function s.tgop(e,tp,eg,ep,ev,re,r,rp)
+ 			local sc=Duel.SelectMatchingCard(tp,s.rednovaspfilter,tp,LOCATION_EXTRA,0,1,1,nil,e,tp):GetFirst()
+ 			if not sc then return end
+ 			Duel.BreakEffect()
+-			if Duel.SpecialSummon(sc,SUMMON_TYPE_SYNCHRO,tp,tp,false,false,POS_FACEUP) then
++			if Duel.SpecialSummon(sc,SUMMON_TYPE_SYNCHRO,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 				sc:CompleteProcedure()
+ 			end
+ 		end
+diff --git a/official/c53286626.lua b/official/c53286626.lua
+index 10b1464a..e76bab9d 100644
+--- a/official/c53286626.lua
++++ b/official/c53286626.lua
+@@ -49,7 +49,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	if Duel.GetLocationCount(tp,LOCATION_MZONE)>0 then
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local g=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_DECK,0,1,1,nil,e,tp)
+-		if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP) then
++		if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Damage(tp,1000,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c5861892.lua b/official/c5861892.lua
+index 4b21cba0..d1ef5fb4 100644
+--- a/official/c5861892.lua
++++ b/official/c5861892.lua
+@@ -61,8 +61,9 @@ function s.cointg(e,tp,eg,ep,ev,re,r,rp,chk)
+ end
+ function s.coinop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
++	local coin=Arcana.TossCoin(c,tp) --FAQ 6882 [card]: the coin is tossed even if this card left the field
+ 	if not c:IsRelateToEffect(e) or c:IsFacedown() then return end
+-	s.arcanareg(c,Arcana.TossCoin(c,tp))
++	s.arcanareg(c,coin)
+ end
+ function s.arcanareg(c,coin)
+ 	--coin effect
+diff --git a/official/c60292055.lua b/official/c60292055.lua
+index f4a9b4ca..20919125 100644
+--- a/official/c60292055.lua
++++ b/official/c60292055.lua
+@@ -51,7 +51,7 @@ end
+ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local tc=Duel.GetFirstTarget()
+-	if tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
++	if tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		--Cannot be used as link material
+ 		local e1=Effect.CreateEffect(c)
+ 		e1:SetDescription(3312)
+diff --git a/official/c65240384.lua b/official/c65240384.lua
+index 86dd0329..afe8a4b1 100644
+--- a/official/c65240384.lua
++++ b/official/c65240384.lua
+@@ -34,7 +34,7 @@ function s.negtg(e,tp,eg,ep,ev,re,r,rp,chk)
+ end
+ function s.negop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+-	if c:IsRelateToEffect(e) and Duel.ChangePosition(c,POS_FACEUP_DEFENSE) then
++	if c:IsRelateToEffect(e) and Duel.ChangePosition(c,POS_FACEUP_DEFENSE)>0 then --FAQ 7432 [general:faq]: a count of 0 is true in Lua
+ 		Duel.NegateActivation(ev)
+ 	end
+ end
+diff --git a/official/c65268179.lua b/official/c65268179.lua
+index f4a4b075..7a54361a 100644
+--- a/official/c65268179.lua
++++ b/official/c65268179.lua
+@@ -97,7 +97,7 @@ function s.spop2(e,tp,eg,ep,ev,re,r,rp)
+ 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 	local tc=Duel.SelectMatchingCard(tp,s.spfilter3,tp,LOCATION_GRAVE,0,1,1,nil,e,tp):GetFirst()
+-	if tc and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
++	if tc and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_DISABLE)
+diff --git a/official/c67809530.lua b/official/c67809530.lua
+index 126c39b0..6c91b5d5 100644
+--- a/official/c67809530.lua
++++ b/official/c67809530.lua
+@@ -62,7 +62,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_EXTRA,0,1,1,nil,e,tp):GetFirst()
+ 	if not sc then return end
+ 	sc:SetMaterial(nil)
+-	if Duel.SpecialSummon(sc,SUMMON_TYPE_SYNCHRO,tp,tp,false,false,POS_FACEUP) then
++	if Duel.SpecialSummon(sc,SUMMON_TYPE_SYNCHRO,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		sc:CompleteProcedure()
+ 		--Its ATK becomes doubled
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+diff --git a/official/c70369116.lua b/official/c70369116.lua
+index 28fbd429..b62d476b 100644
+--- a/official/c70369116.lua
++++ b/official/c70369116.lua
+@@ -63,7 +63,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if chk==0 then return Duel.IsExistingMatchingCard(s.copfilter,tp,LOCATION_DECK,0,1,nil) end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+ 	local g=Duel.SelectMatchingCard(tp,s.copfilter,tp,LOCATION_DECK,0,1,1,nil)
+-	if not Duel.SendtoGrave(g,REASON_COST) then return end
++	if Duel.SendtoGrave(g,REASON_COST)==0 then return end --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 	local te=g:GetFirst():CheckActivateEffect(true,true,false)
+ 	e:SetLabel(te:GetLabel())
+ 	e:SetLabelObject(te:GetLabelObject())
+diff --git a/official/c70711847.lua b/official/c70711847.lua
+index ff453309..163fce1d 100644
+--- a/official/c70711847.lua
++++ b/official/c70711847.lua
+@@ -57,7 +57,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c74213995.lua b/official/c74213995.lua
+index 921bd7bb..6200b0e9 100644
+--- a/official/c74213995.lua
++++ b/official/c74213995.lua
+@@ -34,7 +34,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	if #g==0 or not Duel.SelectYesNo(tp,aux.Stringid(id,2)) then return end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
+ 	local sg=g:Select(tp,1,1,nil)
+-	if #sg>0 and Duel.SendtoHand(sg,nil,REASON_EFFECT) and sg:GetFirst():IsLocation(LOCATION_HAND) then
++	if #sg>0 and Duel.SendtoHand(sg,nil,REASON_EFFECT)>0 and sg:GetFirst():IsLocation(LOCATION_HAND) then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		Duel.ConfirmCards(1-tp,sg)
+ 		Duel.ShuffleHand(tp)
+ 		Duel.BreakEffect()
+diff --git a/official/c83518674.lua b/official/c83518674.lua
+index 226405a5..03cd3a02 100644
+--- a/official/c83518674.lua
++++ b/official/c83518674.lua
+@@ -57,7 +57,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c86758915.lua b/official/c86758915.lua
+index 8ceb8d4c..dd0d69a3 100644
+--- a/official/c86758915.lua
++++ b/official/c86758915.lua
+@@ -43,7 +43,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<1 then return end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 	local g=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_DECK,0,1,1,nil,e,tp)
+-	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP) and c:IsRelateToEffect(e) then
++	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)>0 and c:IsRelateToEffect(e) then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		Duel.BreakEffect()
+ 		Duel.SendtoHand(c,nil,REASON_EFFECT)
+ 	end
+diff --git a/official/c87321742.lua b/official/c87321742.lua
+index 2aa5f1f1..24dc37db 100644
+--- a/official/c87321742.lua
++++ b/official/c87321742.lua
+@@ -77,7 +77,7 @@ function s.sptg2(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ end
+ function s.spop2(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
+-	if tc and tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
++	if tc and tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local e1=Effect.CreateEffect(e:GetHandler())
+ 		e1:SetType(EFFECT_TYPE_SINGLE)
+ 		e1:SetCode(EFFECT_DISABLE)
+diff --git a/official/c90659259.lua b/official/c90659259.lua
+index 2fd93a50..42b1e885 100644
+--- a/official/c90659259.lua
++++ b/official/c90659259.lua
+@@ -47,7 +47,7 @@ function s.operation(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local g=Duel.SelectMatchingCard(tp,s.spfilter1,tp,LOCATION_DECK,0,1,1,nil,e,tp,tc:GetCode())
+ 		if #g==0 then return end
+-		if Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP) then
++		if Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.BreakEffect()
+ 			Duel.ShuffleDeck(tp)
+ 			Duel.SendtoDeck(tc,nil,SEQ_DECKTOP,REASON_EFFECT)
+diff --git a/official/c90807199.lua b/official/c90807199.lua
+index a1aa1723..ba308a7f 100644
+--- a/official/c90807199.lua
++++ b/official/c90807199.lua
+@@ -55,7 +55,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end
+diff --git a/official/c91946859.lua b/official/c91946859.lua
+index 988ed334..cd2e2545 100644
+--- a/official/c91946859.lua
++++ b/official/c91946859.lua
+@@ -59,7 +59,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 	local g=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+ 	local tc=g:GetFirst()
+-	if tc and Duel.SpecialSummon(tc,SUMMON_TYPE_RITUAL,tp,tp,true,false,POS_FACEUP) then
++	if tc and Duel.SpecialSummon(tc,SUMMON_TYPE_RITUAL,tp,tp,true,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		tc:CompleteProcedure()
+ 	end
+ end
+\ No newline at end of file
+diff --git a/official/c92447211.lua b/official/c92447211.lua
+index 64ce67f0..98b46985 100644
+--- a/official/c92447211.lua
++++ b/official/c92447211.lua
+@@ -43,7 +43,7 @@ end
+ function s.tgop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local rc=e:GetLabelObject()
+-	if rc:IsRelateToEffect(e) and Duel.SendtoGrave(rc,REASON_EFFECT) and rc:IsLocation(LOCATION_GRAVE)
++	if rc:IsRelateToEffect(e) and Duel.SendtoGrave(rc,REASON_EFFECT)>0 and rc:IsLocation(LOCATION_GRAVE) --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		and c:IsRelateToEffect(e) and c:IsFaceup() then
+ 		--This card gains 500 ATK until the end of this turn
+ 		c:UpdateAttack(500,RESETS_STANDARD_DISABLE_PHASE_END)
+diff --git a/official/c92597893.lua b/official/c92597893.lua
+index 1ada2f92..842e1a32 100644
+--- a/official/c92597893.lua
++++ b/official/c92597893.lua
+@@ -69,7 +69,7 @@ function s.posop(e,tp,eg,ep,ev,re,r,rp)
+ 	local c=e:GetHandler()
+ 	local tc=Duel.GetFirstTarget()
+ 	if tc and tc:IsRelateToEffect(e) then
+-		if Duel.ChangePosition(tc,POS_FACEUP_DEFENSE,POS_FACEDOWN_DEFENSE,POS_FACEUP_ATTACK,POS_FACEUP_ATTACK) and c:IsRelateToEffect(e) then
++		if Duel.ChangePosition(tc,POS_FACEUP_DEFENSE,POS_FACEDOWN_DEFENSE,POS_FACEUP_ATTACK,POS_FACEUP_ATTACK)>0 and c:IsRelateToEffect(e) then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.BreakEffect()
+ 			Duel.SendtoHand(c,nil,REASON_EFFECT)
+ 		end
+diff --git a/official/c94187078.lua b/official/c94187078.lua
+index 443175a9..dfa3c717 100644
+--- a/official/c94187078.lua
++++ b/official/c94187078.lua
+@@ -47,7 +47,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
+ 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+ 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 	local g=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_DECK,0,1,1,nil,e,tp)
+-	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP) then
++	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local tc=g:GetFirst()
+ 		tc:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD,0,1)
+ 		--Destroy it during the End Phase
+diff --git a/official/c97769122.lua b/official/c97769122.lua
+index 563a278d..a684c088 100644
+--- a/official/c97769122.lua
++++ b/official/c97769122.lua
+@@ -78,7 +78,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	if op==1 then
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+ 		local g=Duel.SelectMatchingCard(tp,s.copfilter,tp,LOCATION_DECK,0,1,1,nil)
+-		if not Duel.SendtoGrave(g,REASON_COST) then return end
++		if Duel.SendtoGrave(g,REASON_COST)==0 then return end --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 		local te=g:GetFirst():CheckActivateEffect(true,true,false)
+ 		e:SetLabel(te:GetLabel())
+ 		e:SetLabelObject(te:GetLabelObject())
+diff --git a/official/c99745551.lua b/official/c99745551.lua
+index 484abc39..95b3b1d2 100644
+--- a/official/c99745551.lua
++++ b/official/c99745551.lua
+@@ -56,7 +56,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 		Duel.BreakEffect()
+ 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+ 		local sc=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+-		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP) then
++		if #sc>0 and Duel.SpecialSummon(sc,0,tp,tp,false,false,POS_FACEUP)>0 then --FAQ 7432 [general:analogy]: a count of 0 is true in Lua
+ 			Duel.Draw(tp,1,REASON_EFFECT)
+ 		end
+ 	end

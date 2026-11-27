@@ -3080,3 +3080,45 @@ def test_dmz_dragon_gives_no_third_attack_to_a_monster_that_already_attacked_twi
                     ['@3', 'Activate DMZ', '#0', '#1', '#1', '#0', 'Activate Borrelsword', '#1', 'Enter the Battle', 'Attack with Borrelsword', '#1', '#1', '#1', '#1', '#0', '#1', '#0'], seed=1)
     assert "Anesthrokket Dragon: P1 Spell & Trap Zone 1 → P1 GY — destroyed by an effect" in out, out
     assert not _offered(d, "Attack with Borrelsword Dragon"), out + d.describe_decision()
+
+
+# ---------------------------------------------------------------- Q&As of cards whose scripts differ from their peers (wideY)
+
+
+def test_big_shield_gardna_cannot_negate_after_ceasefire_flipped_it():
+    # FAQ 7432
+    d, out = _w_run({'monsters': [{'card': 'Big Shield Gardna', 'position': 'set'}], 'deck_filler': 10},
+                    {'hand': ['Mind Control'], 'spells_traps': [{'card': 'Ceasefire', 'face_up': False}], 'deck_filler': 10},
+                    ['@2', 'Activate Mind Control', '#0', 'Activate Ceasefire'], seed=1)
+    out += _until(d, lambda d: d.decision.kind == "idle" or "choose a zone" in d.describe_decision())
+    assert "Big Shield Gardna (P1 Monster Zone 1) changes to face-up Defense Position" in out, out
+    assert "its activation is negated" not in out and "choose a zone" in d.describe_decision(), out + d.describe_decision()
+
+
+def test_light_ruler_tosses_the_coin_after_leaving_the_field():
+    # FAQ 6882
+    d, out = _w_run({'hand': ['Arcana Force EX - The Light Ruler'], 'monsters': [{'card': 'Battle Ox'}, {'card': 'Axe Raider'}, {'card': 'Giant Soldier of Stone'}], 'deck_filler': 10},
+                    {'spells_traps': [{'card': 'Compulsory Evacuation Device', 'face_up': False}], 'deck_filler': 10},
+                    ['@1', 'Special Summon Arcana', '#0', '#0', '#0', '#0', '#0', 'Activate Compulsory', '#0'], seed=1)
+    out += _until(d, lambda d: d.decision.kind == "idle" or d.turn >= 2)
+    after = out.split("The Light Ruler: P1 Monster Zone 1 → P1 hand")[-1]
+    assert "The Light Ruler: P1 Monster Zone 1 → P1 hand" in out and "Coin toss for P1" in after, out
+
+
+def test_royal_command_stops_flip_monster_effects_from_being_activated():
+    # FAQ 24209
+    d = start({'hand': ['Proto Enneacraft - "orgIA"', 'Battle Ox'], 'spells_traps': [{'card': 'Royal Command', 'face_up': False}], 'deck_filler': 10},
+              {'deck_filler': 10}, seed=1)
+    out = _w_turn(d, 1)
+    out += _w_step(d, ['Activate Royal', 'P'])
+    assert not _offered(d, 'Activate Proto Enneacraft - "orgIA" (P1 hand): "Special Summon'), d.describe_decision()
+    assert _offered(d, 'Activate Proto Enneacraft - "orgIA" (P1 hand): "Activate it as a Pendulum Spell'), d.describe_decision()
+
+
+def test_flip_monster_effects_can_be_activated_without_royal_command():
+    # FAQ 24209
+    d = start({'hand': ['Proto Enneacraft - "orgIA"', 'Battle Ox'], 'deck_filler': 10},
+              {'deck_filler': 10}, seed=1)
+    out = _w_turn(d, 1)
+    out += _w_step(d, [])
+    assert _offered(d, 'Activate Proto Enneacraft - "orgIA" (P1 hand): "Special Summon'), d.describe_decision()
