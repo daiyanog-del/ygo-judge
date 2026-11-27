@@ -127,6 +127,10 @@
 >     Metamorphosis" (22062), "Tsukahagi, the Poisonous Mayakashi" (22064, 22065) and "Red-Eyes Retro Dragon" (16083, 16089).
 >   - script patch 0023, from the Q&As of cards with a trigger effect in the GY: "Destiny HERO - Dreamer" is a Trigger
 >     Effect (13064), "Cross Debug" (22608) and "Cyber Emergency" (21900).
+>   - core patch 0016: monsters turned face-up at the same time do not count as arriving after each other, so the player
+>     chooses which unique monster stays (FAQ 8792, "Earthbound Immortal"), and a Pendulum Scale change whose condition is met
+>     later keeps its timestamp (14394, 16043, "Stargazer Magician").
+>   - script patch 0024: "Decoy Dragon" calculates damage before the summoned monster destroys itself (9227).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 

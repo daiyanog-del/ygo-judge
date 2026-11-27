@@ -1,0 +1,19 @@
+diff --git a/official/c2732323.lua b/official/c2732323.lua
+index 25c01f0d..1ccfc111 100644
+--- a/official/c2732323.lua
++++ b/official/c2732323.lua
+@@ -26,10 +26,13 @@ function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ end
+ function s.spop(e,tp,eg,ep,ev,re,r,rp)
+ 	local tc=Duel.GetFirstTarget()
++	Duel.DisableSelfDestroyCheck(true) --FAQ 9227: the damage calculation is part of this effect, so no self-destruction until it ends
+ 	if tc and tc:IsRelateToEffect(e) and Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP)>0 then
+ 		local a=Duel.GetAttacker()
+ 		if a:CanAttack() and not a:IsImmuneToEffect(e) then
+ 			Duel.CalculateDamage(a,tc)
++			return
+ 		end
+ 	end
++	Duel.DisableSelfDestroyCheck(false)
+ end
+\ No newline at end of file

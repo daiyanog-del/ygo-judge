@@ -2933,3 +2933,72 @@ def test_cyber_emergency_negated_by_the_opponent_returns_for_either_player():
                     ['@1', 'Activate Cyber Emergency'], seed=1)
     out += _until(d, lambda d: d.decision.kind == "idle" or "effect of Cyber Emergency (P1 GY)" in d.describe_decision())
     assert "effect of Cyber Emergency (P1 GY)" in d.describe_decision(), out + d.describe_decision()
+
+
+# ---------------------------------------------------------------- core fixes for uniqueness and Pendulum Scales, and Decoy Dragon
+def _w_step(d, goals):
+    """Play each goal on the current decision without passing: "#i" = option i, "P" = pass, other = option label prefix."""
+    out = ""
+    for g in goals:
+        if g == "P":
+            out += d.play([P])
+        elif g.startswith("#"):
+            out += d.play([int(g[1:])])
+        else:
+            labels = [o.label for o in d.decision.options]
+            hit = next((l for l in labels if l.startswith(g)), None)
+            assert hit, out + d.describe_decision() + " -- missing " + g
+            out += d.play([hit])
+    return out
+
+
+def test_earthbound_immortals_turned_face_up_together_let_the_player_choose():
+    # FAQ 8792
+    d, out = _w_run({'hand': ['Swords of Revealing Light'], 'field_spell': {'card': 'Necrovalley'}, 'deck_filler': 10},
+                    {'monsters': [{'card': 'Earthbound Immortal Ccapac Apu', 'position': 'set', 'zone': 1, 'summoned': 'tribute'}, {'card': 'Earthbound Immortal Uru', 'position': 'set', 'zone': 2}], 'deck_filler': 10},
+                    ['@1', 'Activate Swords', '#0'], seed=1)
+    assert "Select the card(s) to keep on the field" in d.describe_decision(), out + d.describe_decision()
+    assert _offered(d, "Earthbound Immortal Ccapac Apu") and _offered(d, "Earthbound Immortal Uru"), d.describe_decision()
+
+
+def test_earthbound_immortal_turned_face_up_after_another_is_destroyed():
+    # FAQ 8792
+    d, out = _w_run({'hand': ['Swords of Revealing Light'], 'field_spell': {'card': 'Necrovalley'}, 'deck_filler': 10},
+                    {'monsters': [{'card': 'Earthbound Immortal Ccapac Apu', 'position': 'attack', 'zone': 1, 'summoned': 'tribute'}, {'card': 'Earthbound Immortal Uru', 'position': 'set', 'zone': 2}], 'deck_filler': 10},
+                    ['@1', 'Activate Swords', '#0'], seed=1)
+    assert "Earthbound Immortal Uru: P2 Monster Zone 2 → P2 GY — destroyed, by rule" in out, out + d.describe_decision()
+
+
+def test_stargazer_keeps_the_pendulum_shift_scale_when_its_condition_is_met_later():
+    # FAQ 14394
+    d, out = _w_run({'hand': ['Pendulum Shift', 'Mystical Space Typhoon', 'Ignis Phoenix, the Dracoslayer', 'Blue-Eyes White Dragon', 'Archfiend of Gilfer'], 'pendulum_zones': ['Stargazer Magician', 'Timegazer Magician'], 'deck_filler': 10},
+                    {'deck_filler': 10},
+                    ['@1', 'Activate Pendulum Shift', '#0', '#0', '#8', 'Activate Mystical Space Typhoon', '#0', 'Timegazer', 'Activate Ignis Phoenix', '#0'], seed=1)
+    assert _offered(d, "Select Blue-Eyes White Dragon"), out + d.describe_decision()
+
+
+def test_stargazer_scale_becomes_4_without_another_magician():
+    # FAQ 14394
+    d, out = _w_run({'hand': ['Mystical Space Typhoon', 'Ignis Phoenix, the Dracoslayer', 'Blue-Eyes White Dragon', 'Archfiend of Gilfer'], 'pendulum_zones': ['Stargazer Magician', 'Timegazer Magician'], 'deck_filler': 10},
+                    {'deck_filler': 10},
+                    ['@1', 'Activate Mystical Space Typhoon', '#0', 'Timegazer', 'Activate Ignis Phoenix', '#0'], seed=1)
+    assert _offered(d, "Select Archfiend of Gilfer") and not _offered(d, "Select Blue-Eyes White Dragon"), out + d.describe_decision()
+
+
+def test_stargazer_keeps_the_dharma_eye_scale_after_dharma_eye_leaves():
+    # FAQ 16043
+    d = start({'hand': ['Timegazer Magician', 'Performapal Pendulum Sorcerer', 'Mystical Space Typhoon', 'Red-Eyes Black Dragon', 'Dark Magician Girl'], 'pendulum_zones': ['Dharma-Eye Magician', 'Stargazer Magician'], 'deck_filler': 10}, {'hand': [], 'deck_filler': 10})
+    out = _w_turn(d, 1)
+    out += _w_step(d, ["Activate Dharma-Eye", "#0", "#1", "P", "#0", "#0", "Dharma-Eye", "P", "Activate Performapal Pendulum Sorcerer",
+                       "Special Summon Performapal"])
+    assert _offered(d, "Select Red-Eyes Black Dragon") and _offered(d, "Select Dark Magician Girl"), out + d.describe_decision()
+
+
+def test_decoy_dragon_calculates_damage_before_malefic_blue_eyes_destroys_itself():
+    # FAQ 9227
+    d, out = _w_run({'monsters': [{'card': 'Decoy Dragon', 'position': 'attack', 'zone': 1}], 'graveyard': [{'card': 'Malefic Blue-Eyes White Dragon', 'properly_summoned': True, 'summoned': 'special', 'summoned_from': 'hand'}], 'deck_filler': 10},
+                    {'monsters': [{'card': 'Gazelle the King of Mythical Beasts', 'position': 'attack', 'zone': 1}], 'deck_filler': 10},
+                    ['@2', 'Enter the Battle', 'Attack', '#0', '#0', '#0'], seed=1)
+    after = out.split("Malefic Blue-Eyes White Dragon is Special Summoned")[-1]
+    assert "Damage calculation: Gazelle the King of Mythical Beasts" in after, out
+    assert after.index("Damage calculation") < after.index("Malefic Blue-Eyes White Dragon: P1 Monster Zone 2 → P1 GY — destroyed by an effect"), out

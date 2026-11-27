@@ -1,0 +1,58 @@
+diff --git a/effect.cpp b/effect.cpp
+index fc4768f..d3d6e5d 100644
+--- a/effect.cpp
++++ b/effect.cpp
+@@ -114,7 +114,9 @@ int32_t effect::is_available() {
+ 	pduel->lua->add_param<LuaParam::EFFECT>(this);
+ 	int32_t res = pduel->lua->check_condition(condition, 1);
+ 	if(res) {
+-		if(!(status & EFFECT_STATUS_AVAILABLE))
++		// JudgemanAI: a Pendulum Scale change whose condition becomes true later keeps its timestamp, so a scale change
++		// applied in the meantime stays (Konami FAQ 14394, 16043 "Stargazer Magician")
++		if(!(status & EFFECT_STATUS_AVAILABLE) && code != EFFECT_CHANGE_LSCALE && code != EFFECT_CHANGE_RSCALE)
+ 			id = pduel->game_field->infos.field_id++;
+ 		status |= EFFECT_STATUS_AVAILABLE;
+ 	} else
+diff --git a/operations.cpp b/operations.cpp
+index 2bf27f1..c36cd8a 100644
+--- a/operations.cpp
++++ b/operations.cpp
+@@ -5311,6 +5311,7 @@ bool field::process(Processors::ChangePos& arg) {
+ 		card_set flips;
+ 		card_set ssets;
+ 		card_set pos_changed;
++		card_set turned_faceup;
+ 		card_vector cv(targets->container.begin(), targets->container.end());
+ 		if(cv.size() > 1)
+ 			std::sort(cv.begin(), cv.end(), card::card_operation_sort);
+@@ -5335,8 +5336,8 @@ bool field::process(Processors::ChangePos& arg) {
+ 			core.hint_timing[pcard->current.controler] |= TIMING_POS_CHANGE;
+ 			if((opos & POS_FACEDOWN) && (npos & POS_FACEUP)) {
+ 				pcard->fieldid = infos.field_id++;
+-				if(check_unique_onfield(pcard, pcard->current.controler, pcard->current.location))
+-					pcard->unique_fieldid = UINT_MAX;
++				// JudgemanAI: the uniqueness of cards turned face-up together is checked after the loop (Konami FAQ 8792)
++				turned_faceup.insert(pcard);
+ 				if(pcard->current.location == LOCATION_MZONE) {
+ 					raise_single_event(pcard, nullptr, EVENT_FLIP, reason_effect, 0, reason_player, 0, flag);
+ 					flips.insert(pcard);
+@@ -5389,6 +5390,19 @@ bool field::process(Processors::ChangePos& arg) {
+ 				ssets.insert(pcard);
+ 			}
+ 		}
++		// JudgemanAI: cards turned face-up at the same time do not count as arriving after each other, so the player
++		// chooses which one to keep (Konami FAQ 8792). A clash with a card that was already face-up still destroys the newcomer.
++		for(auto& pcard : turned_faceup) {
++			for(auto& other : turned_faceup)
++				if(other != pcard)
++					std::swap(other->current.position, other->previous.position);
++			bool clash = check_unique_onfield(pcard, pcard->current.controler, pcard->current.location) != nullptr;
++			for(auto& other : turned_faceup)
++				if(other != pcard)
++					std::swap(other->current.position, other->previous.position);
++			if(clash)
++				pcard->unique_fieldid = UINT_MAX;
++		}
+ 		adjust_instant();
+ 		process_single_event();
+ 		if(flips.size())
