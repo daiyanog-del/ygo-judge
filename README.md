@@ -137,6 +137,8 @@
 >     Boss Room" replaces the effect (24185); "Icejade Gymir Aegirine" uses the name at resolution while the card is still
 >     where it activated (23907); "Number 38: Hope Harbinger Dragon Titanic Galaxy" and "Red-Eyes Retro Dragon" trigger once
 >     for the whole chain with every destroyed card (17974, 16090), through a flag only they use.
+>   - script patch 0026: "DMZ Dragon" checks whether the monster can attack again, like the other cards that let a monster
+>     attack "once more", so it gives no third attack (22561, 23980).
 >
 > JudgemanAI's web app calls this engine over HTTP as a separate program. Everything here stays AGPL-3.0-or-later.
 
@@ -327,9 +329,10 @@ uv run ygo-judge         # http://127.0.0.1:8000/<access key>/mcp, key in state/
 
 ### Fixes by kind
 
-Each Konami FAQ fix in `patches/` carries a comment with the FAQ number. Newer fixes also carry one of three tags:
-`[general]` for a general rule that covers every card it applies to, `[card]` for one card's own handling, and
-`[exception]` for an exception to a rule the engine applies elsewhere (for example a flag that only some cards use).
+Each Konami FAQ fix in `patches/` carries a comment with the FAQ number. Newer fixes also carry one of four tags:
+`[general:faq]` for a general rule applied where a Konami FAQ rules on that card or case, `[general:analogy]` for the
+same rule applied by analogy to a card with the same text but no FAQ of its own, `[exception]` for an exception to a rule
+the engine applies elsewhere (for example a flag that only some cards use), and `[card]` for one card's own handling.
 `python tools/list_fixes.py > fixes.csv` lists every fix with its patch, file, FAQ numbers and tag; the tag is empty for
 fixes written before the tags.
 

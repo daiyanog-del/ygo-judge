@@ -1,0 +1,14 @@
+diff --git a/official/c98371278.lua b/official/c98371278.lua
+index fc3a0e18..59daded2 100644
+--- a/official/c98371278.lua
++++ b/official/c98371278.lua
+@@ -77,7 +77,7 @@ end
+ function s.desop(e,tp,eg,ep,ev,re,r,rp)
+ 	local bc=Duel.GetAttacker()
+ 	if bc:IsRelateToBattle() and bc:IsControler(tp) and bc:HasEquipCard()
+-		and Duel.Destroy(bc:GetEquipGroup(),REASON_EFFECT)>0 then
++		and Duel.Destroy(bc:GetEquipGroup(),REASON_EFFECT)>0 and bc:CanChainAttack() then --FAQ 22561 [general:faq]: "once more" gives no third attack
+ 		Duel.ChainAttack()
+ 	end
+ end
+\ No newline at end of file

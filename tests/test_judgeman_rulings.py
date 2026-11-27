@@ -3070,3 +3070,13 @@ def test_titanic_galaxy_activates_once_and_chooses_from_every_destroyed_xyz():
     out += _w_step(d, ['Enter the Battle', 'P', 'P', 'Attack with Thunder End', '#0', 'Activate Mirror', 'Activate Raigeki', '#0', '#3', 'P', 'Yes', 'P'])
     for name in ["Number 62: Galaxy-Eyes Prime Photon Dragon", "Thunder End Dragon", "Galaxy-Eyes Full Armor Photon Dragon"]:
         assert _offered(d, name), out + d.describe_decision()
+
+
+# ---------------------------------------------------------------- "once more" attack effects
+def test_dmz_dragon_gives_no_third_attack_to_a_monster_that_already_attacked_twice():
+    # FAQ 22561: the equips are destroyed, but Borrelsword Dragon cannot attack a third time
+    d, out = _w_run({'monsters': [{'card': 'Borrelsword Dragon', 'zone': 'EMZ left', 'position': 'attack', 'summoned': 'link', 'properly_summoned': True}, {'card': 'DMZ Dragon', 'zone': 2}], 'graveyard': ['DMZ Dragon', 'Anesthrokket Dragon'], 'deck_filler': 10},
+                    {'monsters': [{'card': 'Battle Ox', 'zone': 1}, {'card': 'Battle Ox', 'zone': 2}, {'card': 'Battle Ox', 'zone': 3}], 'deck_filler': 10},
+                    ['@3', 'Activate DMZ', '#0', '#1', '#1', '#0', 'Activate Borrelsword', '#1', 'Enter the Battle', 'Attack with Borrelsword', '#1', '#1', '#1', '#1', '#0', '#1', '#0'], seed=1)
+    assert "Anesthrokket Dragon: P1 Spell & Trap Zone 1 → P1 GY — destroyed by an effect" in out, out
+    assert not _offered(d, "Attack with Borrelsword Dragon"), out + d.describe_decision()

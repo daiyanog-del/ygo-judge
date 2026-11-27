@@ -11,7 +11,7 @@ index 1f6662ee..218dcc12 100644
  EFFECT_FLAG2_MAJESTIC_MUST_COPY = 0x80000000
  --Effect codes
 diff --git a/official/c13857930.lua b/official/c13857930.lua
-index f060c73e..ef726fd2 100644
+index f060c73e..2a407aa8 100644
 --- a/official/c13857930.lua
 +++ b/official/c13857930.lua
 @@ -42,7 +42,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
@@ -19,12 +19,12 @@ index f060c73e..ef726fd2 100644
  	Duel.ConfirmCards(1-tp,tc)
  	if tc:IsMonster() then
 -		Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
-+		aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
++		aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general:analogy]: same text as "The Unhappy Maiden"
  	elseif tc:IsSpell() then
  		if c==Duel.GetAttacker() and not c:IsHasEffect(EFFECT_CANNOT_DIRECT_ATTACK)
  			and c:IsRelateToEffect(e) and c:IsFaceup() and Duel.SelectYesNo(tp,aux.Stringid(id,1)) then
 diff --git a/official/c17732278.lua b/official/c17732278.lua
-index 5006f8fb..f7cb4d02 100644
+index 5006f8fb..2908d900 100644
 --- a/official/c17732278.lua
 +++ b/official/c17732278.lua
 @@ -30,7 +30,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
@@ -32,7 +32,7 @@ index 5006f8fb..f7cb4d02 100644
  		if not Duel.IsPlayerAffectedByEffect(Duel.GetTurnPlayer(),EFFECT_SKIP_BP) then
  			Duel.BreakEffect()
 -			Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
-+			aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
++			aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general:analogy]: same text as "The Unhappy Maiden"
  		end
  	elseif tc:IsSpell() then
  		if c==Duel.GetAttacker() and not c:IsHasEffect(EFFECT_CANNOT_DIRECT_ATTACK)
@@ -49,7 +49,7 @@ index 082b1a1e..7b21cd5b 100644
  function s.spcon(e,tp,eg,ep,ev,re,r,rp)
  	local c=e:GetHandler()
 diff --git a/official/c51275027.lua b/official/c51275027.lua
-index 601bbdf6..b2f40ea7 100644
+index 601bbdf6..03be0b6c 100644
 --- a/official/c51275027.lua
 +++ b/official/c51275027.lua
 @@ -15,5 +15,5 @@ function s.condition(e,tp,eg,ep,ev,re,r,rp)
@@ -57,7 +57,7 @@ index 601bbdf6..b2f40ea7 100644
  end
  function s.operation(e,tp,eg,ep,ev,re,r,rp)
 -	Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
-+	aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
++	aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general:faq]
  end
 \ No newline at end of file
 diff --git a/official/c53485634.lua b/official/c53485634.lua
@@ -108,7 +108,7 @@ index 13270b39..7b1b746d 100644
 +	aux.WelcomeLabrynthTrapDestroyOperation(e,tp) --FAQ 24185 [card]: the added destruction still applies after the effect is replaced
  end
 diff --git a/official/c79205581.lua b/official/c79205581.lua
-index dbab9784..1b2c2437 100644
+index dbab9784..5b1b6b8b 100644
 --- a/official/c79205581.lua
 +++ b/official/c79205581.lua
 @@ -32,5 +32,5 @@ end
@@ -116,7 +116,7 @@ index dbab9784..1b2c2437 100644
  	if not e:GetHandler():IsRelateToEffect(e) then return end
  	if Duel.GetFlagEffect(0,86049351)>0 then return end --FAQ 242
 -	Duel.SkipPhase(Duel.GetTurnPlayer(),PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)
-+	aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general]
++	aux.EndThisTurnBattlePhase(e) --FAQ 6059 [general:analogy]: same text as "The Unhappy Maiden"
  end
 \ No newline at end of file
 diff --git a/official/c86682165.lua b/official/c86682165.lua
@@ -135,7 +135,7 @@ index f5f51321..623f470e 100644
  	if #g>0 and Duel.SelectYesNo(tp,aux.Stringid(id,3)) then
  		Duel.BreakEffect()
 diff --git a/utility.lua b/utility.lua
-index 17abb8e5..1097c019 100644
+index 17abb8e5..bf60d277 100644
 --- a/utility.lua
 +++ b/utility.lua
 @@ -3064,3 +3064,16 @@ Duel.LoadScript("proc_gemini.lua")
@@ -143,7 +143,7 @@ index 17abb8e5..1097c019 100644
  Duel.LoadScript("proc_unofficial.lua")
  Duel.LoadScript("deprecated_functions.lua")
 +
-+--JudgemanAI [general] FAQ 6059: "end this turn's Battle Phase" also ends a second Battle Phase this turn
++--JudgemanAI [general:faq] FAQ 6059: "end this turn's Battle Phase" also ends a second Battle Phase this turn
 +function Auxiliary.EndThisTurnBattlePhase(e)
 +	local p=Duel.GetTurnPlayer()
 +	Duel.SkipPhase(p,PHASE_BATTLE,RESET_PHASE|PHASE_BATTLE_STEP,1)

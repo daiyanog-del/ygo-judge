@@ -45,7 +45,7 @@ index 9b65f3d..a44a120 100644
  	return true;
  }
 diff --git a/processor.cpp b/processor.cpp
-index 310aaa1..f72b84e 100644
+index 310aaa1..d4d40c5 100644
 --- a/processor.cpp
 +++ b/processor.cpp
 @@ -1806,7 +1806,9 @@ bool field::process(Processors::BattleCommand& arg) {
@@ -53,7 +53,7 @@ index 310aaa1..f72b84e 100644
  			arg.step = 41;
  			arg.phase_to_change_to = 2;
 -			arg.repeat_battle_phase = static_cast<bool>(is_player_affected_by_effect(infos.turn_player, EFFECT_BP_TWICE));
-+			// JudgemanAI [general]: an effect that ends "this turn's" Battle Phase also ends a second one (Konami FAQ 6059)
++			// JudgemanAI [general:faq]: an effect that ends "this turn's" Battle Phase also ends a second one (Konami FAQ 6059)
 +			arg.repeat_battle_phase = static_cast<bool>(is_player_affected_by_effect(infos.turn_player, EFFECT_BP_TWICE))
 +				&& !is_player_affected_by_effect(infos.turn_player, EFFECT_CANNOT_BP);
  			if(core.force_turn_end || !peffect->value) {
@@ -64,7 +64,7 @@ index 310aaa1..f72b84e 100644
  			}
  		}
 -		arg.repeat_battle_phase = !eset.empty();
-+		// JudgemanAI [general]: an effect that ends "this turn's" Battle Phase also ends a second one (Konami FAQ 6059)
++		// JudgemanAI [general:faq]: an effect that ends "this turn's" Battle Phase also ends a second one (Konami FAQ 6059)
 +		arg.repeat_battle_phase = !eset.empty() && !is_player_affected_by_effect(infos.turn_player, EFFECT_CANNOT_BP);
  		infos.phase = PHASE_BATTLE;
  		emplace_process<Processors::PhaseEvent>(PHASE_BATTLE);

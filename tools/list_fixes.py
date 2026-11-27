@@ -2,9 +2,10 @@
 
 Each added line that mentions "FAQ" becomes one row: patch, file, FAQ numbers, kind, comment.
 The kind comes from a tag in the comment:
-  [general]   a general rule (applies to every card it covers, not only the one in the FAQ)
-  [card]      a fix to one card's own handling
-  [exception] an exception to a rule the engine applies elsewhere (for example a flag that only some cards opt into)
+  [general:faq]      a general rule, applied where a Konami FAQ rules on that card or case
+  [general:analogy]  the same general rule, applied by analogy to a card with the same text but no FAQ of its own
+  [exception]        an exception to a rule the engine applies elsewhere (for example a flag that only some cards opt into)
+  [card]             a fix to one card's own handling
 Lines without a tag have an empty kind; older fixes were written before the tags and can be sorted later.
 
 Usage: python tools/list_fixes.py > fixes.csv
@@ -16,7 +17,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent / "patches"
 FAQ = re.compile(r"FAQ\s*([\d,\s/]+(?:and\s+\d+)?)")
-TAG = re.compile(r"\[(general|card|exception)\]")
+TAG = re.compile(r"\[(general:faq|general:analogy|exception|card)\]")
 
 
 def rows():
