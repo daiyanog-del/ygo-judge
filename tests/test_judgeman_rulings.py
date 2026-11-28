@@ -3446,3 +3446,116 @@ def test_ghost_mourner_cannot_target_the_primal_being_token():
         out += d.play([c])
     assert state["ghost"] and "Primal Being Token" in out, out
     assert not _offered(d, "Primal Being Token"), out + d.describe_decision()
+
+
+# ---------------------------------------------------------------- the held Q&As (cleared on 11-28)
+def test_cloning_targets_the_summoned_monster():
+    # card text: "target that monster"
+    d, out = _run({"spells_traps": [{"card": "Cloning", "face_up": False}], "deck_filler": 10},
+                  {"hand": ["Spirit Reaper"], "deck_filler": 10}, ["@2", "Normal Summon Spirit Reaper", "#0", "Activate Cloning"])
+    assert "Targets: Spirit Reaper (P2 Monster Zone 1)" in out, out
+
+
+def test_wedju_temple_places_only_one_of_the_destroyed_monsters():
+    # FAQ 24064 (D)
+    d, out = _run({"hand": ["Dark Hole"], "field_spell": {"card": "Wedju Temple"},
+                   "monsters": [{"card": "Millennium Shield", "zone": 1, "summoned": "normal"}, {"card": "Millennium Shield", "zone": 2, "summoned": "special"}],
+                   "deck_filler": 10}, {"deck_filler": 10}, ["Activate Dark Hole", "#0", "Yes"])
+    assert "Select the card(s) to place on the field" in d.describe_decision() and "Pick 1 option(s)" in d.describe_decision(), d.describe_decision()
+
+
+def test_dinomight_knight_cannot_activate_a_trap_from_the_deck_under_jinzo():
+    # FAQ 20504
+    d = start({"monsters": [{"card": "Dinomight Knight, the True Dracofighter", "zone": 2, "summoned": "tribute", "summoned_from": "hand"}],
+               "deck": ["True Draco Apocalypse"], "deck_filler": 5},
+              {"hand": ["Upstart Goblin"], "monsters": [{"card": "Jinzo", "zone": 3}], "deck_filler": 5}, seed=1)
+    out = d.play([[1], [0], [0], [0]])
+    assert "True Draco Apocalypse: P1 Deck → P1 hand" in out and "Activate it" not in d.describe_decision(), out + d.describe_decision()
+
+
+def _rex(target):
+    d = start({"monsters": [{"card": "Wiz, Sage Fur Hire", "zone": 2}], "graveyard": ["Rex, Freight Fur Hire", "Dyna, Hero Fur Hire", "Rookie Fur Hire"],
+               "deck_filler": 10},
+              {"spells_traps": [{"card": "Solemn Warning", "face_up": False}, {"card": "Dominus Impulse", "face_up": False}], "deck_filler": 10}, seed=1)
+    d.play([0])
+    d.play([next(o.label for o in d.decision.options if o.label.startswith(target))])
+    return d
+
+
+def test_rex_targeting_a_spell_cannot_be_chained_by_solemn_warning():
+    # FAQ 24221
+    d = _rex("Rookie Fur Hire")
+    assert not _offered(d, "Activate Solemn Warning") and not _offered(d, "Activate Dominus Impulse"), d.describe_decision()
+    d = _rex("Dyna, Hero Fur Hire")
+    assert _offered(d, "Activate Solemn Warning") and _offered(d, "Activate Dominus Impulse"), d.describe_decision()
+
+
+def test_serial_spell_copying_monster_reborn_cannot_target_ra_under_millennium_revelation():
+    # FAQ 23023
+    d = start({"hand": ["Monster Reborn", "Serial Spell", "Mystical Shine Ball"], "spells_traps": [{"card": "Millennium Revelation", "face_up": True}],
+               "graveyard": ["The Winged Dragon of Ra", "Jinzo"], "deck_filler": 5}, {"deck_filler": 10}, seed=1)
+    out = d.play([1, 0, 0, 1, 0, 0])
+    assert "Targets: The Winged Dragon of Ra" in out, out
+    assert "Select the card(s) to Special Summon" in d.describe_decision() and "Winged Dragon of Ra" not in d.describe_decision(), d.describe_decision()
+
+
+def _nibiru(p1, p2):
+    d = start(p1, p2, seed=1)
+    out, summoned = "", False
+    for _ in range(80):
+        labels = [o.label for o in d.decision.options]
+        if any(l.startswith("Activate Nibiru") for l in labels):
+            return True
+        if d.turn >= 3 or (summoned and d.turn == 2 and d.decision.kind == "idle"):
+            return False
+        c = None
+        if d.turn == 2 and not summoned:
+            c = next((l for l in labels if l.startswith("Special Summon Stargazer")), None)
+            summoned = c is not None
+        m = re.search(r"Pick \d+ to (\d+)", d.describe_decision())
+        if c is None and m:
+            c = list(range(min(int(m.group(1)), len(labels))))
+        if c is None:
+            c = P if P in labels else (next((l for l in labels if l.startswith("End the turn")), 0) if d.turn == 1 else 0)
+        out += d.play([c])
+    raise AssertionError(out)
+
+
+def test_nibiru_under_kaiser_colosseum_needs_you_to_keep_fewer_monsters():
+    # FAQ 24035
+    p2 = {"hand": ["Mystical Shine Ball"] * 5, "pendulum_zones": ["Stargazer Magician", "Timegazer Magician"],
+          "spells_traps": [{"card": "Kaiser Colosseum", "face_up": True}], "deck_filler": 10}
+    assert not _nibiru({"hand": ["Nibiru, the Primal Being"], "deck_filler": 10}, p2)
+    p2b = dict(p2, monsters=[{"card": "Summoner Monk", "zone": "EMZ left", "position": "attack"}])
+    assert _nibiru({"hand": ["Nibiru, the Primal Being"], "deck_filler": 10}, p2b)
+
+
+def _bandit_with_enemy_controller(own):
+    d = start({"hand": ['Spell Card "Enemy Controller"', "The Great Gallant Bandit"],
+               "monsters": [{"card": "Mystical Shine Ball", "zone": 1}] if own else [], "deck_filler": 10},
+              {"monsters": [{"card": "Effect Veiler", "zone": 1}, {"card": "Ash Blossom & Joyous Spring", "zone": 2}], "deck_filler": 10}, seed=1)
+    out = ""
+    for _ in range(25):
+        labels = [o.label for o in d.decision.options]
+        head = d.describe_decision().split("\n")[0]
+        if "Summons The Great Gallant Bandit" in out:
+            return True
+        if "Enemy Controller" in out and d.decision.kind == "idle":
+            return False
+        m = re.search(r"Pick (\d+)(?: to (\d+))?", d.describe_decision())
+        if m and "Tribute" in head:
+            c = list(range(min(int(m.group(2) or m.group(1)), len(labels))))
+        else:
+            c = next((l for l in labels if l.startswith(("Activate Spell Card", "Normal Summon The Great"))), None)
+            if c is None:
+                c = next((l for l in labels if "Tribute Summon" in l), None)
+            if c is None:
+                c = P if P in labels else 0
+        out += d.play([c])
+    return "Summons The Great Gallant Bandit" in out
+
+
+def test_great_gallant_bandit_cannot_use_its_own_way_with_enemy_controller():
+    # FAQ 24399
+    assert not _bandit_with_enemy_controller(own=False)
+    assert _bandit_with_enemy_controller(own=True)

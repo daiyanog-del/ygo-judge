@@ -1,0 +1,144 @@
+diff --git a/official/c10000010.lua b/official/c10000010.lua
+index 31eb5470..1132cb86 100644
+--- a/official/c10000010.lua
++++ b/official/c10000010.lua
+@@ -46,7 +46,7 @@ function s.initial_effect(c)
+ 	c:RegisterEffect(e4)
+ end
+ function s.spval(e,se,sp,st)
+-	return st==SUMMON_TYPE_SPECIAL+SUMMON_WITH_MONSTER_REBORN and Duel.IsPlayerAffectedByEffect(sp,41044418) and e:GetHandler():IsControler(sp)
++	return st==SUMMON_TYPE_SPECIAL+SUMMON_WITH_MONSTER_REBORN and Duel.IsPlayerAffectedByEffect(sp,41044418) and e:GetHandler():IsControler(sp) and se and se:GetHandler():IsCode(83764718) --FAQ 23023 [card]: Serial Spell copying it is not the effect of Monster Reborn
+ end
+ function s.genchainlm(c)
+ 	return	function(e,rp,tp)
+diff --git a/official/c19312169.lua b/official/c19312169.lua
+index c36369a4..833d25a9 100644
+--- a/official/c19312169.lua
++++ b/official/c19312169.lua
+@@ -22,7 +22,7 @@ function s.initial_effect(c)
+ 	e3:SetCode(EFFECT_CANNOT_TRIGGER)
+ 	e3:SetProperty(EFFECT_FLAG_SET_AVAILABLE)
+ 	e3:SetRange(LOCATION_SZONE)
+-	e3:SetTargetRange(LOCATION_HAND|LOCATION_SZONE,LOCATION_HAND|LOCATION_SZONE)
++	e3:SetTargetRange(LOCATION_HAND|LOCATION_SZONE|LOCATION_DECK,LOCATION_HAND|LOCATION_SZONE|LOCATION_DECK) --FAQ 20504 [general:faq]: also a card activated from the Deck directly onto the field
+ 	e3:SetTarget(aux.TargetBoolFunction(Card.IsTrap))
+ 	c:RegisterEffect(e3)
+ 	--Negate traps
+diff --git a/official/c24203749.lua b/official/c24203749.lua
+index 524d2541..c2d1eb92 100644
+--- a/official/c24203749.lua
++++ b/official/c24203749.lua
+@@ -16,6 +16,7 @@ function s.initial_effect(c)
+ 		if min_tributes<=0 or min_tributes>max_tributes then return false end
+ 		local tp=c:GetControler()
+ 		if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 or Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)>0 then return false end
++		if Duel.IsExistingMatchingCard(function(tc) return tc:IsHasEffect(EFFECT_EXTRA_RELEASE) end,tp,0,LOCATION_MZONE,1,nil) then return false end --FAQ 24399 [card]: not while an opponent's monster must be Tributed instead of your own (Enemy Controller)
+ 		local mg=Duel.GetMatchingGroup(Card.IsReleasable,tp,LOCATION_HAND,LOCATION_MZONE,c,tp)
+ 		return #mg>0 and mg:CheckWithSumGreater(s.tributes,min_tributes,c) --FAQ 24367 [card]: a monster that counts as 2 Tributes counts as 2
+ 	end)
+diff --git a/official/c27204311.lua b/official/c27204311.lua
+index a32cd692..3d737aa8 100644
+--- a/official/c27204311.lua
++++ b/official/c27204311.lua
+@@ -42,6 +42,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local g=Duel.GetMatchingGroup(aux.FaceupFilter(Card.IsReleasableByEffect),tp,LOCATION_MZONE,LOCATION_MZONE,nil)
+ 	if chk==0 then
+ 		return #g>0 and Duel.GetMZoneCount(tp,g,tp)>0 and Duel.GetMZoneCount(1-tp,g,tp)>0
++			and s.colosseumok(tp,g) --FAQ 24035 [card]: under the opponent's Kaiser Colosseum, you must keep fewer monsters than they do
+ 			and Duel.IsPlayerCanSpecialSummonCount(tp,2)
+ 			and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+ 			and Duel.IsPlayerCanSpecialSummonMonster(tp,id+1,0,TYPES_TOKEN,g:GetSum(Card.GetBaseAttack),g:GetSum(Card.GetBaseDefense),11,RACE_ROCK,ATTRIBUTE_LIGHT,POS_FACEUP,1-tp)
+@@ -84,4 +85,11 @@ function s.operation(e,tp,eg,ep,ev,re,r,rp)
+ 		token:RegisterEffect(e2)
+ 		Duel.SpecialSummonComplete()
+ 	end
+-end
+\ No newline at end of file
++end
++
++function s.colosseumok(tp,g) --FAQ 24035 [card]: under the opponent's Kaiser Colosseum, you must keep fewer monsters than they do
++	if not Duel.IsExistingMatchingCard(function(c) return c:IsFaceup() and c:IsCode(35059553) and not c:IsDisabled() end,tp,0,LOCATION_SZONE,1,nil) then return true end
++	local mine=Duel.GetFieldGroupCount(tp,LOCATION_MZONE,0)-g:FilterCount(Card.IsControler,nil,tp)
++	local theirs=Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)-g:FilterCount(Card.IsControler,nil,1-tp)
++	return mine+1<=theirs
++end
+diff --git a/official/c28004531.lua b/official/c28004531.lua
+index 5762ab26..a648b081 100644
+--- a/official/c28004531.lua
++++ b/official/c28004531.lua
+@@ -66,6 +66,9 @@ function s.gthtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+ 	Duel.SetPossibleOperationInfo(0,CATEGORY_TOHAND,g,1,tp,LOCATION_GRAVE)
+ 	if g:GetFirst():IsMonster() then
+ 		Duel.SetPossibleOperationInfo(0,CATEGORY_SPECIAL_SUMMON,g,1,tp,LOCATION_GRAVE)
++		e:SetCategory(CATEGORY_TOHAND+CATEGORY_SPECIAL_SUMMON)
++	else
++		e:SetCategory(CATEGORY_TOHAND) --FAQ 24221 [card]: targeting a Spell/Trap, it has no effect that Special Summons
+ 	end
+ end
+ function s.gthop(e,tp,eg,ep,ev,re,r,rp)
+diff --git a/official/c63017368.lua b/official/c63017368.lua
+index 166ee9c7..3f2a30e1 100644
+--- a/official/c63017368.lua
++++ b/official/c63017368.lua
+@@ -73,9 +73,8 @@ function s.reptg(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	if chk==0 then return ft>0 and #g>0 and not e:GetHandler():IsStatus(STATUS_DESTROY_CONFIRMED) end
+ 	if Duel.SelectEffectYesNo(tp,e:GetHandler(),96) then
+ 		if #g>1 then
+-			ft=math.min(ft,#g)
+ 			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOFIELD)
+-			g=g:Select(tp,1,ft,nil)
++			g=g:Select(tp,1,1,nil) --FAQ 24064 [card]: only 1 of the destroyed monsters is placed
+ 		end
+ 		for sc in g:Iter() do
+ 			sc:RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD&~RESET_TOFIELD,0,1)
+diff --git a/official/c71983925.lua b/official/c71983925.lua
+index 4fec0beb..f16cebb4 100644
+--- a/official/c71983925.lua
++++ b/official/c71983925.lua
+@@ -22,7 +22,7 @@ function s.initial_effect(c)
+ 	e3:SetCode(EFFECT_CANNOT_TRIGGER)
+ 	e3:SetProperty(EFFECT_FLAG_SET_AVAILABLE)
+ 	e3:SetRange(LOCATION_SZONE)
+-	e3:SetTargetRange(LOCATION_HAND|LOCATION_SZONE,LOCATION_HAND|LOCATION_SZONE)
++	e3:SetTargetRange(LOCATION_HAND|LOCATION_SZONE|LOCATION_DECK,LOCATION_HAND|LOCATION_SZONE|LOCATION_DECK) --FAQ 20504 [general:faq]: also a card activated from the Deck directly onto the field
+ 	e3:SetTarget(s.distg)
+ 	c:RegisterEffect(e3)
+ 	--disable
+diff --git a/official/c77585513.lua b/official/c77585513.lua
+index f73e37dd..1ba8d2d9 100644
+--- a/official/c77585513.lua
++++ b/official/c77585513.lua
+@@ -8,7 +8,7 @@ function s.initial_effect(c)
+ 	e1:SetCode(EFFECT_CANNOT_TRIGGER)
+ 	e1:SetProperty(EFFECT_FLAG_SET_AVAILABLE)
+ 	e1:SetRange(LOCATION_MZONE)
+-	e1:SetTargetRange(LOCATION_HAND|LOCATION_SZONE,LOCATION_HAND|LOCATION_SZONE)
++	e1:SetTargetRange(LOCATION_HAND|LOCATION_SZONE|LOCATION_DECK,LOCATION_HAND|LOCATION_SZONE|LOCATION_DECK) --FAQ 20504 [general:faq]: also a card activated from the Deck directly onto the field
+ 	e1:SetTarget(aux.TargetBoolFunction(Card.IsTrap))
+ 	c:RegisterEffect(e1)
+ 	--cannot activate
+diff --git a/official/c86871614.lua b/official/c86871614.lua
+index 5214c910..f545aaee 100644
+--- a/official/c86871614.lua
++++ b/official/c86871614.lua
+@@ -8,6 +8,7 @@ function s.initial_effect(c)
+ 	e1:SetDescription(aux.Stringid(id,0))
+ 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON+CATEGORY_TOKEN)
+ 	e1:SetType(EFFECT_TYPE_ACTIVATE)
++	e1:SetProperty(EFFECT_FLAG_CARD_TARGET) --card text [card]: it targets the Summoned monster
+ 	e1:SetCode(EVENT_SUMMON_SUCCESS)
+ 	e1:SetCondition(function(e,tp,eg,ep,ev,re,r,rp) return ep==1-tp end)
+ 	e1:SetTarget(s.target)
+@@ -21,10 +22,10 @@ s.listed_names={TOKEN_CLONE} --"Clone Token"
+ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+ 	local ec=eg:GetFirst()
+ 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+-		and ec:IsFaceup() and ec:IsLocation(LOCATION_MZONE)
++		and ec:IsFaceup() and ec:IsLocation(LOCATION_MZONE) and ec:IsCanBeEffectTarget(e) --card text [card]: it targets the Summoned monster
+ 		and ec:GetOriginalLevel()>0
+ 		and Duel.IsPlayerCanSpecialSummonMonster(tp,TOKEN_CLONE,0,TYPES_TOKEN,ec:GetBaseAttack(),ec:GetBaseDefense(),ec:GetOriginalLevel(),ec:GetOriginalRace(),ec:GetOriginalAttribute()) end
+-	ec:CreateEffectRelation(e)
++	Duel.SetTargetCard(ec) --card text [card]: it targets the Summoned monster
+ 	Duel.SetOperationInfo(0,CATEGORY_TOKEN,nil,1,tp,0)
+ 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,0)
+ end
